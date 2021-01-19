@@ -16,6 +16,7 @@ import (
 	"github.com/elazarl/goproxy"
 	credentialspb "google.golang.org/genproto/googleapis/iam/credentials/v1"
 
+	"github.com/jessesomerville/ephemeral-iam/internal/appconfig"
 	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
 )
 
@@ -51,7 +52,7 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 		logger.Info("Writing auth proxy logs to ", logFilename)
 	}
 
-	setCa("server.pem", "server.key")
+	setCa(appconfig.CertFile, appconfig.KeyFile)
 
 	proxy.OnRequest().HandleConnect(goproxy.FuncHttpsHandler(proxyConnectHandle))
 
