@@ -19,7 +19,7 @@ go get github.com/jessesomerville/gcp-iam-escalate
 # Usage
 
 ```
- > ./gcp-iam-escalate help
+$ gcp-iam-escalate
 A proof-of-concept CLI tool that demonstrates gaining short-term access to
 				to GCP APIs by through short-lived service account credentials.
 
@@ -28,6 +28,7 @@ Usage:
 
 Available Commands:
   assumePrivileges    Configure gcloud to make API calls as the provided service account
+  editConfig          Edit configuration values
   help                Help about any command
   listServiceAccounts List service accounts that can be impersonated
 
