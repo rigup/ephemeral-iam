@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	credentials "cloud.google.com/go/iam/credentials/apiv1"
 	"emperror.dev/errors"
 	"github.com/golang/protobuf/ptypes/duration"
 	"golang.org/x/oauth2/google"
@@ -15,7 +16,7 @@ import (
 var sessionDuration int64 = 600
 
 // GenerateTemporaryAccessToken generates short-lived credentials for the given service account
-func GenerateTemporaryAccessToken(serviceAccountEmail string) (*credentialspb.GenerateAccessTokenResponse, error) {
+func GenerateTemporaryAccessToken(serviceAccountEmail string, client *credentials.IamCredentialsClient) (*credentialspb.GenerateAccessTokenResponse, error) {
 
 	sessionDuration := &duration.Duration{
 		Seconds: sessionDuration, // Expire after 10 minutes
@@ -31,7 +32,7 @@ func GenerateTemporaryAccessToken(serviceAccountEmail string) (*credentialspb.Ge
 	}
 
 	ctx := context.Background()
-	resp, err := gcpClient.GenerateAccessToken(ctx, &req)
+	resp, err := client.GenerateAccessToken(ctx, &req)
 	if err != nil {
 		return nil, errors.WrapIfWithDetails(err, "Failed to generate GCP access token for service account", "service account", serviceAccountEmail)
 	}

@@ -38,5 +38,5 @@ Use "gcp-iam-escalate [command] --help" for more information about a command.
 ```
 
 # TODO
-- [ ] Add integration with Slack for alerting
+- [ ] Add integration with Slack for alerting.  This could also be implemented in GCP using audit log export filters and cloud functions
 - [ ] Write tests

@@ -45,8 +45,13 @@ var assumePrivilegesCmd = &cobra.Command{
 	authorization header to the OAuth2 token generated for the provided service account. Once
 	the credentials have expired, the auth proxy is shut down and the gcloud config is restored.
 
+	The reason flag is used to add additional metadata to audit logs.  The provided reason will
+	be in 'protoPatload.requestMetadata.requestAttributes.reason'.
+
 	Example:
-	  gcp_iam_escalate assumePrivileges --serviceAccountEmail example@my-project.iam.gserviceaccount.com`,
+	  gcp_iam_escalate assumePrivileges \
+	      --serviceAccountEmail example@my-project.iam.gserviceaccount.com \
+	      --reason "Emergency security patch (JIRA-1234)"`,
 	Run: func(cmd *cobra.Command, args []string) {
 		project, err := gcpclient.GetCurrentProject()
 		emperror.Panic(err)
@@ -58,7 +63,9 @@ var assumePrivilegesCmd = &cobra.Command{
 		}
 
 		logger.Info("Fetching short-lived access token for ", serviceAccountEmail)
-		accessToken, err := gcpclient.GenerateTemporaryAccessToken(serviceAccountEmail)
+
+		gcpClientWithReason := gcpclient.GCPClientWithReason(reason)
+		accessToken, err := gcpclient.GenerateTemporaryAccessToken(serviceAccountEmail, gcpClientWithReason)
 		emperror.Panic(err)
 
 		logger.Info("Configuring gcloud to use auth proxy")

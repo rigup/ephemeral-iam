@@ -6,10 +6,10 @@ import (
 
 	credentials "cloud.google.com/go/iam/credentials/apiv1"
 	"emperror.dev/emperror"
+	"google.golang.org/api/option"
 )
 
 var gcpClient *credentials.IamCredentialsClient
-var privilegedClient *credentials.IamCredentialsClient
 var once sync.Once
 
 // GetGCPClient gets a gcloud client using the local gcloud configuration
@@ -18,6 +18,13 @@ func GetGCPClient() *credentials.IamCredentialsClient {
 		gcpClient = newGcpClient()
 	})
 	return gcpClient
+}
+
+func GCPClientWithReason(reason string) *credentials.IamCredentialsClient {
+	ctx := context.Background()
+	gcpClientWithReason, err := credentials.NewIamCredentialsClient(ctx, option.WithRequestReason(reason))
+	emperror.Panic(err)
+	return gcpClientWithReason
 }
 
 func newGcpClient() *credentials.IamCredentialsClient {
