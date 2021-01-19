@@ -13,13 +13,13 @@ A CLI tool for temporarily escalating GCP IAM privileges to perform high privile
 
 Install the package
 ```
-go get github.com/jessesomerville/ephemeral-iam
+go get github.com/jessesomerville/ephemeral-iam/...
 ```
 
 # Usage
 
 ```
-$ ephemeral-iam help
+$ eiam help
 
 	A proof-of-concept CLI tool that demonstrates gaining short-term access to GCP APIs using
 	short-lived service account credentials.
@@ -40,6 +40,5 @@ Use "ephemeral-iam [command] --help" for more information about a command.
 ```
 
 # TODO
-- [ ] Generate certs with golang instead of bash script
 - [ ] Add integration with Slack for alerting.  This could also be implemented in GCP using audit log export filters and cloud functions
 - [ ] Write tests
