@@ -24,17 +24,19 @@ package main
 import (
 	"emperror.dev/emperror"
 
+	"github.com/jessesomerville/gcp-iam-escalate/appconfig"
 	"github.com/jessesomerville/gcp-iam-escalate/cmd"
 	"github.com/jessesomerville/gcp-iam-escalate/errorhandler"
-	"github.com/jessesomerville/gcp-iam-escalate/google"
+	"github.com/jessesomerville/gcp-iam-escalate/gcpclient"
 	"github.com/jessesomerville/gcp-iam-escalate/loghandler"
 )
 
 func main() {
+	config := &appconfig.Config
 
-	logger := loghandler.GetLogger()
+	logger := loghandler.GetLogger(&config.Logging)
 	errorHandler := errorhandler.GetErrorHandler(logger)
-	credentialsClient := google.GetGCPClient()
+	credentialsClient := gcpclient.GetGCPClient()
 
 	defer emperror.HandleRecover(errorHandler)
 	defer credentialsClient.Close()

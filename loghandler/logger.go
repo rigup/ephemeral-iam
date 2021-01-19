@@ -3,39 +3,40 @@ package loghandler
 import (
 	"sync"
 
+	"emperror.dev/emperror"
 	"github.com/sirupsen/logrus"
+
+	"github.com/jessesomerville/gcp-iam-escalate/appconfig"
 )
 
 var logger *logrus.Logger
 var once sync.Once
 
 // GetLogger returns the output log instance
-func GetLogger() *logrus.Logger {
+func GetLogger(config *appconfig.LogConfig) *logrus.Logger {
 	once.Do(func() {
-		logger = newLogger()
+		logger = newLogger(config)
 	})
 	return logger
 }
 
-func newLogger() *logrus.Logger {
+func newLogger(config *appconfig.LogConfig) *logrus.Logger {
 	logger := logrus.New()
 
-	logger.Level = logrus.InfoLevel
+	level, err := logrus.ParseLevel(config.Level)
+	emperror.Panic(err)
 
-	// switch config.Format {
-	// case "json":
-	// 	logger.Formatter = new(logrus.JSONFormatter)
+	logger.Level = level
 
-	// default:
-	// 	logger.Formatter = &logrus.TextFormatter{
-	// 		DisableLevelTruncation: true,
-	// 		PadLevelText:           true,
-	// 	}
-	// }
+	switch config.Format {
+	case "json":
+		logger.Formatter = new(logrus.JSONFormatter)
 
-	logger.Formatter = &logrus.TextFormatter{
-		DisableLevelTruncation: true,
-		PadLevelText:           true,
+	default:
+		logger.Formatter = &logrus.TextFormatter{
+			DisableLevelTruncation: config.DisableLevelTrucation,
+			PadLevelText:           config.PadLevelText,
+		}
 	}
 
 	return logger
