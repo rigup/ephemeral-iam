@@ -1,3 +1,24 @@
+/*
+Copyright © 2021 Jesse Somerville
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
 package proxy
 
 import (
@@ -12,7 +33,6 @@ import (
 	"sync"
 	"time"
 
-	"emperror.dev/emperror"
 	"github.com/elazarl/goproxy"
 	credentialspb "google.golang.org/genproto/googleapis/iam/credentials/v1"
 
@@ -26,7 +46,7 @@ var (
 )
 
 // StartProxyServer spins up the proxy that replaces the gcloud auth token
-func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenResponse) {
+func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenResponse, reason string) (retErr error) {
 
 	accessToken := privilegedAccessToken.GetAccessToken()
 	expirationDate := privilegedAccessToken.GetExpireTime().AsTime()
@@ -36,13 +56,17 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 	if config.AuthProxy.WriteToFile {
 		_, err := os.Stat(config.AuthProxy.LogDir)
 		if os.IsNotExist(err) {
-			emperror.Panic(os.MkdirAll(config.AuthProxy.LogDir, 0755))
+			if err := os.MkdirAll(config.AuthProxy.LogDir, 0755); err != nil {
+				return fmt.Errorf("Failed to create proxy log directory: %v", err)
+			}
 		}
 		// Create log file
 		timestamp := time.Now().Format("20060102150405")
 		logFilename := filepath.Join(config.AuthProxy.LogDir, fmt.Sprintf("%s_auth_proxy.log", timestamp))
 		logFile, err := os.OpenFile(logFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-		emperror.Panic(err)
+		if err != nil {
+			return fmt.Errorf("Failed to create log file: %v", err)
+		}
 
 		// I'm not calling logFile.Close() because it gets invoked too early
 
@@ -58,6 +82,7 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 
 	proxy.OnRequest().DoFunc(func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 		r.Header.Set("authorization", fmt.Sprintf("Bearer %s", accessToken))
+		r.Header.Set("X-Goog-Request-Reason", reason)
 		return r, nil
 	})
 
@@ -76,12 +101,17 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 		signal.Notify(sigint, os.Interrupt)
 		<-sigint
 
+		// TODO: Don't think I'm handling these errors correctly
 		// An interrupt signal was recieved, shutdown the proxy server
-		emperror.Panic(srv.Shutdown(context.Background()))
+		if err := srv.Shutdown(context.Background()); err != nil {
+			retErr = fmt.Errorf("Failed to properly shut down proxy server: %v", err)
+		}
 		close(idleConnsClosed)
 		fmt.Println()
 		logger.Info("Stopping auth proxy and restoring gcloud config")
-		emperror.Panic(gcpclient.UnsetGcloudProxy())
+		if err := gcpclient.UnsetGcloudProxy(); err != nil {
+			retErr = fmt.Errorf("Failed to reset gcloud configuration: %v", err)
+		}
 		os.Exit(0)
 	}()
 
@@ -104,8 +134,13 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 	time.Sleep(sessionLength)
 
 	logger.Info("Privileged session expired, stopping auth proxy and restoring gcloud config")
-	emperror.Panic(srv.Shutdown(context.Background()))
-	emperror.Panic(gcpclient.UnsetGcloudProxy())
+	if err := srv.Shutdown(context.Background()); err != nil {
+		retErr = fmt.Errorf("Failed to properly shut down proxy server: %v", err)
+	}
+	if err := gcpclient.UnsetGcloudProxy(); err != nil {
+		retErr = fmt.Errorf("Failed to reset gcloud configuration: %v", err)
+	}
+	return nil
 }
 
 func proxyConnectHandle(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {

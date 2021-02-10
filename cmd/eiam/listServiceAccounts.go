@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 Jesse Somerville <jssomerville2@gmail.com>
+Copyright © 2021 Jesse Somerville
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,6 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"emperror.dev/emperror"
-	"emperror.dev/errors"
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iam/v1"
@@ -41,18 +39,20 @@ var listServiceAccountsCmd = &cobra.Command{
 	Use:   "listServiceAccounts",
 	Short: "List service accounts that can be impersonated",
 	Long: `
-	The "listServiceAccounts" command fetches all Cloud IAM Service Accounts in the current
-	GCP project (as determined by the activated gcloud config) and checks each of them to see
-	which ones the current user has access to impersonate.
+The "listServiceAccounts" command fetches all Cloud IAM Service Accounts in the current
+GCP project (as determined by the activated gcloud config) and checks each of them to see
+which ones the current user has access to impersonate.
 
-	NOTE: For this to work properly, the current user must have access to list service accounts
-	in the current project.
+NOTE: For this to work properly, the current user must have access to list service accounts
+in the current project.
 
-	Example:
-	  gcp-iam-elevate listServiceAccounts`,
+Example:
+  gcp-iam-elevate listServiceAccounts`,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := fetchAvailableServiceAccounts()
-		emperror.Panic(err)
+		if err := fetchAvailableServiceAccounts(); err != nil {
+			logger.Errorf("Failed to fetch service accounts: %v", err)
+			os.Exit(1)
+		}
 	},
 }
 
@@ -63,7 +63,7 @@ func init() {
 func fetchAvailableServiceAccounts() error {
 	project, err := gcpclient.GetCurrentProject()
 	if err != nil {
-		return errors.WrapIf(err, "Failed to get current GCP project from gcloud config")
+		return fmt.Errorf("Failed to get current GCP project from gcloud config: %v", err)
 	}
 	logger.Info("Using current project: ", project)
 
@@ -76,7 +76,7 @@ func fetchAvailableServiceAccounts() error {
 	for _, serviceAccount := range serviceAccounts {
 		hasAccess, err := gcpclient.CanImpersonate(project, serviceAccount.Email)
 		if err != nil {
-			return errors.WrapIf(err, "Error checking IAM permissions")
+			return fmt.Errorf("Error checking IAM permissions: %v", err)
 		} else if hasAccess {
 			availableSAs = append(availableSAs, serviceAccount)
 		}

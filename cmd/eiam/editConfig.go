@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 Jesse Somerville <jssomerville2@gmail.com>
+Copyright © 2021 Jesse Somerville
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@ package main
 import (
 	"strconv"
 
-	"emperror.dev/emperror"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -44,13 +43,19 @@ var editConfigCmd = &cobra.Command{
 	Use:   "editConfig",
 	Short: "Edit configuration values",
 	Long: `
-	Example:
-		ephemeral-iam editConfig --writeProxyLogToFile true`,
+The "editConfig" command allows you to update values that are stored in
+your local configuration file. The default location of the config file
+is dependent on your OS.  For macOS it is:
+
+~/Library/Application Support/ephemeral-iam/config.yml
+
+Example:
+	ephemeral-iam editConfig --writeProxyLogToFile true`,
 	Run: func(cmd *cobra.Command, args []string) {
 		verbose, err := strconv.ParseBool(verboseProxyLog)
-		emperror.Panic(err)
+		handleErr(err)
 		writeToFile, err := strconv.ParseBool(writeProxyLogToFile)
-		emperror.Panic(err)
+		handleErr(err)
 
 		viper.Set("AuthProxy.ProxyAddress", proxyAddress)
 		viper.Set("AuthProxy.ProxyPort", proxyPort)

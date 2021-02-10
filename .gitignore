@@ -20,3 +20,6 @@ server.pem
 # Please output directory and local configuration
 plz-out
 .plzconfig.local
+
+# binaries
+eiam

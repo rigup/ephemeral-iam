@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 Jesse Somerville <jssomerville2@gmail.com>
+Copyright © 2021 Jesse Somerville
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,7 @@ THE SOFTWARE.
 package main
 
 import (
-	"emperror.dev/emperror"
-
 	"github.com/jessesomerville/ephemeral-iam/internal/appconfig"
-	"github.com/jessesomerville/ephemeral-iam/internal/errorhandler"
 	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
 	"github.com/jessesomerville/ephemeral-iam/internal/loghandler"
 )
@@ -34,12 +31,11 @@ func main() {
 	config := &appconfig.Config
 
 	logger := loghandler.GetLogger(&config.Logging)
-	errorHandler := errorhandler.GetErrorHandler(logger)
 	credentialsClient := gcpclient.GetGCPClient()
 
-	defer emperror.HandleRecover(errorHandler)
 	defer credentialsClient.Close()
 
-	err := Execute()
-	emperror.Panic(err)
+	if err := Execute(); err != nil {
+		logger.Errorf("Error occurred during execution: %v", err)
+	}
 }

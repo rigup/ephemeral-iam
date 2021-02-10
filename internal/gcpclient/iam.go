@@ -1,3 +1,24 @@
+/*
+Copyright © 2021 Jesse Somerville
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
 package gcpclient
 
 import (
@@ -5,7 +26,6 @@ import (
 	"fmt"
 
 	credentials "cloud.google.com/go/iam/credentials/apiv1"
-	"emperror.dev/errors"
 	"github.com/golang/protobuf/ptypes/duration"
 	"golang.org/x/oauth2/google"
 	gcp "google.golang.org/api/container/v1"
@@ -34,11 +54,13 @@ func GenerateTemporaryAccessToken(serviceAccountEmail string, client *credential
 	ctx := context.Background()
 	resp, err := client.GenerateAccessToken(ctx, &req)
 	if err != nil {
-		return nil, errors.WrapIfWithDetails(err, "Failed to generate GCP access token for service account", "service account", serviceAccountEmail)
+		return nil, fmt.Errorf("Failed to generate GCP access token for service account %s: %v", serviceAccountEmail, err)
 	}
 	return resp, nil
 }
 
+// GetServiceAccounts fetches each of the service accounts that the authenticated
+// user can impersonate in the active project.
 func GetServiceAccounts(project string) ([]*iam.ServiceAccount, error) {
 	ctx := context.Background()
 
@@ -58,11 +80,13 @@ func GetServiceAccounts(project string) ([]*iam.ServiceAccount, error) {
 		}
 		return nil
 	}); err != nil {
-		return []*iam.ServiceAccount{}, errors.WrapIf(err, "An error occured while fetching service accounts")
+		return []*iam.ServiceAccount{}, fmt.Errorf("An error occured while fetching service accounts: %v", err)
 	}
 	return serviceAccounts, nil
 }
 
+// CanImpersonate checks if a given service account can be impersonated by the
+// authenticated user.
 func CanImpersonate(project, serviceAccountEmail string) (bool, error) {
 
 	permissions := &iam.TestIamPermissionsRequest{
@@ -96,12 +120,12 @@ func getIamService() (*iam.Service, error) {
 
 	c, err := google.DefaultClient(ctx, iam.CloudPlatformScope)
 	if err != nil {
-		return nil, errors.WrapIf(err, "Failed to create IAM DefaultClient")
+		return nil, fmt.Errorf("Failed to create IAM DefaultClient: %v", err)
 	}
 
 	iamService, err := iam.New(c)
 	if err != nil {
-		return nil, errors.WrapIf(err, "Failed to create IAM API Service")
+		return nil, fmt.Errorf("Failed to create IAM API Service: %v", err)
 	}
 	return iamService, nil
 }

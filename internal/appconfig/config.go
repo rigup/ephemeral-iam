@@ -1,10 +1,31 @@
+/*
+Copyright © 2021 Jesse Somerville
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
 package appconfig
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
-	"emperror.dev/emperror"
 	"github.com/kirsle/configdir"
 	"github.com/spf13/viper"
 )
@@ -36,8 +57,10 @@ type LogConfig struct {
 var Config Configuration
 
 var (
+	// CertFile is the filepath pointing to the TLS cert
 	CertFile = filepath.Join(getConfigDir(), "server.pem")
-	KeyFile  = filepath.Join(getConfigDir(), "server.key")
+	// KeyFile is the filepath pointing to the TLS key
+	KeyFile = filepath.Join(getConfigDir(), "server.key")
 )
 
 func init() {
@@ -51,20 +74,30 @@ func init() {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			initConfig()
 		} else {
-			emperror.Panic(err)
+			fmt.Fprintf(os.Stderr, "Failed to read config file %s/config.yml: %v", getConfigDir(), err)
+			os.Exit(1)
 		}
 	}
 
-	emperror.Panic(viper.Unmarshal(&Config))
+	if err := viper.Unmarshal(&Config); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to unmarshal config %s/config.yml: %v", getConfigDir(), err)
+		os.Exit(1)
+	}
 
 	if _, err := os.Stat(CertFile); os.IsNotExist(err) {
-		GenerateCerts()
+		if err := GenerateCerts(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 	}
 }
 
 func getConfigDir() string {
 	configPath := configdir.LocalConfig("ephemeral-iam")
-	emperror.Panic(configdir.MakePath(configPath))
+	if err := configdir.MakePath(configPath); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get default configuration path: %v", err)
+		os.Exit(1)
+	}
 	return configPath
 }
 
@@ -83,18 +116,8 @@ func initConfig() {
 
 	if err := viper.SafeWriteConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileAlreadyExistsError); !ok {
-			emperror.Panic(err)
+			fmt.Fprintf(os.Stderr, "Failed to write config file %s/config.yml: %v", getConfigDir(), err)
+			os.Exit(1)
 		}
 	}
 }
-
-// func generateProxyCerts() {
-// 	_, currFile, _, ok := runtime.Caller(0)
-// 	if !ok {
-// 		emperror.Panic(errors.New("Failed to get package directory: No caller information"))
-// 	}
-
-// 	if err := exec.Command(filepath.Join(currFile, "../../scripts/generate_proxy_certs.sh")).Run(); err != nil {
-// 		emperror.Panic(err)
-// 	}
-// }

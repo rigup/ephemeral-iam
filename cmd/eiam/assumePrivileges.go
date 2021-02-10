@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 Jesse Somerville <jssomerville2@gmail.com>
+Copyright © 2021 Jesse Somerville
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,39 +24,35 @@ package main
 import (
 	"os"
 
-	"emperror.dev/emperror"
 	"github.com/spf13/cobra"
 
 	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
 	"github.com/jessesomerville/ephemeral-iam/internal/proxy"
 )
 
-// TODO: include the `reason` flag in Slack Alerts
-var serviceAccountEmail string
-var reason string
-
 // generateAccessTokenCmd represents the generateAccessToken command
 var assumePrivilegesCmd = &cobra.Command{
 	Use:   "assumePrivileges",
 	Short: "Configure gcloud to make API calls as the provided service account",
 	Long: `
-	The "assumePrivileges" command fetches short-lived credentials for the provided service Account
-	and configures gcloud to proxy its traffic through an auth proxy. This auth proxy sets the
-	authorization header to the OAuth2 token generated for the provided service account. Once
-	the credentials have expired, the auth proxy is shut down and the gcloud config is restored.
+The "assumePrivileges" command fetches short-lived credentials for the provided service Account
+and configures gcloud to proxy its traffic through an auth proxy. This auth proxy sets the
+authorization header to the OAuth2 token generated for the provided service account. Once
+the credentials have expired, the auth proxy is shut down and the gcloud config is restored.
 
-	The reason flag is used to add additional metadata to audit logs.  The provided reason will
-	be in 'protoPatload.requestMetadata.requestAttributes.reason'.
+The reason flag is used to add additional metadata to audit logs.  The provided reason will
+be in 'protoPatload.requestMetadata.requestAttributes.reason'.
 
-	Example:
-	  gcp_iam_escalate assumePrivileges \
-	      --serviceAccountEmail example@my-project.iam.gserviceaccount.com \
-	      --reason "Emergency security patch (JIRA-1234)"`,
+Example:
+  gcp_iam_escalate assumePrivileges \
+      --serviceAccountEmail example@my-project.iam.gserviceaccount.com \
+      --reason "Emergency security patch (JIRA-1234)"`,
 	Run: func(cmd *cobra.Command, args []string) {
 		project, err := gcpclient.GetCurrentProject()
-		emperror.Panic(err)
+		handleErr(err)
+
 		hasAccess, err := gcpclient.CanImpersonate(project, serviceAccountEmail)
-		emperror.Panic(err)
+		handleErr(err)
 		if !hasAccess {
 			logger.Error("You do not have access to impersonate this service account")
 			os.Exit(1)
@@ -64,21 +60,27 @@ var assumePrivilegesCmd = &cobra.Command{
 
 		logger.Info("Fetching short-lived access token for ", serviceAccountEmail)
 
-		gcpClientWithReason := gcpclient.GCPClientWithReason(reason)
+		gcpClientWithReason, err := gcpclient.WithReason(reason)
+		handleErr(err)
+
 		accessToken, err := gcpclient.GenerateTemporaryAccessToken(serviceAccountEmail, gcpClientWithReason)
-		emperror.Panic(err)
+		handleErr(err)
 
 		logger.Info("Configuring gcloud to use auth proxy")
-		emperror.Panic(gcpclient.ConfigureGcloudProxy())
+		if err := gcpclient.ConfigureGcloudProxy(); err != nil {
+			logger.Errorln(err)
+			os.Exit(1)
+		}
 
-		proxy.StartProxyServer(accessToken)
+		os.Setenv("CLOUDSDK_CORE_REQUEST_REASON", reason)
+		proxy.StartProxyServer(accessToken, reason)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(assumePrivilegesCmd)
-	assumePrivilegesCmd.Flags().StringVar(&serviceAccountEmail, "serviceAccountEmail", "", "The email address for the service account to impersonate (required)")
-	assumePrivilegesCmd.Flags().StringVar(&reason, "reason", "", "A detailed rationale for assuming higher permissions (required)")
+	assumePrivilegesCmd.Flags().StringVarP(&serviceAccountEmail, "serviceAccountEmail", "s", "", "The email address for the service account to impersonate (required)")
+	assumePrivilegesCmd.Flags().StringVarP(&reason, "reason", "r", "", "A detailed rationale for assuming higher permissions (required)")
 	assumePrivilegesCmd.MarkFlagRequired("serviceAccountEmail")
 	assumePrivilegesCmd.MarkFlagRequired("reason")
 }
