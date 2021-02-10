@@ -22,9 +22,11 @@ THE SOFTWARE.
 package main
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
+	"github.com/manifoldco/promptui"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
@@ -52,11 +54,11 @@ func handleErr(err error) {
 	}
 }
 
-// Modified from https://github.com/davidovich/summon/cmd/run.go
+// Modified from https://github.com/davidovich/summon/master/tree/cmd/run.go
 // see https://github.com/spf13/pflag/pull/160
 // https://github.com/spf13/cobra/issues/739
 // and https://github.com/spf13/pflag/pull/199
-func extractUnknownArgs(flags *pflag.FlagSet, args []string) ([]string, []string) {
+func extractUnknownArgs(flags *pflag.FlagSet, args []string) []string {
 	unknownArgs := []string{}
 
 	trimmed := args[2:]
@@ -84,7 +86,7 @@ func extractUnknownArgs(flags *pflag.FlagSet, args []string) ([]string, []string
 		}
 	}
 	args = difference(args, unknownArgs)
-	return unknownArgs, args
+	return unknownArgs
 }
 
 func difference(a, b []string) []string {
@@ -99,4 +101,18 @@ func difference(a, b []string) []string {
 		}
 	}
 	return diff
+}
+
+func confirm() error {
+	prompt := promptui.Prompt{
+		Label:     "Is this correct?",
+		IsConfirm: true,
+	}
+
+	_, err := prompt.Run()
+	if err != nil {
+		return fmt.Errorf("Prompt: %v", err)
+	}
+
+	return nil
 }

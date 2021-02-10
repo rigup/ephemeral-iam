@@ -22,6 +22,7 @@ THE SOFTWARE.
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -50,6 +51,15 @@ Example:
 	Run: func(cmd *cobra.Command, args []string) {
 		project, err := gcpclient.GetCurrentProject()
 		handleErr(err)
+
+		fmt.Println()
+		logger.Infof("Project:            %s\n", project)
+		logger.Infof("Service Account:    %s\n", serviceAccountEmail)
+		logger.Infof("Reason:             %s\n\n", reason)
+
+		if err := confirm(); err != nil {
+			os.Exit(0)
+		}
 
 		hasAccess, err := gcpclient.CanImpersonate(project, serviceAccountEmail)
 		handleErr(err)

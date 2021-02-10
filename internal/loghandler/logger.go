@@ -52,6 +52,7 @@ func newLogger(config *appconfig.LogConfig) *logrus.Logger {
 	}
 
 	logger.Level = level
+	logger.Out = os.Stderr
 
 	switch config.Format {
 	case "json":

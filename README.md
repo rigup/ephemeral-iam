@@ -89,12 +89,7 @@ To better familiarize yourself with `ephemeral-iam` and how it works, you can
 follow [the tutorial provided in the documentation](docs/tutorial.md).
 
 # TODO
-- [ ] Add a "Getting Started" guide
-- [ ] Write tests
-- [ ] Add ability to run one-off commands
-- [ ] Add ability to request long-lived session (?)
-- [ ] Add confirmation prompt showing current context and service account
+- [ ] Finish documenation (security_considerations.md and tutorial.md)
+- [ ] Unit tests
 - [ ] Add CLI flags to allow users to override defaults set in the active gcloud config
-- [ ] Add something to designate what privileged context a user is running in for the duration of a privileged session
 - [ ] Build and publish release binaries
-- [ ] Automate `kubectl` configuration

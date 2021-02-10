@@ -22,6 +22,7 @@ THE SOFTWARE.
 package gcpclient
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -67,7 +68,16 @@ func UnsetGcloudProxy() error {
 func GetCurrentProject() (string, error) {
 	out, err := exec.Command("gcloud", "config", "get-value", "project").Output()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Failed to get active project from config: %v", err)
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+// GetCurrentRegion gets the active GCP region from the gcloud config
+func GetCurrentRegion() (string, error) {
+	out, err := exec.Command("gcloud", "config", "get-value", "compute/region").Output()
+	if err != nil {
+		return "", fmt.Errorf("Failed to get active region config: %v", err)
 	}
 	return strings.TrimSpace(string(out)), nil
 }

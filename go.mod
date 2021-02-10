@@ -7,6 +7,7 @@ require (
 	github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e
 	github.com/golang/protobuf v1.4.3
 	github.com/kirsle/configdir v0.0.0-20170128060238-e45d2f54772f
+	github.com/manifoldco/promptui v0.8.0
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.1
