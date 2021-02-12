@@ -61,7 +61,7 @@ Example:
 			os.Exit(0)
 		}
 
-		hasAccess, err := gcpclient.CanImpersonate(project, serviceAccountEmail)
+		hasAccess, err := gcpclient.CanImpersonate(project, serviceAccountEmail, reason)
 		handleErr(err)
 		if !hasAccess {
 			logger.Error("You do not have access to impersonate this service account")

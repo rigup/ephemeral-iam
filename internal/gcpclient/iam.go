@@ -27,9 +27,9 @@ import (
 
 	credentials "cloud.google.com/go/iam/credentials/apiv1"
 	"github.com/golang/protobuf/ptypes/duration"
-	"golang.org/x/oauth2/google"
 	gcp "google.golang.org/api/container/v1"
 	"google.golang.org/api/iam/v1"
+	"google.golang.org/api/option"
 	credentialspb "google.golang.org/genproto/googleapis/iam/credentials/v1"
 )
 
@@ -61,16 +61,17 @@ func GenerateTemporaryAccessToken(serviceAccountEmail string, client *credential
 
 // GetServiceAccounts fetches each of the service accounts that the authenticated
 // user can impersonate in the active project.
-func GetServiceAccounts(project string) ([]*iam.ServiceAccount, error) {
+func GetServiceAccounts(project, reason string) ([]*iam.ServiceAccount, error) {
 	ctx := context.Background()
 
-	iamService, err := getIamService()
+	iamService, err := iam.NewService(ctx, option.WithRequestReason(reason))
 	if err != nil {
-		return []*iam.ServiceAccount{}, err
+		return []*iam.ServiceAccount{}, fmt.Errorf("Failed to create Cloud IAM SDK client: %v", err)
 	}
+	serviceAccountsClient := iam.NewProjectsServiceAccountsService(iamService)
 
 	projectResource := fmt.Sprintf("projects/%s", project)
-	req := iamService.Projects.ServiceAccounts.List(projectResource)
+	req := serviceAccountsClient.List(projectResource)
 
 	var serviceAccounts []*iam.ServiceAccount
 
@@ -87,22 +88,22 @@ func GetServiceAccounts(project string) ([]*iam.ServiceAccount, error) {
 
 // CanImpersonate checks if a given service account can be impersonated by the
 // authenticated user.
-func CanImpersonate(project, serviceAccountEmail string) (bool, error) {
+func CanImpersonate(project, serviceAccountEmail, reason string) (bool, error) {
+
+	iamService, err := iam.NewService(context.Background(), option.WithRequestReason(reason))
+	if err != nil {
+		return false, fmt.Errorf("Failed to create Cloud IAM SDK client: %v", err)
+	}
+	serviceAccountsClient := iam.NewProjectsServiceAccountsService(iamService)
 
 	permissions := &iam.TestIamPermissionsRequest{
 		Permissions: []string{"iam.serviceAccounts.getAccessToken"},
 	}
 
-	iamService, err := getIamService()
-	if err != nil {
-		return false, err
-	}
-
 	saResource := fmt.Sprintf("projects/%s/serviceAccounts/%s", project, serviceAccountEmail)
+	testIamPermCall := serviceAccountsClient.TestIamPermissions(saResource, permissions)
 
-	testIamPermReq := iamService.Projects.ServiceAccounts.TestIamPermissions(saResource, permissions)
-
-	resp, err := testIamPermReq.Do()
+	resp, err := testIamPermCall.Do()
 	if err != nil {
 		return false, err
 	}
@@ -113,19 +114,4 @@ func CanImpersonate(project, serviceAccountEmail string) (bool, error) {
 		}
 	}
 	return false, nil
-}
-
-func getIamService() (*iam.Service, error) {
-	ctx := context.Background()
-
-	c, err := google.DefaultClient(ctx, iam.CloudPlatformScope)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to create IAM DefaultClient: %v", err)
-	}
-
-	iamService, err := iam.New(c)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to create IAM API Service: %v", err)
-	}
-	return iamService, nil
 }

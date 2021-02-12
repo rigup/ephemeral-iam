@@ -13,6 +13,9 @@ management tasks that require escalated permissions.
 
 ## Conceptual Overview
 
+> **TODO:** I want to give an overview of how this all works under the hood.
+> Especially around the gcloud configuration changes
+
 ## Installation
 Instructions on how to install the `eiam` binary can be found in
 [INSTALL.md](docs/INSTALL.md).
@@ -49,7 +52,9 @@ Usage:
 Available Commands:
   assumePrivileges    Configure gcloud to make API calls as the provided service account
   editConfig          Edit configuration values
+  gcloud              Run a gcloud command with the permissions of the specified service account
   help                Help about any command
+  kubectl             Run a kubectl command with the permissions of the specified service account
   listServiceAccounts List service accounts that can be impersonated
 
 Flags:
@@ -68,7 +73,7 @@ authorization header to the OAuth2 token generated for the provided service acco
 the credentials have expired, the auth proxy is shut down and the gcloud config is restored.
 
 The reason flag is used to add additional metadata to audit logs.  The provided reason will
-be in 'protoPatload.requestMetadata.requestAttributes.reason'.
+be in 'protoPayload.requestMetadata.requestAttributes.reason'.
 
 Example:
   gcp_iam_escalate assumePrivileges \
@@ -88,8 +93,10 @@ Flags:
 To better familiarize yourself with `ephemeral-iam` and how it works, you can
 follow [the tutorial provided in the documentation](docs/tutorial.md).
 
+
 # TODO
-- [ ] Finish documenation (security_considerations.md and tutorial.md)
+- [ ] Finish documenation (`Concepts`, `security_considerations.md`, and `tutorial.md`)
 - [ ] Unit tests
 - [ ] Add CLI flags to allow users to override defaults set in the active gcloud config
 - [ ] Build and publish release binaries
+- [ ] Explore the possiblility of using a dedicated gcloud config to prevent potential issues around modifying the users config

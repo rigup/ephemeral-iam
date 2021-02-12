@@ -67,14 +67,14 @@ func fetchAvailableServiceAccounts() error {
 	}
 	logger.Info("Using current project: ", project)
 
-	serviceAccounts, err := gcpclient.GetServiceAccounts(project)
+	serviceAccounts, err := gcpclient.GetServiceAccounts(project, reason)
 	if err != nil {
 		return err
 	}
 
 	var availableSAs []*iam.ServiceAccount
 	for _, serviceAccount := range serviceAccounts {
-		hasAccess, err := gcpclient.CanImpersonate(project, serviceAccount.Email)
+		hasAccess, err := gcpclient.CanImpersonate(project, serviceAccount.Email, reason)
 		if err != nil {
 			return fmt.Errorf("Error checking IAM permissions: %v", err)
 		} else if hasAccess {
