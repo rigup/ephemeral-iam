@@ -22,6 +22,8 @@ THE SOFTWARE.
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"strings"
@@ -52,6 +54,23 @@ func handleErr(err error) {
 		logger.Errorln(err)
 		os.Exit(1)
 	}
+}
+
+func sessionID() (string, error) {
+	bytes := make([]byte, 8)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("Failed to generate random log ID: %v", err)
+	}
+	return hex.EncodeToString(bytes), nil
+}
+
+func formatReason(reason string) (string, error) {
+	randomID, err := sessionID()
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("ephemeral-iam %s: %s", randomID, reason), nil
 }
 
 // Modified from https://github.com/davidovich/summon/master/tree/cmd/run.go

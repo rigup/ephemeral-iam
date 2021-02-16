@@ -39,7 +39,7 @@ import (
 func GenerateCerts() error {
 	priv, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		return fmt.Errorf(" : %v", err)
+		return fmt.Errorf("Failed to generate RSA key pair: %v", err)
 	}
 
 	notBefore := time.Now()

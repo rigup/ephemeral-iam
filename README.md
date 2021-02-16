@@ -96,6 +96,7 @@ follow [the tutorial provided in the documentation](docs/tutorial.md).
 
 # TODO
 - [ ] Finish documenation (`Concepts`, `security_considerations.md`, and `tutorial.md`)
+- [ ] Document stderr output to pipe output
 - [ ] Unit tests
 - [ ] Add CLI flags to allow users to override defaults set in the active gcloud config
 - [ ] Build and publish release binaries

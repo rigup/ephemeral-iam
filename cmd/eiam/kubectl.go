@@ -24,30 +24,26 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
-	"github.com/jessesomerville/ephemeral-iam/internal/proxy"
+)
+
+var (
+	kubectlCmdArgs []string
+	zone           string
 )
 
 // generateAccessTokenCmd represents the generateAccessToken command
-var assumePrivilegesCmd = &cobra.Command{
-	Use:   "assumePrivileges",
-	Short: "Configure gcloud to make API calls as the provided service account",
-	Long: `
-The "assumePrivileges" command fetches short-lived credentials for the provided service Account
-and configures gcloud to proxy its traffic through an auth proxy. This auth proxy sets the
-authorization header to the OAuth2 token generated for the provided service account. Once
-the credentials have expired, the auth proxy is shut down and the gcloud config is restored.
-
-The reason flag is used to add additional metadata to audit logs.  The provided reason will
-be in 'protoPatload.requestMetadata.requestAttributes.reason'.
-
-Example:
-  gcp_iam_escalate assumePrivileges \
-      --serviceAccountEmail example@my-project.iam.gserviceaccount.com \
-      --reason "Emergency security patch (JIRA-1234)"`,
+var runKubectlCmd = &cobra.Command{
+	Use:                "kubectl [KUBECTL_ARGS]",
+	Short:              "Run a kubectl command with the permissions of the specified service account",
+	Long:               `TODO`,
+	Args:               cobra.ArbitraryArgs,
+	FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 	Run: func(cmd *cobra.Command, args []string) {
 		project, err := gcpclient.GetCurrentProject()
 		handleErr(err)
@@ -55,7 +51,8 @@ Example:
 		fmt.Println()
 		logger.Infof("Project:            %s\n", project)
 		logger.Infof("Service Account:    %s\n", serviceAccountEmail)
-		logger.Infof("Reason:             %s\n\n", reason)
+		logger.Infof("Reason:             %s\n", reason)
+		logger.Infof("Command:            kubectl %s\n\n", strings.Join(kubectlCmdArgs, " "))
 
 		if err := confirm(); err != nil {
 			os.Exit(0)
@@ -64,6 +61,8 @@ Example:
 		reason, err := formatReason(reason)
 		handleErr(err)
 
+		logger.Infof("Checking sufficient permissions to impersonate %s", serviceAccountEmail)
+
 		hasAccess, err := gcpclient.CanImpersonate(project, serviceAccountEmail, reason)
 		handleErr(err)
 		if !hasAccess {
@@ -71,7 +70,7 @@ Example:
 			os.Exit(1)
 		}
 
-		logger.Info("Fetching short-lived access token for ", serviceAccountEmail)
+		logger.Info("Fetching access token for ", serviceAccountEmail)
 
 		gcpClientWithReason, err := gcpclient.WithReason(reason)
 		handleErr(err)
@@ -79,21 +78,26 @@ Example:
 		accessToken, err := gcpclient.GenerateTemporaryAccessToken(serviceAccountEmail, gcpClientWithReason)
 		handleErr(err)
 
-		logger.Info("Configuring gcloud to use auth proxy")
-		if err := gcpclient.ConfigureGcloudProxy(); err != nil {
-			logger.Errorln(err)
-			os.Exit(1)
+		logger.Infof("Running: [kubectl %s]\n\n", strings.Join(kubectlCmdArgs, " "))
+		kubectlAuth := append(kubectlCmdArgs, "--token", accessToken.GetAccessToken())
+		c := exec.Command("kubectl", kubectlAuth...)
+		c.Stdout = os.Stdout
+		c.Stderr = os.Stderr
+
+		if err := c.Run(); err != nil {
+			fullCmd := fmt.Sprintf("kubectl %s", strings.Join(kubectlCmdArgs, " "))
+			logger.Errorf("%v for command [kubectl %s]", err, fullCmd)
 		}
 
-		os.Setenv("CLOUDSDK_CORE_REQUEST_REASON", reason)
-		proxy.StartProxyServer(accessToken, reason)
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(assumePrivilegesCmd)
-	assumePrivilegesCmd.Flags().StringVarP(&serviceAccountEmail, "serviceAccountEmail", "s", "", "The email address for the service account to impersonate (required)")
-	assumePrivilegesCmd.Flags().StringVarP(&reason, "reason", "r", "", "A detailed rationale for assuming higher permissions (required)")
-	assumePrivilegesCmd.MarkFlagRequired("serviceAccountEmail")
-	assumePrivilegesCmd.MarkFlagRequired("reason")
+	rootCmd.AddCommand(runKubectlCmd)
+	runKubectlCmd.Flags().StringVarP(&serviceAccountEmail, "serviceAccountEmail", "s", "", "The email address for the service account to impersonate (required)")
+	runKubectlCmd.Flags().StringVarP(&reason, "reason", "r", "", "A detailed rationale for assuming higher permissions (required)")
+	runKubectlCmd.MarkFlagRequired("serviceAccountEmail")
+	runKubectlCmd.MarkFlagRequired("reason")
+
+	kubectlCmdArgs = extractUnknownArgs(runKubectlCmd.Flags(), os.Args)
 }

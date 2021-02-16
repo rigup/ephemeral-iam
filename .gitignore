@@ -22,7 +22,7 @@ plz-out
 .plzconfig.local
 
 # binaries
-eiam
+/eiam
 
 # Local .terraform directories
 **/.terraform/*
