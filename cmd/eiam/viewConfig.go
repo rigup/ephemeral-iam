@@ -19,52 +19,30 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package loghandler
+package main
 
 import (
 	"fmt"
-	"os"
-	"sync"
+	"io/ioutil"
 
-	"github.com/sirupsen/logrus"
-
-	"github.com/jessesomerville/ephemeral-iam/internal/appconfig"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-var logger *logrus.Logger
-var once sync.Once
+var viewConfigCmd = &cobra.Command{
+	Use:   "viewConfig",
+	Short: "View the current configuration settings",
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		configFile := viper.ConfigFileUsed()
 
-// GetLogger returns the output log instance
-func GetLogger(config *appconfig.LogConfig) *logrus.Logger {
-	once.Do(func() {
-		logger = newLogger(config)
-	})
-	return logger
+		data, err := ioutil.ReadFile(configFile)
+		handleErr(err)
+
+		fmt.Printf("\n%s\n", string(data))
+	},
 }
 
-func newLogger(config *appconfig.LogConfig) *logrus.Logger {
-	logger := logrus.New()
-
-	level, err := logrus.ParseLevel(config.Level)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create logger instance: %v", err)
-		os.Exit(1)
-	}
-
-	logger.Level = level
-	logger.Out = os.Stderr
-
-	switch config.Format {
-	case "json":
-		logger.Formatter = new(logrus.JSONFormatter)
-
-	default:
-		logger.Formatter = &logrus.TextFormatter{
-			DisableLevelTruncation: config.DisableLevelTrucation,
-			PadLevelText:           config.PadLevelText,
-			DisableTimestamp:       true,
-		}
-	}
-
-	return logger
+func init() {
+	rootCmd.AddCommand(viewConfigCmd)
 }

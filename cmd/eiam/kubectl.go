@@ -37,7 +37,6 @@ var (
 	zone           string
 )
 
-// generateAccessTokenCmd represents the generateAccessToken command
 var runKubectlCmd = &cobra.Command{
 	Use:                "kubectl [KUBECTL_ARGS]",
 	Short:              "Run a kubectl command with the permissions of the specified service account",
@@ -54,8 +53,10 @@ var runKubectlCmd = &cobra.Command{
 		logger.Infof("Reason:             %s\n", reason)
 		logger.Infof("Command:            kubectl %s\n\n", strings.Join(kubectlCmdArgs, " "))
 
-		if err := confirm(); err != nil {
-			os.Exit(0)
+		if !Accept {
+			if err := confirm(); err != nil {
+				os.Exit(0)
+			}
 		}
 
 		reason, err := formatReason(reason)
@@ -99,5 +100,7 @@ func init() {
 	runKubectlCmd.MarkFlagRequired("serviceAccountEmail")
 	runKubectlCmd.MarkFlagRequired("reason")
 
-	kubectlCmdArgs = extractUnknownArgs(runKubectlCmd.Flags(), os.Args)
+	if len(os.Args) > 2 && os.Args[1] == "kubectl" {
+		kubectlCmdArgs = extractUnknownArgs(runKubectlCmd.Flags(), os.Args)
+	}
 }

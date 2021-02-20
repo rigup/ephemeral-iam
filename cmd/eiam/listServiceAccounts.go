@@ -34,10 +34,10 @@ import (
 	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
 )
 
-// listServiceAccountsCmd represents the listServiceAccounts command
 var listServiceAccountsCmd = &cobra.Command{
-	Use:   "listServiceAccounts",
-	Short: "List service accounts that can be impersonated",
+	Use:     "listServiceAccounts",
+	Aliases: []string{"list"},
+	Short:   "List service accounts that can be impersonated [alias: list]",
 	Long: `
 The "listServiceAccounts" command fetches all Cloud IAM Service Accounts in the current
 GCP project (as determined by the activated gcloud config) and checks each of them to see

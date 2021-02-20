@@ -33,7 +33,10 @@ import (
 	credentialspb "google.golang.org/genproto/googleapis/iam/credentials/v1"
 )
 
-var sessionDuration int64 = 600
+var (
+	sessionDuration int64 = 600
+	ctx                   = context.Background()
+)
 
 // GenerateTemporaryAccessToken generates short-lived credentials for the given service account
 func GenerateTemporaryAccessToken(serviceAccountEmail string, client *credentials.IamCredentialsClient) (*credentialspb.GenerateAccessTokenResponse, error) {
@@ -51,7 +54,6 @@ func GenerateTemporaryAccessToken(serviceAccountEmail string, client *credential
 		},
 	}
 
-	ctx := context.Background()
 	resp, err := client.GenerateAccessToken(ctx, &req)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to generate GCP access token for service account %s: %v", serviceAccountEmail, err)
@@ -62,16 +64,14 @@ func GenerateTemporaryAccessToken(serviceAccountEmail string, client *credential
 // GetServiceAccounts fetches each of the service accounts that the authenticated
 // user can impersonate in the active project.
 func GetServiceAccounts(project, reason string) ([]*iam.ServiceAccount, error) {
-	ctx := context.Background()
 
-	iamService, err := iam.NewService(ctx, option.WithRequestReason(reason))
+	svcAcctClient, err := newServiceAccountClient(reason)
 	if err != nil {
-		return []*iam.ServiceAccount{}, fmt.Errorf("Failed to create Cloud IAM SDK client: %v", err)
+		return nil, err
 	}
-	serviceAccountsClient := iam.NewProjectsServiceAccountsService(iamService)
 
 	projectResource := fmt.Sprintf("projects/%s", project)
-	req := serviceAccountsClient.List(projectResource)
+	req := svcAcctClient.List(projectResource)
 
 	var serviceAccounts []*iam.ServiceAccount
 
@@ -90,18 +90,17 @@ func GetServiceAccounts(project, reason string) ([]*iam.ServiceAccount, error) {
 // authenticated user.
 func CanImpersonate(project, serviceAccountEmail, reason string) (bool, error) {
 
-	iamService, err := iam.NewService(context.Background(), option.WithRequestReason(reason))
+	svcAcctClient, err := newServiceAccountClient(reason)
 	if err != nil {
-		return false, fmt.Errorf("Failed to create Cloud IAM SDK client: %v", err)
+		return false, err
 	}
-	serviceAccountsClient := iam.NewProjectsServiceAccountsService(iamService)
 
 	permissions := &iam.TestIamPermissionsRequest{
 		Permissions: []string{"iam.serviceAccounts.getAccessToken"},
 	}
 
 	saResource := fmt.Sprintf("projects/%s/serviceAccounts/%s", project, serviceAccountEmail)
-	testIamPermCall := serviceAccountsClient.TestIamPermissions(saResource, permissions)
+	testIamPermCall := svcAcctClient.TestIamPermissions(saResource, permissions)
 
 	resp, err := testIamPermCall.Do()
 	if err != nil {
@@ -114,4 +113,32 @@ func CanImpersonate(project, serviceAccountEmail, reason string) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+// GetServiceAccountIAMPolicy gets the IAM policy for the specified service account
+func GetServiceAccountIAMPolicy(project, serviceAccountEmail string) (string, error) {
+	svcAcctClient, err := newServiceAccountClient("")
+	if err != nil {
+		return "", err
+	}
+
+	saResource := fmt.Sprintf("projects/%s/serviceAccounts/%s", project, serviceAccountEmail)
+	policy, err := svcAcctClient.GetIamPolicy(saResource).Do()
+	if err != nil {
+		return "", fmt.Errorf("Failed to fetch project level IAM policy for %s: %v", serviceAccountEmail, err)
+	}
+
+	for _, i := range policy.Bindings {
+		fmt.Println(i.Role, i.Members)
+	}
+	return "", nil
+}
+
+func newServiceAccountClient(reason string) (*iam.ProjectsServiceAccountsService, error) {
+	iamService, err := iam.NewService(context.Background(), option.WithRequestReason(reason))
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create Cloud IAM SDK client: %v", err)
+	}
+
+	return iam.NewProjectsServiceAccountsService(iamService), nil
 }

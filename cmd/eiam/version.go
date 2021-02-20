@@ -19,52 +19,23 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package loghandler
+package main
 
 import (
-	"fmt"
-	"os"
-	"sync"
-
-	"github.com/sirupsen/logrus"
-
-	"github.com/jessesomerville/ephemeral-iam/internal/appconfig"
+	"github.com/spf13/cobra"
 )
 
-var logger *logrus.Logger
-var once sync.Once
+var version = "0.0.dev1" // TODO: Have CI set this when a release is made
 
-// GetLogger returns the output log instance
-func GetLogger(config *appconfig.LogConfig) *logrus.Logger {
-	once.Do(func() {
-		logger = newLogger(config)
-	})
-	return logger
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print the installed ephemeral-iam version",
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		logger.Infof("ephemeral-iam v%s\n", version)
+	},
 }
 
-func newLogger(config *appconfig.LogConfig) *logrus.Logger {
-	logger := logrus.New()
-
-	level, err := logrus.ParseLevel(config.Level)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create logger instance: %v", err)
-		os.Exit(1)
-	}
-
-	logger.Level = level
-	logger.Out = os.Stderr
-
-	switch config.Format {
-	case "json":
-		logger.Formatter = new(logrus.JSONFormatter)
-
-	default:
-		logger.Formatter = &logrus.TextFormatter{
-			DisableLevelTruncation: config.DisableLevelTrucation,
-			PadLevelText:           config.PadLevelText,
-			DisableTimestamp:       true,
-		}
-	}
-
-	return logger
+func init() {
+	rootCmd.AddCommand(versionCmd)
 }

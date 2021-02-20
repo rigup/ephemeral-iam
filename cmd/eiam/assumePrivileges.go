@@ -31,10 +31,10 @@ import (
 	"github.com/jessesomerville/ephemeral-iam/internal/proxy"
 )
 
-// generateAccessTokenCmd represents the generateAccessToken command
 var assumePrivilegesCmd = &cobra.Command{
-	Use:   "assumePrivileges",
-	Short: "Configure gcloud to make API calls as the provided service account",
+	Use:     "assumePrivileges -s service_account_email -r reason [-y]",
+	Aliases: []string{"priv"},
+	Short:   "Configure gcloud to make API calls as the provided service account [alias: priv]",
 	Long: `
 The "assumePrivileges" command fetches short-lived credentials for the provided service Account
 and configures gcloud to proxy its traffic through an auth proxy. This auth proxy sets the
@@ -57,8 +57,10 @@ Example:
 		logger.Infof("Service Account:    %s\n", serviceAccountEmail)
 		logger.Infof("Reason:             %s\n\n", reason)
 
-		if err := confirm(); err != nil {
-			os.Exit(0)
+		if !Accept {
+			if err := confirm(); err != nil {
+				os.Exit(0)
+			}
 		}
 
 		reason, err := formatReason(reason)

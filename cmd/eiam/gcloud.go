@@ -34,13 +34,15 @@ import (
 
 var gcloudCmdArgs []string
 
-// generateAccessTokenCmd represents the generateAccessToken command
 var runGcloudCmd = &cobra.Command{
 	Use:                "gcloud [GCLOUD_ARGS]",
 	Short:              "Run a gcloud command with the permissions of the specified service account",
 	Long:               `TODO`,
 	Args:               cobra.ArbitraryArgs,
 	FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
+	PreRun: func(cmd *cobra.Command, args []string) {
+		gcloudCmdArgs = extractUnknownArgs(cmd.Flags(), os.Args)
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		project, err := gcpclient.GetCurrentProject()
 		handleErr(err)
@@ -51,8 +53,10 @@ var runGcloudCmd = &cobra.Command{
 		logger.Infof("Reason:             %s\n", reason)
 		logger.Infof("Command:            gcloud %s\n\n", strings.Join(gcloudCmdArgs, " "))
 
-		if err := confirm(); err != nil {
-			os.Exit(0)
+		if !Accept {
+			if err := confirm(); err != nil {
+				os.Exit(0)
+			}
 		}
 
 		reason, err := formatReason(reason)
@@ -92,6 +96,7 @@ func init() {
 	runGcloudCmd.MarkFlagRequired("serviceAccountEmail")
 	runGcloudCmd.MarkFlagRequired("reason")
 
-	// TODO: This should allow the command to accept flags for the gcloud command without failing
-	gcloudCmdArgs = extractUnknownArgs(runGcloudCmd.Flags(), os.Args)
+	// if len(os.Args) > 2 && os.Args[1] == "gcloud" {
+	// 	gcloudCmdArgs = extractUnknownArgs(runGcloudCmd.Flags(), os.Args)
+	// }
 }

@@ -37,10 +37,11 @@ import (
 )
 
 var config = &appconfig.Config
-
 var logger *logrus.Logger
 
 var (
+	// Accept states whether to prompt the user for confirmation or not
+	Accept              bool
 	serviceAccountEmail string
 	reason              string
 )
@@ -73,58 +74,9 @@ func formatReason(reason string) (string, error) {
 	return fmt.Sprintf("ephemeral-iam %s: %s", randomID, reason), nil
 }
 
-// Modified from https://github.com/davidovich/summon/master/tree/cmd/run.go
-// see https://github.com/spf13/pflag/pull/160
-// https://github.com/spf13/cobra/issues/739
-// and https://github.com/spf13/pflag/pull/199
-func extractUnknownArgs(flags *pflag.FlagSet, args []string) []string {
-	unknownArgs := []string{}
-
-	trimmed := args[2:]
-	skipLoop := false
-	for i := 0; i < len(trimmed); i++ {
-		if skipLoop {
-			skipLoop = false
-			continue
-		}
-		var f *pflag.Flag
-		a := trimmed[i]
-		if a[0] == '-' {
-			if a[1] == '-' {
-				f = flags.Lookup(strings.SplitN(a[2:], "=", 2)[0])
-			} else {
-				f = flags.ShorthandLookup(string(a[1]))
-			}
-			if f == nil {
-				unknownArgs = append(unknownArgs, a)
-			} else {
-				skipLoop = true
-			}
-		} else {
-			unknownArgs = append(unknownArgs, a)
-		}
-	}
-	args = difference(args, unknownArgs)
-	return unknownArgs
-}
-
-func difference(a, b []string) []string {
-	mb := make(map[string]struct{}, len(b))
-	for _, x := range b {
-		mb[x] = struct{}{}
-	}
-	var diff []string
-	for _, x := range a {
-		if _, found := mb[x]; !found {
-			diff = append(diff, x)
-		}
-	}
-	return diff
-}
-
 func confirm() error {
 	prompt := promptui.Prompt{
-		Label:     "Is this correct?",
+		Label:     "Is this correct",
 		IsConfirm: true,
 	}
 
@@ -134,4 +86,44 @@ func confirm() error {
 	}
 
 	return nil
+}
+
+// Modified from https://github.com/davidovich/summon/blob/master/cmd/run.go
+// see https://github.com/spf13/pflag/pull/160
+// https://github.com/spf13/cobra/issues/739
+// and https://github.com/spf13/pflag/pull/199
+func extractUnknownArgs(flags *pflag.FlagSet, args []string) []string {
+	// Ensure args were passed to command
+	if len(args) < 3 {
+		return []string{}
+	}
+	trimmed := args[2:]
+
+	unknownArgs := []string{}
+	for i := 0; i < len(trimmed); i++ {
+		currArg := trimmed[i]
+
+		var currFlag *pflag.Flag
+		if currArg[0] == '-' && len(currArg) > 1 {
+			if currArg[1] == '-' {
+				// Arg starts with two dashes, search for full flag names
+				currFlag = flags.Lookup(strings.SplitN(currArg[2:], "=", 2)[0])
+			} else {
+				// Arg starts with single dash, look for single char shorthand flags
+				currFlag = flags.ShorthandLookup(string(currArg[1]))
+			}
+		}
+
+		// If the current flag is known and it accepts an argument, skip the next loop
+		if currFlag != nil {
+			if currFlag.NoOptDefVal == "" {
+				if i+1 < len(trimmed) && currFlag.Value.String() == trimmed[i+1] {
+					i++
+				}
+			}
+			continue
+		}
+		unknownArgs = append(unknownArgs, currArg)
+	}
+	return unknownArgs
 }

@@ -24,6 +24,7 @@ package main
 import (
 	"strconv"
 
+	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -36,9 +37,9 @@ var (
 	proxylogDir         string
 	logFormat           string
 	logLevel            string
+	interactive         bool
 )
 
-// editConfigCmd represents the editConfig command
 var editConfigCmd = &cobra.Command{
 	Use:   "editConfig",
 	Short: "Edit configuration values",
@@ -49,9 +50,17 @@ is dependent on your OS.  For macOS it is:
 
 ~/Library/Application Support/ephemeral-iam/config.yml
 
+Instead of passing values in as flags, you can edit the config in interactive
+mode using the "--interactive" flag.
+
 Example:
 	ephemeral-iam editConfig --writeProxyLogToFile true`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		if interactive {
+			interactivePrompt()
+		}
+
 		verbose, err := strconv.ParseBool(verboseProxyLog)
 		handleErr(err)
 		writeToFile, err := strconv.ParseBool(writeProxyLogToFile)
@@ -81,4 +90,58 @@ func init() {
 	editConfigCmd.Flags().StringVar(&proxylogDir, "proxylogDir", config.AuthProxy.LogDir, "The directory to write auth proxy logs to")
 	editConfigCmd.Flags().StringVar(&logFormat, "logFormat", config.Logging.Format, "The format for the console logs. Can be either 'json' or 'text'")
 	editConfigCmd.Flags().StringVar(&logLevel, "logLevel", config.Logging.Level, "The logging level to write to the console")
+	editConfigCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Edit in interactive mode. If this flag is provided, no other flags will be honored.")
+}
+
+func interactivePrompt() {
+	var err error
+
+	prompt := promptui.Prompt{
+		Label:   "Proxy Address",
+		Default: config.AuthProxy.ProxyAddress,
+	}
+	proxyAddress, err = prompt.Run()
+	handleErr(err)
+
+	prompt = promptui.Prompt{
+		Label:   "Proxy Port",
+		Default: config.AuthProxy.ProxyPort,
+	}
+	proxyPort, err = prompt.Run()
+	handleErr(err)
+
+	prompt = promptui.Prompt{
+		Label:   "Verbose Proxy Log",
+		Default: strconv.FormatBool(config.AuthProxy.Verbose),
+	}
+	verboseProxyLog, err = prompt.Run()
+	handleErr(err)
+
+	prompt = promptui.Prompt{
+		Label:   "Write Proxy Log To File",
+		Default: strconv.FormatBool(config.AuthProxy.WriteToFile),
+	}
+	writeProxyLogToFile, err = prompt.Run()
+	handleErr(err)
+
+	prompt = promptui.Prompt{
+		Label:   "Proxy Log Directory",
+		Default: config.AuthProxy.LogDir,
+	}
+	proxylogDir, err = prompt.Run()
+	handleErr(err)
+
+	selectPrompt := promptui.Select{
+		Label: "Log Format",
+		Items: []string{"text", "json"},
+	}
+	_, logFormat, err = selectPrompt.Run()
+	handleErr(err)
+
+	selectPrompt = promptui.Select{
+		Label: "Log Level",
+		Items: []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"},
+	}
+	_, logLevel, err = selectPrompt.Run()
+	handleErr(err)
 }
