@@ -38,11 +38,25 @@ var (
 )
 
 var runKubectlCmd = &cobra.Command{
-	Use:                "kubectl [KUBECTL_ARGS]",
-	Short:              "Run a kubectl command with the permissions of the specified service account",
-	Long:               `TODO`,
+	Use:   "kubectl [KUBECTL_ARGS]",
+	Short: "Run a kubectl command with the permissions of the specified service account",
+	Long: `
+The "kubectl" command runs the provided kubectl command with the permissions of the specified
+service account. Output from the kubectl command is able to be piped into other commands.
+
+Examples:
+	eiam kubectl pods -o json \
+	  --serviceAccountEmail example@my-project.iam.gserviceaccount.com \
+	  --reason "Debugging for (JIRA-1234)"
+		
+	eiam kubectl pods -o json \
+	  -s example@my-project.iam.gserviceaccount.com -r "example" \
+	  | jq`,
 	Args:               cobra.ArbitraryArgs,
 	FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
+	PreRun: func(cmd *cobra.Command, args []string) {
+		kubectlCmdArgs = extractUnknownArgs(cmd.Flags(), os.Args)
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		project, err := gcpclient.GetCurrentProject()
 		handleErr(err)
@@ -99,8 +113,4 @@ func init() {
 	runKubectlCmd.Flags().StringVarP(&reason, "reason", "r", "", "A detailed rationale for assuming higher permissions (required)")
 	runKubectlCmd.MarkFlagRequired("serviceAccountEmail")
 	runKubectlCmd.MarkFlagRequired("reason")
-
-	if len(os.Args) > 2 && os.Args[1] == "kubectl" {
-		kubectlCmdArgs = extractUnknownArgs(runKubectlCmd.Flags(), os.Args)
-	}
 }

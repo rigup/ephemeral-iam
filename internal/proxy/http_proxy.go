@@ -72,8 +72,7 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 
 		// Set auth proxy to log to file
 		proxy.Logger = log.New(logFile, "", log.LstdFlags)
-		proxy.Logger.Printf("test")
-		logger.Info("Writing auth proxy logs to ", logFilename)
+		logger.Infof("Writing auth proxy logs to %s\n", logFilename)
 	}
 
 	setCa(appconfig.CertFile, appconfig.KeyFile)

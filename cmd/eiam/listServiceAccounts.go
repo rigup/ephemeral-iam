@@ -46,8 +46,10 @@ which ones the current user has access to impersonate.
 NOTE: For this to work properly, the current user must have access to list service accounts
 in the current project.
 
-Example:
-  gcp-iam-elevate listServiceAccounts`,
+Examples:
+    eiam listServiceAccounts
+
+    eiam list`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := fetchAvailableServiceAccounts(); err != nil {
 			logger.Errorf("Failed to fetch service accounts: %v", err)

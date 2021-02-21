@@ -30,7 +30,6 @@ var version = "0.0.dev1" // TODO: Have CI set this when a release is made
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the installed ephemeral-iam version",
-	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Infof("ephemeral-iam v%s\n", version)
 	},

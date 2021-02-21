@@ -1,12 +1,12 @@
 # Installation
 
-## Option 1: Install a release binary
+### Option 1: Install a release binary
 
 TODO
 
-## Option 2: Installing with `go get`
+### Option 2: Installing with `go get`
 
-### Prerequisites
+#### Prerequisites
 
 1. You must have [`go`](https://golang.org/doc/install) installed.
 
@@ -15,7 +15,7 @@ TODO
    a bug while using this tool on on other platforms/architecture, please open a
    new issue.
 
-### Configure Go Environment
+#### Configure Go Environment
 
 You will want to configure your `GOPATH` environment variable and add it to
 your `PATH`.  Additionally, you may want to add them to your shell configuration
@@ -27,7 +27,7 @@ export GOPATH="${HOME}/go"
 export PATH="${PATH}:${GOPATH}/bin
 ```
 
-### Install the package
+#### Install the package
 ```shell
 # Install using go get
 $ go get github.com/jessesomerville/ephemeral-iam/...
@@ -41,3 +41,8 @@ command as shown below.
 # Ensure the eiam binary was successfully added to your PATH
 $ eiam --help
 ```
+
+## Command Completion
+Command completion is available for `bash`, `zsh`, and `fish` shells. To
+configure command completion, follow the instructions shown when running
+`eiam completion --help`.

@@ -32,7 +32,6 @@ import (
 var viewConfigCmd = &cobra.Command{
 	Use:   "viewConfig",
 	Short: "View the current configuration settings",
-	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		configFile := viper.ConfigFileUsed()
 

@@ -45,7 +45,7 @@ The reason flag is used to add additional metadata to audit logs.  The provided 
 be in 'protoPatload.requestMetadata.requestAttributes.reason'.
 
 Example:
-  gcp_iam_escalate assumePrivileges \
+  	eiam assumePrivileges \
       --serviceAccountEmail example@my-project.iam.gserviceaccount.com \
       --reason "Emergency security patch (JIRA-1234)"`,
 	Run: func(cmd *cobra.Command, args []string) {

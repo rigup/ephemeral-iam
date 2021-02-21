@@ -35,9 +35,20 @@ import (
 var gcloudCmdArgs []string
 
 var runGcloudCmd = &cobra.Command{
-	Use:                "gcloud [GCLOUD_ARGS]",
-	Short:              "Run a gcloud command with the permissions of the specified service account",
-	Long:               `TODO`,
+	Use:   "gcloud [GCLOUD_ARGS]",
+	Short: "Run a gcloud command with the permissions of the specified service account",
+	Long: `
+The "gcloud" command runs the provided gcloud command with the permissions of the specified
+service account. Output from the gcloud command is able to be piped into other commands.
+
+Examples:
+	eiam gcloud compute instances list --format=json \
+	  --serviceAccountEmail example@my-project.iam.gserviceaccount.com \
+	  --reason "Debugging for (JIRA-1234)"
+	  
+	eiam gcloud compute instances list --format=json \
+	  -s example@my-project.iam.gserviceaccount.com -r "example" \
+	  | jq`,
 	Args:               cobra.ArbitraryArgs,
 	FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 	PreRun: func(cmd *cobra.Command, args []string) {
@@ -95,8 +106,4 @@ func init() {
 	runGcloudCmd.Flags().StringVarP(&reason, "reason", "r", "", "A detailed rationale for assuming higher permissions (required)")
 	runGcloudCmd.MarkFlagRequired("serviceAccountEmail")
 	runGcloudCmd.MarkFlagRequired("reason")
-
-	// if len(os.Args) > 2 && os.Args[1] == "gcloud" {
-	// 	gcloudCmdArgs = extractUnknownArgs(runGcloudCmd.Flags(), os.Args)
-	// }
 }

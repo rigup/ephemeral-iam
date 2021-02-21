@@ -1,4 +1,4 @@
-# ephemeral-iam
+# Ephemeral IAM
 A CLI tool that utilizes service account token generation to enabled users to
 temporarily authenticate `gcloud` commands as a service account.  The intended
 use-case for this tool is to restrict the permissions that users are granted
@@ -12,9 +12,40 @@ management tasks that require escalated permissions.
 > [security considerations document](docs/security_considerations.md).
 
 ## Conceptual Overview
+This section explains the basic process that happens when running the `eiam assumePrivileges`
+command.
 
-> **TODO:** I want to give an overview of how this all works under the hood.
-> Especially around the gcloud configuration changes
+Ephemeral IAM uses the `projects.serviceAccounts.generateAccessToken` method
+to generate OAuth 2.0 tokens for service accounts which are then used in subsequent
+API calls.  When a user runs the `assumePrivileges` command, `eiam` makes a call
+to generate an OAuth 2.0 token for the specified service account that expires
+in 10 minutes. 
+
+If the token was successfully generated, `eiam` then starts an
+HTTPS proxy on the user's localhost. To enable the handling of HTTPS traffic,
+a self-signed TLS certificate is generated for the proxy and stored for future
+use.
+
+Next, the active `gcloud` config is updated to forward all API calls through
+the local proxy.
+
+**Example updated configuration fields:**
+```
+[core]
+  custom_ca_certs_file: [/path/to/eiam/config_dir/server.pem]
+[proxy]
+  address: [127.0.0.1]
+  port: [8084]
+  type: [http]
+```
+
+For the duration of the privileged session (either until the token expires or
+when the user manually stops it with CTRL-C), all API calls made with `gcloud`
+will be intercepted by the proxy which will replace the `Authorization` header
+with the generated OAuth 2.0 token to authorize the request as the service account.
+
+Once the session is over, `eiam` gracefully shuts down the proxy server and reverts
+the users `gcloud` config to its original state.
 
 ## Installation
 Instructions on how to install the `eiam` binary can be found in
@@ -47,25 +78,29 @@ Top-level `--help`
 Utility for granting short-lived, privileged access to GCP APIs.
 
 Usage:
-  gcp-iam-escalate [command]
+  eiam [command]
 
 Available Commands:
-  assumePrivileges    Configure gcloud to make API calls as the provided service account
+  assumePrivileges    Configure gcloud to make API calls as the provided service account [alias: priv]
+  completion          Generate completion script
   editConfig          Edit configuration values
   gcloud              Run a gcloud command with the permissions of the specified service account
   help                Help about any command
   kubectl             Run a kubectl command with the permissions of the specified service account
-  listServiceAccounts List service accounts that can be impersonated
+  listServiceAccounts List service accounts that can be impersonated [alias: list]
+  version             Print the installed ephemeral-iam version
+  viewConfig          View the current configuration settings
 
 Flags:
-  -h, --help   help for gcp-iam-escalate
+  -h, --help   help for eiam
+  -y, --yes    Assume 'yes' to all prompts
 
-Use "gcp-iam-escalate [command] --help" for more information about a command.
+Use "eiam [command] --help" for more information about a command.
 ```
 
 Subcommand `--help`
 ```
- $ ./eiam assumePrivileges --help
+ $ eiam assumePrivileges --help
 
 The "assumePrivileges" command fetches short-lived credentials for the provided service Account
 and configures gcloud to proxy its traffic through an auth proxy. This auth proxy sets the
@@ -73,29 +108,35 @@ authorization header to the OAuth2 token generated for the provided service acco
 the credentials have expired, the auth proxy is shut down and the gcloud config is restored.
 
 The reason flag is used to add additional metadata to audit logs.  The provided reason will
-be in 'protoPayload.requestMetadata.requestAttributes.reason'.
+be in 'protoPatload.requestMetadata.requestAttributes.reason'.
 
 Example:
-  gcp_iam_escalate assumePrivileges \
+  	eiam assumePrivileges \
       --serviceAccountEmail example@my-project.iam.gserviceaccount.com \
       --reason "Emergency security patch (JIRA-1234)"
 
 Usage:
-  gcp-iam-escalate assumePrivileges [flags]
+  eiam assumePrivileges -s service_account_email -r reason [-y] [flags]
+
+Aliases:
+  assumePrivileges, priv
 
 Flags:
   -h, --help                         help for assumePrivileges
-      --reason string                A detailed rationale for assuming higher permissions (required)
-      --serviceAccountEmail string   The email address for the service account to impersonate (required)
+  -r, --reason string                A detailed rationale for assuming higher permissions (required)
+  -s, --serviceAccountEmail string   The email address for the service account to impersonate (required)
+
+Global Flags:
+  -y, --yes   Assume 'yes' to all prompts
 ```
 
 ### Tutorial
 To better familiarize yourself with `ephemeral-iam` and how it works, you can
-follow [the tutorial provided in the documentation](docs/tutorial.md).
+follow [the tutorial provided in the documentation](docs/tutorial).
 
 
 # TODO
-- [ ] Finish documentation (`Concepts`, `security_considerations.md`, and `tutorial.md`)
+- [ ] Write `tutorial.md`
 - [ ] Unit tests
 - [ ] Build and publish release binaries
 - [ ] Explore the possiblility of using a dedicated gcloud config to prevent potential issues around modifying the users config
