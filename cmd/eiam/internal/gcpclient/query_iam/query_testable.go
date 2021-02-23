@@ -15,7 +15,8 @@ import (
 
 var ctx = context.Background()
 
-// QueryTestablePermissionsOnResource was modified from https://github.com/salrashid123/gcp_iam/query/main.go:L71-L108
+// QueryTestablePermissionsOnResource gets the testable permissions on a resource
+// Modified from https://github.com/salrashid123/gcp_iam/blob/main/query/main.go#L71-L108
 func QueryTestablePermissionsOnResource(resource string) ([]string, error) {
 	iamService, err := iam.NewService(ctx)
 	if err != nil {
@@ -50,6 +51,7 @@ func QueryTestablePermissionsOnResource(resource string) ([]string, error) {
 }
 
 // QueryComputeInstancePermissions gets the authenticated members permissions on a compute instance
+// Modified from https://github.com/salrashid123/gcp_iam/blob/main/query/main.go#L351-L371
 func QueryComputeInstancePermissions(permsToTest []string, project, zone, instance string) ([]string, error) {
 	computeService, err := compute.NewService(ctx)
 	if err != nil {
@@ -73,6 +75,7 @@ func QueryComputeInstancePermissions(permsToTest []string, project, zone, instan
 }
 
 // QueryProjectPermissions gets the authenticated members permissions on a project
+// Modified from https://github.com/salrashid123/gcp_iam/blob/main/query/main.go#L534-L575
 func QueryProjectPermissions(permsToTest []string, project string) ([]string, error) {
 	crmService, err := crm.NewService(ctx)
 	if err != nil {
@@ -126,6 +129,7 @@ func QueryPubSubPermissions(permsToTest []string, project, topic string) ([]stri
 }
 
 // QueryServiceAccountPermissions gets the authenticated members permissions on a service account
+// Modified from https://github.com/salrashid123/gcp_iam/blob/main/query/main.go#L150-L173
 func QueryServiceAccountPermissions(permsToTest []string, project, email string) ([]string, error) {
 	iamService, err := iam.NewService(ctx)
 	if err != nil {
@@ -145,6 +149,7 @@ func QueryServiceAccountPermissions(permsToTest []string, project, email string)
 }
 
 // QueryStorageBucketPermissions gets the authenticated members permissions on a storage bucket
+// Modified from https://github.com/salrashid123/gcp_iam/blob/main/query/main.go#L313-L338
 func QueryStorageBucketPermissions(permsToTest []string, bucket string) ([]string, error) {
 	storageService, err := storage.NewService(ctx)
 	if err != nil {

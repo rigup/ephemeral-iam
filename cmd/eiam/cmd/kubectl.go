@@ -37,6 +37,8 @@ func newCmdKubectl() *cobra.Command {
 		Args:               cobra.ArbitraryArgs,
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		PreRun: func(cmd *cobra.Command, args []string) {
+			cmd.Flags().VisitAll(options.CheckRequired)
+
 			kubectlCmdArgs = util.ExtractUnknownArgs(cmd.Flags(), os.Args)
 			util.CheckError(util.FormatReason(&kubectlCmdConfig.Reason))
 

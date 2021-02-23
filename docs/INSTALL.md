@@ -30,7 +30,7 @@ export PATH="${PATH}:${GOPATH}/bin
 #### Install the package
 ```shell
 # Install using go get
-$ go get github.com/jessesomerville/ephemeral-iam/...
+$ GO111MODULE="on" go get github.com/jessesomerville/ephemeral-iam/...
 ```
 
 This will create the `eiam` binary in your `$GOPATH/bin` directory. You can

@@ -37,6 +37,8 @@ func newCmdGcloud() *cobra.Command {
 		Args:               cobra.ArbitraryArgs,
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		PreRun: func(cmd *cobra.Command, args []string) {
+			cmd.Flags().VisitAll(options.CheckRequired)
+
 			gcloudCmdArgs = util.ExtractUnknownArgs(cmd.Flags(), os.Args)
 			util.CheckError(util.FormatReason(&gcloudCmdConfig.Reason))
 

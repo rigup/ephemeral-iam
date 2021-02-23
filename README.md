@@ -5,10 +5,10 @@ use-case for this tool is to restrict the permissions that users are granted
 by default in their GCP organization while still allowing them to complete
 management tasks that require escalated permissions.
 
-> **Notice:** `ephemeral-iam` requires granting users the `Service Account Token Generator`
+> **Notice:** Ephemeral IAM requires granting users the `Service Account Token Generator`
 > role and does not include any controls to prevent users from using these
-> privileges in contexts outside of `ephemeral-iam` in its current state.
-> For more information on `ephemeral-iam`'s security considerations, refer to the
+> privileges in contexts outside of Ephemeral IAM in its current state.
+> For more information on Ephemeral IAM's security considerations, refer to the
 > [security considerations document](docs/security_considerations.md).
 
 ## Conceptual Overview
@@ -165,9 +165,7 @@ follow [the tutorial provided in the documentation](docs/tutorial).
 
 
 # TODO
-- [ ] Add global common flags (e.g. project)
 - [ ] Add NOTICE file
 - [ ] Write `tutorial.md`
 - [ ] Unit tests
 - [ ] Build and publish release binaries
-- [ ] Explore the possiblility of using a dedicated gcloud config to prevent potential issues around modifying the users config

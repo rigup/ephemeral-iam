@@ -69,6 +69,7 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 		Short: "Query the permissions you are granted on a compute instance",
 		Long:  querySvcAcctPermsLong,
 		PreRun: func(cmd *cobra.Command, args []string) {
+			cmd.Flags().VisitAll(options.CheckRequired)
 			resourceString = fmt.Sprintf(
 				computeInstanceRes,
 				queryPermsCmdConfig.Project,
@@ -137,6 +138,7 @@ func newCmdQueryPubSubPermissions() *cobra.Command {
 		Short: "Query the permissions you are granted on a pubsub topic",
 		Long:  queryPubSubPermsLong,
 		PreRun: func(cmd *cobra.Command, args []string) {
+			cmd.Flags().VisitAll(options.CheckRequired)
 			resourceString = fmt.Sprintf(pubsubTopicsRes, queryPermsCmdConfig.Project, queryPermsCmdConfig.PubSubTopic)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -166,6 +168,7 @@ func newCmdQueryServiceAccountPermissions() *cobra.Command {
 		Short: "Query the permissions you are granted on a service account",
 		Long:  querySvcAcctPermsLong,
 		PreRun: func(cmd *cobra.Command, args []string) {
+			cmd.Flags().VisitAll(options.CheckRequired)
 			resourceString = fmt.Sprintf(serviceAccountsRes, queryPermsCmdConfig.Project, queryPermsCmdConfig.ServiceAccountEmail)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -199,6 +202,7 @@ func newCmdQueryStorageBucketPermissions() *cobra.Command {
 		Short: "Query the permissions you are granted on a storage bucket",
 		Long:  queryStorageBucketPermsLong,
 		PreRun: func(cmd *cobra.Command, args []string) {
+			cmd.Flags().VisitAll(options.CheckRequired)
 			resourceString = fmt.Sprintf(storageBucketsRes, queryPermsCmdConfig.StorageBucket)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {

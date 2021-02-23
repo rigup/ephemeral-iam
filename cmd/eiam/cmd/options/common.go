@@ -92,3 +92,14 @@ func AddReasonFlag(fs *pflag.FlagSet, reason *string, required bool) {
 		fs.SetAnnotation(ReasonFlag.Name, RequiredAnnotation, []string{"true"})
 	}
 }
+
+// CheckRequired ensures that a command's required flags have been set
+func CheckRequired(flag *pflag.Flag) {
+	for annot, val := range flag.Annotations {
+		if annot == RequiredAnnotation && val[0] == "true" {
+			if flag.Value.String() == "" {
+				util.Logger.Fatalf("Missing required flag: %s", flag.Name)
+			}
+		}
+	}
+}
