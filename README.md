@@ -136,6 +136,8 @@ follow [the tutorial provided in the documentation](docs/tutorial).
 
 
 # TODO
+- [ ] Add global common flags (e.g. project)
+- [ ] Add NOTICE file
 - [ ] Write `tutorial.md`
 - [ ] Unit tests
 - [ ] Build and publish release binaries
