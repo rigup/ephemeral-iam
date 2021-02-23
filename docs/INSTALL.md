@@ -41,8 +41,3 @@ command as shown below.
 # Ensure the eiam binary was successfully added to your PATH
 $ eiam --help
 ```
-
-## Command Completion
-Command completion is available for `bash`, `zsh`, and `fish` shells. To
-configure command completion, follow the instructions shown when running
-`eiam completion --help`.

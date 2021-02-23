@@ -12,12 +12,12 @@ management tasks that require escalated permissions.
 > [security considerations document](docs/security_considerations.md).
 
 ## Conceptual Overview
-This section explains the basic process that happens when running the `eiam assumePrivileges`
+This section explains the basic process that happens when running the `eiam assume-privileges`
 command.
 
 Ephemeral IAM uses the `projects.serviceAccounts.generateAccessToken` method
 to generate OAuth 2.0 tokens for service accounts which are then used in subsequent
-API calls.  When a user runs the `assumePrivileges` command, `eiam` makes a call
+API calls.  When a user runs the `assume-privileges` command, `eiam` makes a call
 to generate an OAuth 2.0 token for the specified service account that expires
 in 10 minutes. 
 
@@ -75,21 +75,48 @@ and to explore the accepted arguments and flags.
 Top-level `--help`
 ```
  $ eiam --help
-Utility for granting short-lived, privileged access to GCP APIs.
+
+╭────────────────────────────────────────────────────────────╮
+│                                                            │
+│                        Ephemeral IAM                       │
+│  ──────────────────────────────────────────────────────    │
+│  A CLI tool for temporarily escalating GCP IAM privileges  │
+│  to perform high privilege tasks.                          │
+│                                                            │
+│      https://github.com/jessesomerville/ephemeral-iam      │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+
+
+╭────────────────────── Example usage ───────────────────────╮
+│                                                            │
+│                   Start privleged session                  │
+│  ──────────────────────────────────────────────────────    │
+│  $ eiam assumePrivileges \                                 │
+│      -s example-svc@my-project.iam.gserviceaccount.com \   │
+│      --reason "Emergency security patch (JIRA-1234)"       │
+│                                                            │
+│                                                            │
+│                                                            │
+│                     Run gcloud command                     │
+│  ──────────────────────────────────────────────────────    │
+│  $ eiam gcloud compute instances list --format=json \      │
+│      -s example@my-project.iam.gserviceaccount.com \       │
+│      -r "Reason"                                           │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
 
 Usage:
   eiam [command]
 
 Available Commands:
-  assumePrivileges    Configure gcloud to make API calls as the provided service account [alias: priv]
-  completion          Generate completion script
-  editConfig          Edit configuration values
-  gcloud              Run a gcloud command with the permissions of the specified service account
-  help                Help about any command
-  kubectl             Run a kubectl command with the permissions of the specified service account
-  listServiceAccounts List service accounts that can be impersonated [alias: list]
-  version             Print the installed ephemeral-iam version
-  viewConfig          View the current configuration settings
+  assume-privileges     Configure gcloud to make API calls as the provided service account [alias: priv]
+  config                Manage configuration values
+  gcloud                Run a gcloud command with the permissions of the specified service account
+  help                  Help about any command
+  kubectl               Run a kubectl command with the permissions of the specified service account
+  list-service-accounts List service accounts that can be impersonated [alias: list]
+  query-permissions     Query current permissions on a GCP resource
 
 Flags:
   -h, --help   help for eiam
@@ -100,9 +127,9 @@ Use "eiam [command] --help" for more information about a command.
 
 Subcommand `--help`
 ```
- $ eiam assumePrivileges --help
+ $ eiam assume-privileges --help
 
-The "assumePrivileges" command fetches short-lived credentials for the provided service Account
+The "assume-privileges" command fetches short-lived credentials for the provided service Account
 and configures gcloud to proxy its traffic through an auth proxy. This auth proxy sets the
 authorization header to the OAuth2 token generated for the provided service account. Once
 the credentials have expired, the auth proxy is shut down and the gcloud config is restored.
@@ -110,21 +137,23 @@ the credentials have expired, the auth proxy is shut down and the gcloud config 
 The reason flag is used to add additional metadata to audit logs.  The provided reason will
 be in 'protoPatload.requestMetadata.requestAttributes.reason'.
 
-Example:
-  	eiam assumePrivileges \
-      --serviceAccountEmail example@my-project.iam.gserviceaccount.com \
-      --reason "Emergency security patch (JIRA-1234)"
-
 Usage:
-  eiam assumePrivileges -s service_account_email -r reason [-y] [flags]
+  eiam assume-privileges [flags]
 
 Aliases:
-  assumePrivileges, priv
+  assume-privileges, priv
+
+Examples:
+
+eiam assume-privileges \
+  --serviceAccountEmail example@my-project.iam.gserviceaccount.com \
+  --reason "Emergency security patch (JIRA-1234)"
 
 Flags:
-  -h, --help                         help for assumePrivileges
-  -r, --reason string                A detailed rationale for assuming higher permissions (required)
-  -s, --serviceAccountEmail string   The email address for the service account to impersonate (required)
+  -h, --help                         help for assume-privileges
+  -p, --project string               The GCP project. Inherits from the active gcloud config by default (default "rigup-sandbox")
+  -R, --reason string                A detailed rationale for assuming higher permissions
+  -s, --serviceAccountEmail string   The email address for the service account
 
 Global Flags:
   -y, --yes   Assume 'yes' to all prompts
