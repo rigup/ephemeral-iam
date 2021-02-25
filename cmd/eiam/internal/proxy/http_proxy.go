@@ -13,11 +13,13 @@ import (
 	"time"
 
 	"github.com/elazarl/goproxy"
+	"github.com/spf13/viper"
 	credentialspb "google.golang.org/genproto/googleapis/iam/credentials/v1"
 
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig"
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient"
+	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/shell"
 )
 
 var (
@@ -27,24 +29,22 @@ var (
 
 // StartProxyServer spins up the proxy that replaces the gcloud auth token
 func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenResponse, reason string) (retErr error) {
-	config := appconfig.Config
-
 	accessToken := privilegedAccessToken.GetAccessToken()
 	expirationDate := privilegedAccessToken.GetExpireTime().AsTime()
 
 	proxy := goproxy.NewProxyHttpServer()
-	proxy.Verbose = config.AuthProxy.Verbose
-	if config.AuthProxy.WriteToFile {
-		_, err := os.Stat(config.AuthProxy.LogDir)
+	proxy.Verbose = viper.GetBool("AuthProxy.Verbose")
+	if viper.GetBool("AuthProxy.WriteToFile") {
+		_, err := os.Stat(viper.GetString("AuthProxy.LogDir"))
 		if os.IsNotExist(err) {
-			if err := os.MkdirAll(config.AuthProxy.LogDir, 0755); err != nil {
+			if err := os.MkdirAll(viper.GetString("AuthProxy.LogDir"), 0o755); err != nil {
 				return fmt.Errorf("Failed to create proxy log directory: %v", err)
 			}
 		}
 		// Create log file
 		timestamp := time.Now().Format("20060102150405")
-		logFilename := filepath.Join(config.AuthProxy.LogDir, fmt.Sprintf("%s_auth_proxy.log", timestamp))
-		logFile, err := os.OpenFile(logFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+		logFilename := filepath.Join(viper.GetString("AuthProxy.LogDir"), fmt.Sprintf("%s_auth_proxy.log", timestamp))
+		logFile, err := os.OpenFile(logFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
 		if err != nil {
 			return fmt.Errorf("Failed to create log file: %v", err)
 		}
@@ -67,7 +67,7 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 	})
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf("%s:%s", config.AuthProxy.ProxyAddress, config.AuthProxy.ProxyPort),
+		Addr:    fmt.Sprintf("%s:%s", viper.GetString("AuthProxy.ProxyAddress"), viper.GetString("AuthProxy.ProxyPort")),
 		Handler: proxy,
 	}
 
@@ -76,8 +76,8 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 
 	// Catch interrupts to gracefully shutdown the proxy and restore the gcloud config
 	idleConnsClosed := make(chan struct{})
+	sigint := make(chan os.Signal, 1)
 	go func() {
-		sigint := make(chan os.Signal, 1)
 		signal.Notify(sigint, os.Interrupt)
 		<-sigint
 
@@ -110,8 +110,18 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 	util.Logger.Info("Privileged session will last until ", expiresOn.Format(time.RFC1123))
 	util.Logger.Warn("Press CTRL+C to quit privileged session")
 
-	// Wait until the token expires
-	time.Sleep(sessionLength)
+	// Drop the user into a interactive shell until the session expires
+loop:
+	for expired := time.After(sessionLength); ; {
+		select {
+		case <-expired:
+			break loop
+		default:
+			if err := shell.CommandPrompt(sigint); err != nil {
+				return err
+			}
+		}
+	}
 
 	util.Logger.Info("Privileged session expired, stopping auth proxy and restoring gcloud config")
 	if err := srv.Shutdown(context.Background()); err != nil {

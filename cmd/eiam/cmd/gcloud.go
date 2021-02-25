@@ -8,6 +8,7 @@ import (
 
 	"github.com/lithammer/dedent"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/cmd/options"
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
@@ -82,7 +83,7 @@ func runGcloudCommand() error {
 	// There has to be a better way to do this...
 	util.Logger.Infof("Running: [gcloud %s]\n\n", strings.Join(gcloudCmdArgs, " "))
 	gcloudCmdArgs = append(gcloudCmdArgs, "--impersonate-service-account", gcloudCmdConfig.ServiceAccountEmail, "--verbosity=error")
-	c := exec.Command("gcloud", gcloudCmdArgs...)
+	c := exec.Command(viper.GetString("binarypaths.gcloud"), gcloudCmdArgs...)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
 	c.Env = append(os.Environ(), reasonHeader)

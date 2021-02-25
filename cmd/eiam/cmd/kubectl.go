@@ -8,6 +8,7 @@ import (
 
 	"github.com/lithammer/dedent"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/cmd/options"
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
@@ -83,7 +84,7 @@ func runKubectlCommand() error {
 
 	util.Logger.Infof("Running: [kubectl %s]\n\n", strings.Join(kubectlCmdArgs, " "))
 	kubectlAuth := append(kubectlCmdArgs, "--token", accessToken.GetAccessToken())
-	c := exec.Command("kubectl", kubectlAuth...)
+	c := exec.Command(viper.GetString("binarypaths.kubectl"), kubectlAuth...)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
 

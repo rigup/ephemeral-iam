@@ -7,33 +7,9 @@ import (
 
 	"github.com/kirsle/configdir"
 	"github.com/spf13/viper"
+
+	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
 )
-
-// Configuration is the top level struct for the config file
-type Configuration struct {
-	AuthProxy ProxyConfig
-	Logging   LogConfig
-}
-
-// ProxyConfig is the struct for the auth proxy configuration
-type ProxyConfig struct {
-	ProxyAddress string
-	ProxyPort    string
-	LogDir       string
-	Verbose      bool
-	WriteToFile  bool
-}
-
-// LogConfig is the struct for the logging configuration
-type LogConfig struct {
-	Format                string
-	Level                 string
-	DisableLevelTrucation bool
-	PadLevelText          bool
-}
-
-// Config is the global configuration instance
-var Config Configuration
 
 var (
 	// CertFile is the filepath pointing to the TLS cert
@@ -57,17 +33,14 @@ func init() {
 		}
 	}
 
-	if err := viper.Unmarshal(&Config); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to unmarshal config %s/config.yml: %v", getConfigDir(), err)
-		os.Exit(1)
-	}
-
 	if _, err := os.Stat(CertFile); os.IsNotExist(err) {
 		if err := GenerateCerts(); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 	}
+
+	util.NewLogger()
 }
 
 func getConfigDir() string {

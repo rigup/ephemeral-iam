@@ -5,24 +5,17 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig"
+	"github.com/spf13/viper"
 )
 
-var (
-	config = &appconfig.Config
-	// Logger is the global logging instance
-	Logger *logrus.Logger
-)
+// Logger is the global logging instance
+var Logger *logrus.Logger
 
-func init() {
-	Logger = newLogger(&config.Logging)
-}
-
-func newLogger(config *appconfig.LogConfig) *logrus.Logger {
+// NewLogger instantiates a new logging instance
+func NewLogger() {
 	logger := logrus.New()
 
-	level, err := logrus.ParseLevel(config.Level)
+	level, err := logrus.ParseLevel(viper.GetString("logging.level"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create logger instance: %v", err)
 		os.Exit(1)
@@ -31,17 +24,17 @@ func newLogger(config *appconfig.LogConfig) *logrus.Logger {
 	logger.Level = level
 	logger.Out = os.Stderr
 
-	switch config.Format {
+	switch viper.GetString("logging.format") {
 	case "json":
 		logger.Formatter = new(logrus.JSONFormatter)
 
 	default:
 		logger.Formatter = &logrus.TextFormatter{
-			DisableLevelTruncation: config.DisableLevelTrucation,
-			PadLevelText:           config.PadLevelText,
+			DisableLevelTruncation: viper.GetBool("logging.disableleveltruncation"),
+			PadLevelText:           viper.GetBool("logging.padleveltext"),
 			DisableTimestamp:       true,
 		}
 	}
 
-	return logger
+	Logger = logger
 }

@@ -10,6 +10,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -52,8 +53,8 @@ func ConfigureGcloudProxy() error {
 		return err
 	}
 
-	gcloudConfig.Section("proxy").Key("address").SetValue(appconfig.Config.AuthProxy.ProxyAddress)
-	gcloudConfig.Section("proxy").Key("port").SetValue(appconfig.Config.AuthProxy.ProxyPort)
+	gcloudConfig.Section("proxy").Key("address").SetValue(viper.GetString("authproxy.proxyaddress"))
+	gcloudConfig.Section("proxy").Key("port").SetValue(viper.GetString("authproxy.proxyport"))
 	gcloudConfig.Section("proxy").Key("type").SetValue("http")
 	gcloudConfig.Section("core").Key("custom_ca_certs_file").SetValue(appconfig.CertFile)
 	if err := gcloudConfig.SaveTo(pathToConfig); err != nil {

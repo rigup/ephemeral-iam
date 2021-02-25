@@ -23,34 +23,15 @@ var (
 	storageBucketsRes  = "//storage.googleapis.com/projects/_/buckets/%s"
 )
 
-var (
-	queryPermsLong = dedent.Dedent(`
-
-`)
-	queryComputePermsLong = dedent.Dedent(`
-
-`)
-	queryProjectPermsLong = dedent.Dedent(`
-
-`)
-	queryPubSubPermsLong = dedent.Dedent(`
-
-`)
-	querySvcAcctPermsLong = dedent.Dedent(`
-
-`)
-	queryStorageBucketPermsLong = dedent.Dedent(`
-
-`)
-)
-
 var queryPermsCmdConfig options.CmdConfig
 
 func newCmdQueryPermissions() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query-permissions",
 		Short: "Query current permissions on a GCP resource",
-		Long:  queryPermsLong,
+		Long: dedent.Dedent(`
+			Compare the set of permissions you've been granted against a full list of possible permissions on a resource.
+		`),
 	}
 
 	cmd.AddCommand(newCmdQueryComputeInstancePermissions())
@@ -67,7 +48,6 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "compute-instance",
 		Short: "Query the permissions you are granted on a compute instance",
-		Long:  querySvcAcctPermsLong,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			cmd.Flags().VisitAll(options.CheckRequired)
 			resourceString = fmt.Sprintf(
@@ -108,7 +88,6 @@ func newCmdQueryProjectPermissions() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "project",
 		Short: "Query the permissions you are granted at the project level",
-		Long:  queryProjectPermsLong,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			resourceString = fmt.Sprintf(projectsRes, queryPermsCmdConfig.Project)
 		},
@@ -136,7 +115,6 @@ func newCmdQueryPubSubPermissions() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pubsub",
 		Short: "Query the permissions you are granted on a pubsub topic",
-		Long:  queryPubSubPermsLong,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			cmd.Flags().VisitAll(options.CheckRequired)
 			resourceString = fmt.Sprintf(pubsubTopicsRes, queryPermsCmdConfig.Project, queryPermsCmdConfig.PubSubTopic)
@@ -166,7 +144,6 @@ func newCmdQueryServiceAccountPermissions() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "service-account",
 		Short: "Query the permissions you are granted on a service account",
-		Long:  querySvcAcctPermsLong,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			cmd.Flags().VisitAll(options.CheckRequired)
 			resourceString = fmt.Sprintf(serviceAccountsRes, queryPermsCmdConfig.Project, queryPermsCmdConfig.ServiceAccountEmail)
@@ -200,7 +177,6 @@ func newCmdQueryStorageBucketPermissions() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "storage-bucket",
 		Short: "Query the permissions you are granted on a storage bucket",
-		Long:  queryStorageBucketPermsLong,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			cmd.Flags().VisitAll(options.CheckRequired)
 			resourceString = fmt.Sprintf(storageBucketsRes, queryPermsCmdConfig.StorageBucket)
