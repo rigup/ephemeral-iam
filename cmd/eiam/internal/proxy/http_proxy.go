@@ -28,7 +28,7 @@ var (
 )
 
 // StartProxyServer spins up the proxy that replaces the gcloud auth token
-func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenResponse, reason string) (retErr error) {
+func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenResponse, reason, svcAcct string) (retErr error) {
 	accessToken := privilegedAccessToken.GetAccessToken()
 	expirationDate := privilegedAccessToken.GetExpireTime().AsTime()
 
@@ -87,7 +87,6 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 			retErr = fmt.Errorf("Failed to properly shut down proxy server: %v", err)
 		}
 		close(idleConnsClosed)
-		fmt.Println()
 		util.Logger.Info("Stopping auth proxy and restoring gcloud config")
 		if err := gcpclient.UnsetGcloudProxy(); err != nil {
 			retErr = fmt.Errorf("Failed to reset gcloud configuration: %v", err)
@@ -117,7 +116,7 @@ loop:
 		case <-expired:
 			break loop
 		default:
-			if err := shell.CommandPrompt(sigint); err != nil {
+			if err := shell.CommandPrompt(sigint, svcAcct); err != nil {
 				return err
 			}
 		}

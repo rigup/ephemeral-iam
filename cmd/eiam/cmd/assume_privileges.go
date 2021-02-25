@@ -77,5 +77,5 @@ func startPrivilegedSession() error {
 		return err
 	}
 
-	return proxy.StartProxyServer(accessToken, apCmdConfig.Reason)
+	return proxy.StartProxyServer(accessToken, apCmdConfig.Reason, apCmdConfig.ServiceAccountEmail)
 }

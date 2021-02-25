@@ -8,21 +8,25 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
 )
 
-var promptTmpl = &promptui.PromptTemplates{
-	Prompt:  "[{{ . }}] > ",
-	Valid:   "[{{ . | green }}] > ",
-	Invalid: "[{{ . | red }}] > ",
-	Success: "[{{ . | bold }}] > ",
-}
+var (
+	promptTmpl = &promptui.PromptTemplates{
+		Prompt:  "[{{ . }}] > ",
+		Valid:   "[{{ . | green }}] > ",
+		Invalid: "[{{ . | red }}] > ",
+		Success: "[{{ . | bold }}] > ",
+	}
+	yellow = color.New(color.FgYellow).SprintFunc()
+)
 
 // CommandPrompt prompts the user for a command to execute
-func CommandPrompt(sigint chan<- os.Signal) error {
-	fmt.Println()
+func CommandPrompt(sigint chan<- os.Signal, svcAccount string) error {
+	fmt.Printf("\n[%s]\n", yellow(svcAccount))
 	prompt := promptui.Prompt{
 		Label:     "eiam",
 		Templates: promptTmpl,
