@@ -1,14 +1,27 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"strconv"
 
 	"github.com/lithammer/dedent"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
+)
+
+var (
+	loggingLevels    = []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
+	loggingFormats   = []string{"text", "json"}
+	boolConfigFields = []string{
+		"authproxy.verbose",
+		"authproxy.writetofile",
+		"logging.disableleveltruncation",
+		"logging.padleveltext",
+	}
 )
 
 var configInfo = dedent.Dedent(`
@@ -95,16 +108,52 @@ func newCmdConfigSet() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set",
 		Short: "Set the value of a provided config item",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if !viper.InConfig(args[0]) {
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 2 {
+				return errors.New("Requires both a config key and a new value")
+			}
+
+			if !contains(viper.AllKeys(), args[0]) {
 				return fmt.Errorf("Invalid config key %s", args[0])
 			}
+
+			if args[0] == "logging.level" {
+				if !contains(loggingLevels, args[1]) {
+					return fmt.Errorf("Logging level must be one of %v", loggingLevels)
+				}
+			} else if args[0] == "logging.format" {
+				if !contains(loggingFormats, args[1]) {
+					return fmt.Errorf("Logging format must be one of %v", loggingFormats)
+				}
+			} else if contains(boolConfigFields, args[0]) {
+				_, err := strconv.ParseBool(args[1])
+				if err != nil {
+					return fmt.Errorf("The %s value must be either true or false", args[0])
+				}
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
 			oldVal := viper.Get(args[0])
-			viper.Set(args[0], args[1])
+			if contains(boolConfigFields, args[0]) {
+				newValue, _ := strconv.ParseBool(args[1])
+				viper.Set(args[0], newValue)
+			} else {
+				viper.Set(args[0], args[1])
+			}
+			viper.WriteConfig()
 			util.Logger.Infof("Updated %s from %v to %s", args[0], oldVal, args[1])
 			return nil
 		},
 	}
 	return cmd
+}
+
+func contains(values []string, val string) bool {
+	for _, i := range values {
+		if i == val {
+			return true
+		}
+	}
+	return false
 }

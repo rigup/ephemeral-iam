@@ -80,16 +80,15 @@ func getConfigDir() string {
 }
 
 func initConfig() {
-	viper.SetDefault("AuthProxy.ProxyAddress", "127.0.0.1")
-	viper.SetDefault("AuthProxy.ProxyPort", "8084")
-	viper.SetDefault("AuthProxy.Verbose", false)
-	viper.SetDefault("AuthProxy.WriteToFile", false)
-	viper.SetDefault("AuthProxy.LogDir", filepath.Join(getConfigDir(), "log"))
-
-	viper.SetDefault("Logging.Format", "text")
-	viper.SetDefault("Logging.Level", "info")
-	viper.SetDefault("Logging.DisableLevelTruncation", true)
-	viper.SetDefault("Logging.PadLevelText", true)
+	viper.SetDefault("authproxy.proxyaddress", "127.0.0.1")
+	viper.SetDefault("authproxy.proxyport", "8084")
+	viper.SetDefault("authproxy.verbose", false)
+	viper.SetDefault("authproxy.writetofile", false)
+	viper.SetDefault("authproxy.logdir", filepath.Join(getConfigDir(), "log"))
+	viper.SetDefault("logging.format", "text")
+	viper.SetDefault("logging.level", "info")
+	viper.SetDefault("logging.disableleveltruncation", true)
+	viper.SetDefault("logging.padleveltext", true)
 
 	if err := viper.SafeWriteConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileAlreadyExistsError); !ok {
