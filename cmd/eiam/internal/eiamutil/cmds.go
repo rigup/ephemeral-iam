@@ -36,17 +36,19 @@ func sessionID() (string, error) {
 // Confirm asks the user for confirmation before running a command
 func Confirm(vals map[string]string) {
 	var buf bytes.Buffer
-	w := tabwriter.NewWriter(&buf, 0, 4, 4, ' ', 0)
+	w := tabwriter.NewWriter(&buf, 0, 4, 4, '-', 0)
 
 	for key, val := range vals {
-		fmt.Fprintf(w, "%s\t%s\n", key, val)
+		fmt.Fprintf(w, "%s \t %s\n", key, val)
 	}
 
+	w.Flush()
 	cmdInfo := strings.Split(buf.String(), "\n")
-	for _, line := range cmdInfo {
-		Logger.Info(line)
-	}
+
 	fmt.Println()
+	for _, line := range cmdInfo {
+		fmt.Println(line)
+	}
 
 	prompt := promptui.Prompt{
 		Label:     "Continue",

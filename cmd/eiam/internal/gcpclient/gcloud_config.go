@@ -2,11 +2,59 @@ package gcpclient
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os/exec"
-	"strings"
+	"os/user"
+	"path"
+	"sync"
+
+	"gopkg.in/ini.v1"
 
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig"
 )
+
+type gcloudConfiguration struct {
+	Project string
+	Region  string
+	Zone    string
+}
+
+var (
+	once         sync.Once
+	gcloudConfig gcloudConfiguration
+)
+
+func readGcloudConfigFromFile() error {
+	usr, err := user.Current()
+	if err != nil {
+		return fmt.Errorf("Failed to get current system user: %v", err)
+	}
+	configDir := path.Join(usr.HomeDir, ".config", "gcloud")
+
+	activeConfig, err := ioutil.ReadFile(path.Join(configDir, "active_config"))
+	if err != nil {
+		return fmt.Errorf("Unable to read %s: %v", activeConfig, err)
+	}
+	configName := fmt.Sprintf("config_%s", string(activeConfig))
+	pathToConfig := path.Join(configDir, "configurations", configName)
+
+	config, err := ini.Load(pathToConfig)
+	if err != nil {
+		return fmt.Errorf("Failed to parse gcloud config %s: %v", pathToConfig, err)
+	}
+
+	gcloudConfig.Project = config.Section("core").Key("project").String()
+	gcloudConfig.Region = config.Section("compute").Key("region").String()
+	gcloudConfig.Zone = config.Section("compute").Key("zone").String()
+	return nil
+}
+
+func getGcloudConfig() (configErr error) {
+	once.Do(func() {
+		configErr = readGcloudConfigFromFile()
+	})
+	return configErr
+}
 
 // ConfigureGcloudProxy configures the current gcloud configuration to use the auth proxy
 func ConfigureGcloudProxy() error {
@@ -44,27 +92,24 @@ func UnsetGcloudProxy() error {
 
 // GetCurrentProject get the active project from the gcloud config
 func GetCurrentProject() (string, error) {
-	out, err := exec.Command("gcloud", "config", "get-value", "project").Output()
-	if err != nil {
-		return "", fmt.Errorf("Failed to get active project from config: %v", err)
+	if err := getGcloudConfig(); err != nil {
+		return "", err
 	}
-	return strings.TrimSpace(string(out)), nil
+	return gcloudConfig.Project, nil
 }
 
 // GetCurrentRegion get the active region from the gcloud config
 func GetCurrentRegion() (string, error) {
-	out, err := exec.Command("gcloud", "config", "get-value", "compute/region").Output()
-	if err != nil {
-		return "", fmt.Errorf("Failed to get active region config: %v", err)
+	if err := getGcloudConfig(); err != nil {
+		return "", err
 	}
-	return strings.TrimSpace(string(out)), nil
+	return gcloudConfig.Region, nil
 }
 
 // GetCurrentZone get the active zone from the gcloud config
 func GetCurrentZone() (string, error) {
-	out, err := exec.Command("gcloud", "config", "get-value", "compute/zone").Output()
-	if err != nil {
-		return "", fmt.Errorf("Failed to get active zone config: %v", err)
+	if err := getGcloudConfig(); err != nil {
+		return "", err
 	}
-	return strings.TrimSpace(string(out)), nil
+	return gcloudConfig.Zone, nil
 }

@@ -1,6 +1,10 @@
 package cmd
 
 import (
+	"log"
+	"os"
+	"runtime/pprof"
+
 	"github.com/lithammer/dedent"
 	"github.com/spf13/cobra"
 
@@ -9,6 +13,16 @@ import (
 
 // NewEphemeralIamCommand returns cobra.Command to run eiam command
 func NewEphemeralIamCommand() *cobra.Command {
+	f, err := os.Create("cpu.prof")
+	if err != nil {
+		log.Fatal("could not create CPU profile: ", err)
+	}
+	defer f.Close() // error handling omitted for example
+	if err := pprof.StartCPUProfile(f); err != nil {
+		log.Fatal("could not start CPU profile: ", err)
+	}
+	defer pprof.StopCPUProfile()
+
 	cmds := &cobra.Command{
 		Use:   "eiam",
 		Short: "Utility for granting short-lived, privileged access to GCP APIs.",
