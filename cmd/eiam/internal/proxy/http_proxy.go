@@ -33,17 +33,18 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 	expirationDate := privilegedAccessToken.GetExpireTime().AsTime()
 
 	proxy := goproxy.NewProxyHttpServer()
-	proxy.Verbose = viper.GetBool("AuthProxy.Verbose")
-	if viper.GetBool("AuthProxy.WriteToFile") {
-		_, err := os.Stat(viper.GetString("AuthProxy.LogDir"))
+	proxy.Verbose = viper.GetBool("authproxy.verbose")
+
+	if viper.GetBool("authproxy.writetofile") {
+		_, err := os.Stat(viper.GetString("authproxy.logdir"))
 		if os.IsNotExist(err) {
-			if err := os.MkdirAll(viper.GetString("AuthProxy.LogDir"), 0o755); err != nil {
+			if err := os.MkdirAll(viper.GetString("authproxy.logdir"), 0o755); err != nil {
 				return fmt.Errorf("Failed to create proxy log directory: %v", err)
 			}
 		}
 		// Create log file
 		timestamp := time.Now().Format("20060102150405")
-		logFilename := filepath.Join(viper.GetString("AuthProxy.LogDir"), fmt.Sprintf("%s_auth_proxy.log", timestamp))
+		logFilename := filepath.Join(viper.GetString("authproxy.logdir"), fmt.Sprintf("%s_auth_proxy.log", timestamp))
 		logFile, err := os.OpenFile(logFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
 		if err != nil {
 			return fmt.Errorf("Failed to create log file: %v", err)
@@ -67,7 +68,7 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 	})
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf("%s:%s", viper.GetString("AuthProxy.ProxyAddress"), viper.GetString("AuthProxy.ProxyPort")),
+		Addr:    fmt.Sprintf("%s:%s", viper.GetString("authproxy.proxyaddress"), viper.GetString("authproxy.proxyport")),
 		Handler: proxy,
 	}
 
@@ -82,7 +83,7 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 		<-sigint
 
 		// TODO: Don't think I'm handling these errors correctly
-		// An interrupt signal was recieved, shutdown the proxy server
+		// An interrupt signal was received, shutdown the proxy server
 		if err := srv.Shutdown(context.Background()); err != nil {
 			retErr = fmt.Errorf("Failed to properly shut down proxy server: %v", err)
 		}

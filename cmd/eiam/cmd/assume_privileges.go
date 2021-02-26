@@ -24,7 +24,7 @@ func newCmdAssumePrivileges() *cobra.Command {
 			the credentials have expired, the auth proxy is shut down and the gcloud config is restored.
 			
 			The reason flag is used to add additional metadata to audit logs.  The provided reason will
-			be in 'protoPatload.requestMetadata.requestAttributes.reason'.`),
+			be in 'protoPayload.requestMetadata.requestAttributes.reason'.`),
 		Example: dedent.Dedent(`
 				eiam assume-privileges \
 				  --serviceAccountEmail example@my-project.iam.gserviceaccount.com \

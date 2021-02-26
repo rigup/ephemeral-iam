@@ -27,7 +27,7 @@ func NewEphemeralIamCommand() *cobra.Command {
 			
 			╭────────────────────── Example usage ───────────────────────╮
 			│                                                            │
-			│                   Start privleged session                  │
+			│                   Start privileged session                 │
 			│  ──────────────────────────────────────────────────────    │
 			│  $ eiam assumePrivileges \                                 │
 			│      -s example-svc@my-project.iam.gserviceaccount.com \   │

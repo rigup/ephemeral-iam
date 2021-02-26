@@ -68,7 +68,7 @@ prompted about the `Google Auth Library`.  If successful, the output in your
 terminal should indicate where the file path that the ADC were written to.
 
 ### Help Commands
-The root `eiam` invocation and each of its subcommands have their own help
+The root `eiam` invocation and each of its sub-commands have their own help
 commands. These commands can be used to gather more information about a command
 and to explore the accepted arguments and flags.
 
@@ -90,7 +90,7 @@ Top-level `--help`
 
 ╭────────────────────── Example usage ───────────────────────╮
 │                                                            │
-│                   Start privleged session                  │
+│                   Start privileged session                 │
 │  ──────────────────────────────────────────────────────    │
 │  $ eiam assumePrivileges \                                 │
 │      -s example-svc@my-project.iam.gserviceaccount.com \   │
@@ -125,7 +125,7 @@ Flags:
 Use "eiam [command] --help" for more information about a command.
 ```
 
-Subcommand `--help`
+Sub-command `--help`
 ```
  $ eiam assume-privileges --help
 
@@ -135,7 +135,7 @@ authorization header to the OAuth2 token generated for the provided service acco
 the credentials have expired, the auth proxy is shut down and the gcloud config is restored.
 
 The reason flag is used to add additional metadata to audit logs.  The provided reason will
-be in 'protoPatload.requestMetadata.requestAttributes.reason'.
+be in 'protoPayload.requestMetadata.requestAttributes.reason'.
 
 Usage:
   eiam assume-privileges [flags]
