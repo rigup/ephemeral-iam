@@ -29,7 +29,7 @@ func newCmdKubectl() *cobra.Command {
 			service account. Output from the kubectl command is able to be piped into other commands.`),
 		Example: dedent.Dedent(`
 			eiam kubectl pods -o json \
-			  --serviceAccountEmail example@my-project.iam.gserviceaccount.com \
+			  --service-account-email example@my-project.iam.gserviceaccount.com \
 			  --reason "Debugging for (JIRA-1234)"
 				
 			eiam kubectl pods -o json \

@@ -7,6 +7,7 @@ import (
 	crm "google.golang.org/api/cloudresourcemanager/v1"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/iam/v1"
+	"google.golang.org/api/option"
 	"google.golang.org/api/pubsub/v1"
 	"google.golang.org/api/storage/v1"
 
@@ -110,11 +111,22 @@ func QueryProjectPermissions(permsToTest []string, project string) ([]string, er
 }
 
 // QueryPubSubPermissions gets the authenticated members permissions on a PubSub topic
-func QueryPubSubPermissions(permsToTest []string, project, topic string) ([]string, error) {
-	pubsubService, err := pubsub.NewService(ctx)
-	if err != nil {
-		return []string{}, fmt.Errorf("Failed to create PubSub SDK Client: %v", err)
+func QueryPubSubPermissions(permsToTest []string, project, topic, serviceAccountEmail string) ([]string, error) {
+	var pubsubService *pubsub.Service
+	if serviceAccountEmail != "" {
+		if svc, err := pubsub.NewService(ctx, option.ImpersonateCredentials(serviceAccountEmail)); err == nil {
+			pubsubService = svc
+		} else {
+			return []string{}, fmt.Errorf("Failed to create PubSub SDK Client with service account %s: %v", serviceAccountEmail, err)
+		}
+	} else {
+		if svc, err := pubsub.NewService(ctx); err == nil {
+			pubsubService = svc
+		} else {
+			return []string{}, fmt.Errorf("Failed to create PubSub SDK Client: %v", err)
+		}
 	}
+
 	topicsService := pubsub.NewProjectsTopicsService(pubsubService)
 
 	resource := fmt.Sprintf("projects/%s/topics/%s", project, topic)

@@ -27,7 +27,7 @@ func newCmdAssumePrivileges() *cobra.Command {
 			be in 'protoPayload.requestMetadata.requestAttributes.reason'.`),
 		Example: dedent.Dedent(`
 				eiam assume-privileges \
-				  --serviceAccountEmail example@my-project.iam.gserviceaccount.com \
+				  --service-account-email example@my-project.iam.gserviceaccount.com \
 				  --reason "Emergency security patch (JIRA-1234)"`),
 		PreRun: func(cmd *cobra.Command, args []string) {
 			cmd.Flags().VisitAll(options.CheckRequired)

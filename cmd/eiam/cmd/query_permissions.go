@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"sort"
 	"text/tabwriter"
 
+	"github.com/fatih/color"
 	"github.com/lithammer/dedent"
 	"github.com/spf13/cobra"
 
@@ -21,6 +21,9 @@ var (
 	pubsubTopicsRes    = "//pubsub.googleapis.com/projects/%s/topics/%s"
 	serviceAccountsRes = "//iam.googleapis.com/projects/%s/serviceAccounts/%s"
 	storageBucketsRes  = "//storage.googleapis.com/projects/_/buckets/%s"
+
+	green = color.New(color.FgGreen).SprintFunc()
+	red   = color.New(color.FgRed).SprintFunc()
 )
 
 var queryPermsCmdConfig options.CmdConfig
@@ -30,7 +33,54 @@ func newCmdQueryPermissions() *cobra.Command {
 		Use:   "query-permissions",
 		Short: "Query current permissions on a GCP resource",
 		Long: dedent.Dedent(`
-			Compare the set of permissions you've been granted against a full list of possible permissions on a resource.
+			Compare the list of permissions granted on a resource against the full list of
+			grantable permissions.
+			
+			For example, the list of grantable permissions on a Cloud PubSub Topic are as follows:
+			
+				pubsub.topics.attachSubscription
+				pubsub.topics.delete
+				pubsub.topics.detachSubscription
+				pubsub.topics.get
+				pubsub.topics.getIamPolicy
+				pubsub.topics.publish
+				pubsub.topics.setIamPolicy
+				pubsub.topics.update
+				pubsub.topics.updateTag
+			
+			Say a user (user1) is granted the PubSub Viewer role on a topic (topic1). The PubSub Viewer role grants the 
+			"pubsub.topics.get" permissions on Topics.
+			
+				$ eiam query-permissions pubsub -t topic1
+			
+				AVAILABLE                           GRANTED
+				pubsub.topics.attachSubscription    ✖
+				pubsub.topics.delete                ✖
+				pubsub.topics.detachSubscription    ✖
+				pubsub.topics.get                   ✔
+				pubsub.topics.getIamPolicy          ✖
+				pubsub.topics.publish               ✖
+				pubsub.topics.setIamPolicy          ✖
+				pubsub.topics.update                ✖
+				pubsub.topics.updateTag             ✖
+			
+			If user1 can assume the privileges of a service account (sa1), they can query the permissions that sa1
+			has on the topic. Say sa1 has been granted the PubSub Admin role on topic1:
+			
+				$ eiam query-permissions pubsub -t topic1 -s sa1@project.iam.gserviceaccount.com
+			
+				AVAILABLE                           GRANTED
+				pubsub.topics.attachSubscription    ✔
+				pubsub.topics.delete                ✔
+				pubsub.topics.detachSubscription    ✔
+				pubsub.topics.get                   ✔
+				pubsub.topics.getIamPolicy          ✔
+				pubsub.topics.publish               ✔
+				pubsub.topics.setIamPolicy          ✔
+				pubsub.topics.update                ✔
+				pubsub.topics.updateTag             ✔
+			
+				INFO    sa1@project.iam.gserviceaccount.com has full access to this resource
 		`),
 	}
 
@@ -48,6 +98,14 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "compute-instance",
 		Short: "Query the permissions you are granted on a compute instance",
+		Example: dedent.Dedent(`
+			  eiam query-permissions compute-instance \
+			    --zone us-central1-a --instance my-instance
+			
+			  eiam query-permissions compute-instance \
+			    --zone us-central1-a --instance my-instance \
+			    --service-account-email example@my-project.iam.gserviceaccount.com
+		`),
 		PreRun: func(cmd *cobra.Command, args []string) {
 			cmd.Flags().VisitAll(options.CheckRequired)
 			resourceString = fmt.Sprintf(
@@ -71,7 +129,11 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			printPermissions(uniq(testablePerms), userPerms)
+			if queryPermsCmdConfig.ServiceAccountEmail != "" {
+				printPermissions(util.Uniq(testablePerms), userPerms, true)
+			} else {
+				printPermissions(util.Uniq(testablePerms), userPerms, false)
+			}
 			return nil
 		},
 	}
@@ -79,6 +141,7 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 	options.AddProjectFlag(cmd.Flags(), &queryPermsCmdConfig.Project)
 	options.AddZoneFlag(cmd.Flags(), &queryPermsCmdConfig.Zone, true)
 	options.AddComputeInstanceFlag(cmd.Flags(), &queryPermsCmdConfig.ComputeInstance, true)
+	options.AddServiceAccountEmailFlag(cmd.Flags(), &queryPermsCmdConfig.ServiceAccountEmail, false)
 
 	return cmd
 }
@@ -86,8 +149,9 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 func newCmdQueryProjectPermissions() *cobra.Command {
 	var resourceString string
 	cmd := &cobra.Command{
-		Use:   "project",
-		Short: "Query the permissions you are granted at the project level",
+		Use:     "project",
+		Short:   "Query the permissions you are granted at the project level",
+		Example: "  eiam query-permissions project",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			resourceString = fmt.Sprintf(projectsRes, queryPermsCmdConfig.Project)
 		},
@@ -100,12 +164,17 @@ func newCmdQueryProjectPermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			printPermissions(uniq(testablePerms), userPerms)
+			if queryPermsCmdConfig.ServiceAccountEmail != "" {
+				printPermissions(util.Uniq(testablePerms), userPerms, true)
+			} else {
+				printPermissions(util.Uniq(testablePerms), userPerms, false)
+			}
 			return nil
 		},
 	}
 
 	options.AddProjectFlag(cmd.Flags(), &queryPermsCmdConfig.Project)
+	options.AddServiceAccountEmailFlag(cmd.Flags(), &queryPermsCmdConfig.ServiceAccountEmail, false)
 
 	return cmd
 }
@@ -115,6 +184,12 @@ func newCmdQueryPubSubPermissions() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pubsub",
 		Short: "Query the permissions you are granted on a pubsub topic",
+		Example: dedent.Dedent(`
+			  eiam query-permissions pubsub -t topic1
+				
+			  eiam query-permissions pubsub -t topic1 \
+			    --service-account-email example@my-project.iam.gserviceaccount.com
+		`),
 		PreRun: func(cmd *cobra.Command, args []string) {
 			cmd.Flags().VisitAll(options.CheckRequired)
 			resourceString = fmt.Sprintf(pubsubTopicsRes, queryPermsCmdConfig.Project, queryPermsCmdConfig.PubSubTopic)
@@ -124,17 +199,27 @@ func newCmdQueryPubSubPermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			userPerms, err := queryiam.QueryPubSubPermissions(testablePerms, queryPermsCmdConfig.Project, queryPermsCmdConfig.PubSubTopic)
+			userPerms, err := queryiam.QueryPubSubPermissions(
+				testablePerms,
+				queryPermsCmdConfig.Project,
+				queryPermsCmdConfig.PubSubTopic,
+				queryPermsCmdConfig.ServiceAccountEmail,
+			)
 			if err != nil {
 				return err
 			}
-			printPermissions(uniq(testablePerms), userPerms)
+			if queryPermsCmdConfig.ServiceAccountEmail != "" {
+				printPermissions(util.Uniq(testablePerms), userPerms, true)
+			} else {
+				printPermissions(util.Uniq(testablePerms), userPerms, false)
+			}
 			return nil
 		},
 	}
 
 	options.AddProjectFlag(cmd.Flags(), &queryPermsCmdConfig.Project)
 	options.AddPubSubTopicFlag(cmd.Flags(), &queryPermsCmdConfig.PubSubTopic, true)
+	options.AddServiceAccountEmailFlag(cmd.Flags(), &queryPermsCmdConfig.ServiceAccountEmail, false)
 
 	return cmd
 }
@@ -144,6 +229,10 @@ func newCmdQueryServiceAccountPermissions() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "service-account",
 		Short: "Query the permissions you are granted on a service account",
+		Example: dedent.Dedent(`
+			  eiam query-permissions service-account \
+			    --service-account-email example@my-project.iam.gserviceaccount.com
+		`),
 		PreRun: func(cmd *cobra.Command, args []string) {
 			cmd.Flags().VisitAll(options.CheckRequired)
 			resourceString = fmt.Sprintf(serviceAccountsRes, queryPermsCmdConfig.Project, queryPermsCmdConfig.ServiceAccountEmail)
@@ -161,7 +250,11 @@ func newCmdQueryServiceAccountPermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			printPermissions(uniq(testablePerms), userPerms)
+			if queryPermsCmdConfig.ServiceAccountEmail != "" {
+				printPermissions(util.Uniq(testablePerms), userPerms, true)
+			} else {
+				printPermissions(util.Uniq(testablePerms), userPerms, false)
+			}
 			return nil
 		},
 	}
@@ -177,6 +270,12 @@ func newCmdQueryStorageBucketPermissions() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "storage-bucket",
 		Short: "Query the permissions you are granted on a storage bucket",
+		Example: dedent.Dedent(`
+			  eiam query-permissions storage-bucket --bucket bucket-name
+			
+			  eiam query-permissions storage-bucket --bucket bucket-name \
+			    --service-account-email example@my-project.iam.gserviceaccount.com
+		`),
 		PreRun: func(cmd *cobra.Command, args []string) {
 			cmd.Flags().VisitAll(options.CheckRequired)
 			resourceString = fmt.Sprintf(storageBucketsRes, queryPermsCmdConfig.StorageBucket)
@@ -190,81 +289,47 @@ func newCmdQueryStorageBucketPermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			printPermissions(uniq(testablePerms), userPerms)
+			if queryPermsCmdConfig.ServiceAccountEmail != "" {
+				printPermissions(util.Uniq(testablePerms), userPerms, true)
+			} else {
+				printPermissions(util.Uniq(testablePerms), userPerms, false)
+			}
 			return nil
 		},
 	}
 
 	options.AddStorageBucketFlag(cmd.Flags(), &queryPermsCmdConfig.StorageBucket, true)
+	options.AddServiceAccountEmailFlag(cmd.Flags(), &queryPermsCmdConfig.ServiceAccountEmail, false)
 
 	return cmd
 }
 
-func printPermissions(fullPerms, userPerms []string) {
+func printPermissions(fullPerms, userPerms []string, isServiceAccount bool) {
 	fmt.Println()
 	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 
+	fmt.Fprintln(w, "AVAILABLE\tGRANTED")
+	for _, perm := range fullPerms {
+		if util.Contains(userPerms, perm) {
+			fmt.Fprintf(w, "%s\t%s\n", perm, green("✔"))
+		} else {
+			fmt.Fprintf(w, "%s\t%s\n", perm, red("✖"))
+		}
+	}
+	w.Flush()
+	fmt.Println()
+
 	if len(userPerms) == 0 {
-		fmt.Println("AVAILABLE")
-		for _, perm := range fullPerms {
-			fmt.Println(perm)
+		if isServiceAccount {
+			util.Logger.Warnf("%s does not have any access to this resource", queryPermsCmdConfig.ServiceAccountEmail)
+		} else {
+			util.Logger.Warn("You do not have any access to this resource")
 		}
-		w.Flush()
-		fmt.Println()
-		util.Logger.Warn("You do not have any access to this resource")
 	} else if len(userPerms) == len(fullPerms) {
-		fmt.Fprintln(w, "AVAILABLE\tGRANTED")
-		for i, perm := range fullPerms {
-			fmt.Fprintf(w, "%s\t%s\n", perm, userPerms[i])
-		}
-		w.Flush()
-		fmt.Println()
-		util.Logger.Info("You have full access to this resource")
-	} else {
-		diff := difference(fullPerms, userPerms)
-
-		// Pad slices to make even column lengths
-		for i := range fullPerms {
-			if i >= len(userPerms) {
-				userPerms = append(userPerms, " ")
-			}
-			if i >= len(diff) {
-				diff = append(diff, " ")
-			}
-		}
-
-		fmt.Fprintln(w, "AVAILABLE\tGRANTED\tMISSING")
-		for i, perm := range fullPerms {
-			fmt.Fprintf(w, "%s\t%s\t%s\n", perm, userPerms[i], diff[i])
-		}
-		w.Flush()
-	}
-}
-
-// difference returns the elements in `a` that aren't in `b`.
-func difference(a, b []string) []string {
-	mb := make(map[string]struct{}, len(b))
-	for _, x := range b {
-		mb[x] = struct{}{}
-	}
-	var diff []string
-	for _, x := range a {
-		if _, found := mb[x]; !found {
-			diff = append(diff, x)
+		if isServiceAccount {
+			util.Logger.Infof("%s has full access to this resource", queryPermsCmdConfig.ServiceAccountEmail)
+		} else {
+			util.Logger.Info("You have full access to this resource")
 		}
 	}
-	return diff
-}
-
-func uniq(a []string) []string {
-	mb := make(map[string]struct{}, len(a))
-	for _, x := range a {
-		mb[x] = struct{}{}
-	}
-	set := make([]string, 0, len(mb))
-	for k := range mb {
-		set = append(set, k)
-	}
-	sort.Strings(set)
-	return set
 }

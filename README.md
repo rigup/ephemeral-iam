@@ -146,14 +146,14 @@ Aliases:
 Examples:
 
 eiam assume-privileges \
-  --serviceAccountEmail example@my-project.iam.gserviceaccount.com \
+  --service-account-email example@my-project.iam.gserviceaccount.com \
   --reason "Emergency security patch (JIRA-1234)"
 
 Flags:
   -h, --help                         help for assume-privileges
   -p, --project string               The GCP project. Inherits from the active gcloud config by default (default "rigup-sandbox")
   -R, --reason string                A detailed rationale for assuming higher permissions
-  -s, --serviceAccountEmail string   The email address for the service account
+  -s, --service-account-email string   The email address for the service account
 
 Global Flags:
   -y, --yes   Assume 'yes' to all prompts
