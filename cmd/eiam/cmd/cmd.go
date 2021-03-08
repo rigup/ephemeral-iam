@@ -55,6 +55,7 @@ func NewEphemeralIamCommand() *cobra.Command {
 	cmds.AddCommand(newCmdKubectl())
 	cmds.AddCommand(newCmdListServiceAccounts())
 	cmds.AddCommand(newCmdQueryPermissions())
+	cmds.AddCommand(newCmdVersion())
 	options.AddPersistentFlags(cmds.PersistentFlags())
 
 	return cmds

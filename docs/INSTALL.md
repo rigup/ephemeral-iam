@@ -2,10 +2,36 @@
 
 ### Option 1: Install a release binary
 
-TODO
+1. Download the binary for your OS from the [releases page](https://github.com/jessesomerville/ephemeral-iam/releases)
+
+2. OPTIONAL: Download the `checksums.txt` and `checksums.txt.sig` files to verify the integrity of the archive
+
+```shell
+# Check the signature of the checksums
+$ gpg --verify checksums.txt.sig
+
+# Check the checksum of the downloaded archive
+$ shasum -a 256 ephemeral-iam_0.0.1_Darwin_x86_64.tar.gz
+ed395b9acb603ad87819ab05b262b9d725186d9639c09dd2545898ed308720f9  ephemeral-iam_0.0.1_Darwin_x86_64.tar.gz
+
+$ cat checksums.txt | grep ephemeral-iam_0.0.1_Darwin_x86_64.tar.gz
+ed395b9acb603ad87819ab05b262b9d725186d9639c09dd2545898ed308720f9  ephemeral-iam_0.0.1_Darwin_x86_64.tar.gz
+```
+
+3. Move the `eiam` binary into your path:
+
+```shell
+$ mv ./eiam /usr/local/bin/
+```
+
+4. Verify the installation
+
+```shell
+$ eiam version
+INFO    ephemeral-iam v0.0.1
+```
 
 ### Option 2: Installing with `go get`
-
 #### Prerequisites
 
 1. You must have [`go`](https://golang.org/doc/install) installed.
