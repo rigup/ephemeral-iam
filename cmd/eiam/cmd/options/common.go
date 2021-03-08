@@ -20,7 +20,7 @@ var (
 	ProjectFlag             = flagName{"project", "p"}
 	ReasonFlag              = flagName{"reason", "R"}
 	RegionFlag              = flagName{"region", "r"}
-	ServiceAccountEmailFlag = flagName{"serviceAccountEmail", "s"}
+	ServiceAccountEmailFlag = flagName{"service-account-email", "s"}
 	YesFlag                 = flagName{"yes", "y"}
 	ZoneFlag                = flagName{"zone", "z"}
 )
@@ -77,7 +77,7 @@ func AddZoneFlag(fs *pflag.FlagSet, zone *string, required bool) {
 	}
 }
 
-// AddServiceAccountEmailFlag adds the --serviceAccountEmail/-s flag
+// AddServiceAccountEmailFlag adds the --service-account-email/-s flag
 func AddServiceAccountEmailFlag(fs *pflag.FlagSet, serviceAccountEmail *string, required bool) {
 	fs.StringVarP(serviceAccountEmail, ServiceAccountEmailFlag.Name, ServiceAccountEmailFlag.Shorthand, "", "The email address for the service account")
 	if required {

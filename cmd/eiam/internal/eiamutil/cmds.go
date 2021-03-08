@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"text/tabwriter"
 
@@ -100,4 +101,26 @@ func ExtractUnknownArgs(flags *pflag.FlagSet, args []string) []string {
 		unknownArgs = append(unknownArgs, currArg)
 	}
 	return unknownArgs
+}
+
+func Contains(values []string, val string) bool {
+	for _, i := range values {
+		if i == val {
+			return true
+		}
+	}
+	return false
+}
+
+func Uniq(a []string) []string {
+	mb := make(map[string]struct{}, len(a))
+	for _, x := range a {
+		mb[x] = struct{}{}
+	}
+	set := make([]string, 0, len(mb))
+	for k := range mb {
+		set = append(set, k)
+	}
+	sort.Strings(set)
+	return set
 }
