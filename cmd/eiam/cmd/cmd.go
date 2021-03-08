@@ -42,6 +42,9 @@ func NewEphemeralIamCommand() *cobra.Command {
 			│      -r "Reason"                                           │
 			│                                                            │
 			╰────────────────────────────────────────────────────────────╯
+		
+			Please report any bugs or feature requests by opening a new
+			issue at https://github.com/jessesomerville/ephemeral-iam/issues
 		`),
 		SilenceErrors: true,
 		SilenceUsage:  true,

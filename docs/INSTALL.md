@@ -31,6 +31,13 @@ $ eiam version
 INFO    ephemeral-iam v0.0.1
 ```
 
+> **NOTE:** If you are on macOS and you get an error due to the binary being from an unknown publisher, remove
+> the quarantine label from the binary:
+
+```shell
+$ xattr -d com.apple.quarantine /path/to/eiam
+```
+
 ### Option 2: Installing with `go get`
 #### Prerequisites
 
