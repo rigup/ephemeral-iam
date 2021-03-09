@@ -1,5 +1,5 @@
 # Ephemeral IAM
-A CLI tool that utilizes service account token generation to enabled users to
+A CLI tool that utilizes service account token generation to enable users to
 temporarily authenticate `gcloud` commands as a service account.  The intended
 use-case for this tool is to restrict the permissions that users are granted
 by default in their GCP organization while still allowing them to complete
@@ -166,6 +166,4 @@ follow [the tutorial provided in the documentation](docs/tutorial).
 
 # TODO
 - [ ] Add NOTICE file
-- [ ] Write `tutorial.md`
 - [ ] Unit tests
-- [ ] Build and publish release binaries
