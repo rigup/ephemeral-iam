@@ -11,11 +11,11 @@
 $ gpg --verify checksums.txt.sig
 
 # Check the checksum of the downloaded archive
-$ shasum -a 256 ephemeral-iam_0.0.1_Darwin_x86_64.tar.gz
-ed395b9acb603ad87819ab05b262b9d725186d9639c09dd2545898ed308720f9  ephemeral-iam_0.0.1_Darwin_x86_64.tar.gz
+$ shasum -a 256 ephemeral-iam_${VERSION}_${ARCH}.tar.gz
+ed395b9acb603ad87819ab05b262b9d725186d9639c09dd2545898ed308720f9  ephemeral-iam_${VERSION}_${ARCH}.tar.gz
 
-$ cat checksums.txt | grep ephemeral-iam_0.0.1_Darwin_x86_64.tar.gz
-ed395b9acb603ad87819ab05b262b9d725186d9639c09dd2545898ed308720f9  ephemeral-iam_0.0.1_Darwin_x86_64.tar.gz
+$ cat checksums.txt | grep ephemeral-iam_${VERSION}_${ARCH}.tar.gz
+ed395b9acb603ad87819ab05b262b9d725186d9639c09dd2545898ed308720f9  ephemeral-iam_${VERSION}_${ARCH}.tar.gz
 ```
 
 3. Move the `eiam` binary into your path:
