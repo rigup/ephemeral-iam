@@ -53,10 +53,21 @@ func QueryTestablePermissionsOnResource(resource string) ([]string, error) {
 
 // QueryComputeInstancePermissions gets the authenticated members permissions on a compute instance
 // Modified from https://github.com/salrashid123/gcp_iam/blob/main/query/main.go#L351-L371
-func QueryComputeInstancePermissions(permsToTest []string, project, zone, instance string) ([]string, error) {
-	computeService, err := compute.NewService(ctx)
-	if err != nil {
-		return []string{}, fmt.Errorf("Failed to create Compute SDK Client: %v", err)
+func QueryComputeInstancePermissions(permsToTest []string, project, zone, instance, serviceAccountEmail, reason string) ([]string, error) {
+	var computeService *compute.Service
+	if serviceAccountEmail != "" {
+		clientOptions := []option.ClientOption{option.ImpersonateCredentials(serviceAccountEmail), option.WithRequestReason(reason)}
+		if svc, err := compute.NewService(ctx, clientOptions...); err == nil {
+			computeService = svc
+		} else {
+			return []string{}, fmt.Errorf("Failed to create Compute SDK Client with service account %s: %v", serviceAccountEmail, err)
+		}
+	} else {
+		if svc, err := compute.NewService(ctx); err == nil {
+			computeService = svc
+		} else {
+			return []string{}, fmt.Errorf("Failed to create Compute SDK Client: %v", err)
+		}
 	}
 
 	permsToTest = remove(permsToTest, []string{
@@ -77,10 +88,21 @@ func QueryComputeInstancePermissions(permsToTest []string, project, zone, instan
 
 // QueryProjectPermissions gets the authenticated members permissions on a project
 // Modified from https://github.com/salrashid123/gcp_iam/blob/main/query/main.go#L534-L575
-func QueryProjectPermissions(permsToTest []string, project string) ([]string, error) {
-	crmService, err := crm.NewService(ctx)
-	if err != nil {
-		return []string{}, fmt.Errorf("Failed to create Cloud Resource Manager SDK Client: %v", err)
+func QueryProjectPermissions(permsToTest []string, project, serviceAccountEmail, reason string) ([]string, error) {
+	var crmService *crm.Service
+	if serviceAccountEmail != "" {
+		clientOptions := []option.ClientOption{option.ImpersonateCredentials(serviceAccountEmail), option.WithRequestReason(reason)}
+		if svc, err := crm.NewService(ctx, clientOptions...); err == nil {
+			crmService = svc
+		} else {
+			return []string{}, fmt.Errorf("Failed to create Cloud Resource Manager SDK Client with service account %s: %v", serviceAccountEmail, err)
+		}
+	} else {
+		if svc, err := crm.NewService(ctx); err == nil {
+			crmService = svc
+		} else {
+			return []string{}, fmt.Errorf("Failed to create Cloud Resource Manager SDK Client: %v", err)
+		}
 	}
 	crmProjService := crm.NewProjectsService(crmService)
 
@@ -111,10 +133,11 @@ func QueryProjectPermissions(permsToTest []string, project string) ([]string, er
 }
 
 // QueryPubSubPermissions gets the authenticated members permissions on a PubSub topic
-func QueryPubSubPermissions(permsToTest []string, project, topic, serviceAccountEmail string) ([]string, error) {
+func QueryPubSubPermissions(permsToTest []string, project, topic, serviceAccountEmail, reason string) ([]string, error) {
 	var pubsubService *pubsub.Service
 	if serviceAccountEmail != "" {
-		if svc, err := pubsub.NewService(ctx, option.ImpersonateCredentials(serviceAccountEmail)); err == nil {
+		clientOptions := []option.ClientOption{option.ImpersonateCredentials(serviceAccountEmail), option.WithRequestReason(reason)}
+		if svc, err := pubsub.NewService(ctx, clientOptions...); err == nil {
 			pubsubService = svc
 		} else {
 			return []string{}, fmt.Errorf("Failed to create PubSub SDK Client with service account %s: %v", serviceAccountEmail, err)
@@ -162,10 +185,21 @@ func QueryServiceAccountPermissions(permsToTest []string, project, email string)
 
 // QueryStorageBucketPermissions gets the authenticated members permissions on a storage bucket
 // Modified from https://github.com/salrashid123/gcp_iam/blob/main/query/main.go#L313-L338
-func QueryStorageBucketPermissions(permsToTest []string, bucket string) ([]string, error) {
-	storageService, err := storage.NewService(ctx)
-	if err != nil {
-		return []string{}, fmt.Errorf("Failed to create Cloud Storage SDK Client: %v", err)
+func QueryStorageBucketPermissions(permsToTest []string, bucket, serviceAccountEmail, reason string) ([]string, error) {
+	var storageService *storage.Service
+	if serviceAccountEmail != "" {
+		clientOptions := []option.ClientOption{option.ImpersonateCredentials(serviceAccountEmail), option.WithRequestReason(reason)}
+		if svc, err := storage.NewService(ctx, clientOptions...); err == nil {
+			storageService = svc
+		} else {
+			return []string{}, fmt.Errorf("Failed to create Cloud Storage SDK Client with service account %s: %v", serviceAccountEmail, err)
+		}
+	} else {
+		if svc, err := storage.NewService(ctx); err == nil {
+			storageService = svc
+		} else {
+			return []string{}, fmt.Errorf("Failed to create Cloud Storage SDK Client: %v", err)
+		}
 	}
 
 	permsToTest = remove(permsToTest, []string{

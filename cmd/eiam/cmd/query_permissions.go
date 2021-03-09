@@ -125,6 +125,8 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 				queryPermsCmdConfig.Project,
 				queryPermsCmdConfig.Zone,
 				queryPermsCmdConfig.ComputeInstance,
+				queryPermsCmdConfig.ServiceAccountEmail,
+				queryPermsCmdConfig.Reason,
 			)
 			if err != nil {
 				return err
@@ -142,6 +144,7 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 	options.AddZoneFlag(cmd.Flags(), &queryPermsCmdConfig.Zone, true)
 	options.AddComputeInstanceFlag(cmd.Flags(), &queryPermsCmdConfig.ComputeInstance, true)
 	options.AddServiceAccountEmailFlag(cmd.Flags(), &queryPermsCmdConfig.ServiceAccountEmail, false)
+	options.AddReasonFlag(cmd.Flags(), &queryPermsCmdConfig.Reason, false)
 
 	return cmd
 }
@@ -160,7 +163,12 @@ func newCmdQueryProjectPermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			userPerms, err := queryiam.QueryProjectPermissions(testablePerms, queryPermsCmdConfig.Project)
+			userPerms, err := queryiam.QueryProjectPermissions(
+				testablePerms,
+				queryPermsCmdConfig.Project,
+				queryPermsCmdConfig.ServiceAccountEmail,
+				queryPermsCmdConfig.Reason,
+			)
 			if err != nil {
 				return err
 			}
@@ -175,6 +183,7 @@ func newCmdQueryProjectPermissions() *cobra.Command {
 
 	options.AddProjectFlag(cmd.Flags(), &queryPermsCmdConfig.Project)
 	options.AddServiceAccountEmailFlag(cmd.Flags(), &queryPermsCmdConfig.ServiceAccountEmail, false)
+	options.AddReasonFlag(cmd.Flags(), &queryPermsCmdConfig.Reason, false)
 
 	return cmd
 }
@@ -204,6 +213,7 @@ func newCmdQueryPubSubPermissions() *cobra.Command {
 				queryPermsCmdConfig.Project,
 				queryPermsCmdConfig.PubSubTopic,
 				queryPermsCmdConfig.ServiceAccountEmail,
+				queryPermsCmdConfig.Reason,
 			)
 			if err != nil {
 				return err
@@ -220,6 +230,7 @@ func newCmdQueryPubSubPermissions() *cobra.Command {
 	options.AddProjectFlag(cmd.Flags(), &queryPermsCmdConfig.Project)
 	options.AddPubSubTopicFlag(cmd.Flags(), &queryPermsCmdConfig.PubSubTopic, true)
 	options.AddServiceAccountEmailFlag(cmd.Flags(), &queryPermsCmdConfig.ServiceAccountEmail, false)
+	options.AddReasonFlag(cmd.Flags(), &queryPermsCmdConfig.Reason, false)
 
 	return cmd
 }
@@ -285,7 +296,12 @@ func newCmdQueryStorageBucketPermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			userPerms, err := queryiam.QueryStorageBucketPermissions(testablePerms, queryPermsCmdConfig.StorageBucket)
+			userPerms, err := queryiam.QueryStorageBucketPermissions(
+				testablePerms,
+				queryPermsCmdConfig.StorageBucket,
+				queryPermsCmdConfig.ServiceAccountEmail,
+				queryPermsCmdConfig.Reason,
+			)
 			if err != nil {
 				return err
 			}
@@ -300,6 +316,7 @@ func newCmdQueryStorageBucketPermissions() *cobra.Command {
 
 	options.AddStorageBucketFlag(cmd.Flags(), &queryPermsCmdConfig.StorageBucket, true)
 	options.AddServiceAccountEmailFlag(cmd.Flags(), &queryPermsCmdConfig.ServiceAccountEmail, false)
+	options.AddReasonFlag(cmd.Flags(), &queryPermsCmdConfig.Reason, false)
 
 	return cmd
 }

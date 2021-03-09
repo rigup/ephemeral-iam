@@ -57,9 +57,9 @@ func newCmdKubectl() *cobra.Command {
 		},
 	}
 
-	options.AddServiceAccountEmailFlag(cmd.Flags(), &gcloudCmdConfig.ServiceAccountEmail, true)
-	options.AddReasonFlag(cmd.Flags(), &gcloudCmdConfig.Reason, true)
-	options.AddProjectFlag(cmd.Flags(), &gcloudCmdConfig.Project)
+	options.AddServiceAccountEmailFlag(cmd.Flags(), &kubectlCmdConfig.ServiceAccountEmail, true)
+	options.AddReasonFlag(cmd.Flags(), &kubectlCmdConfig.Reason, true)
+	options.AddProjectFlag(cmd.Flags(), &kubectlCmdConfig.Project)
 
 	return cmd
 }

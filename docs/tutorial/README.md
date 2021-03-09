@@ -6,17 +6,10 @@ permissions to create the a few resources used throughout.
 Before you begin, ensure that you have successfully installed the `eiam` CLI tool:
 ```
 $ eiam version
-INFO    ephemeral-iam v0.0.dev1
+INFO    ephemeral-iam v0.0.1
 ```
 
-## Basic commands
-TODO
-
-## Running a gcloud command
-TODO
-
-## Running a kubectl command
-TODO
-
-## Using a Privileged Session
-TODO
+- [Basic Commands](./basic_commands/README.md)
+- [Inspecting Permissions and Service Accounts](./perms_and_svc_accts/README.md)
+- [Running a Single Command](./running_commands/README.md)
+- [Using a Privileged Session](./privileged_session/README.md)
