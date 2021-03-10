@@ -18,7 +18,7 @@ svc-acct-2@project.iam.gserviceaccount.com    Editor access in the project
 ## Debugging Permissions
 
 You can debug issues with permissions using the `query-permissions` command.  This command allows you to
-check which permissions have been granted on a given resource.  As of `eiam` v0.0.2, only a few resources are supported
+check which permissions have been granted on a given resource.  As of `eiam` v0.0.3, only a few resources are supported
 as the process is different for each resource type.  The resources that are currently supported are:
 
 - Compute Instances
