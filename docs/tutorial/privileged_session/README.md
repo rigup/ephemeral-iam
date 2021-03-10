@@ -5,14 +5,6 @@ This is accomplished using the `assume-privileges` (or just `priv`) command. Whe
 will drop you into a shell that is configured to use the permissions of the provided service account. Detailed information
 about how the session is handled can be found in the **Conceptual Overview** section of the [README](../../../README.md).
 
-## Limitations
-Due to the way that the `eiam` "sub-shell" is currently implemented, some basic POSIX shell functionality does not
-work as expected.  The main broken functionalities are directory navigation (e.g. commands such as `cd` do not work as intended)
-and output redirection (e.g. piping output from one command to another is not currently stable).
-The limitations of the `eiam` shell are currently being tracked in [Issue 1](https://github.com/jessesomerville/ephemeral-iam/issues/1).
-
-> **NOTE:** Output redirection is supported by the `eiam gcloud` and `eiam kubectl` commands
-
 > **It is not currently feasible to test the sub-shell for complete POSIX compliance; therefore, if you come across any bugs**
 > **in its implementation, please add the details of said bug to the issue linked above.**
 

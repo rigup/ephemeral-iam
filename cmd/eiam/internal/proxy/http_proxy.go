@@ -17,6 +17,7 @@ import (
 
 	"github.com/elazarl/goproxy"
 	"github.com/kr/pty"
+	"github.com/lithammer/dedent"
 	"github.com/spf13/viper"
 	"golang.org/x/term"
 	credentialspb "google.golang.org/genproto/googleapis/iam/credentials/v1"
@@ -29,12 +30,15 @@ import (
 var (
 	certCache = make(map[string]*tls.Certificate)
 	certLock  = &sync.Mutex{}
+
+	wg sync.WaitGroup
 )
 
 // StartProxyServer spins up the proxy that replaces the gcloud auth token
 func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenResponse, reason, svcAcct string) (retErr error) {
 	accessToken := privilegedAccessToken.GetAccessToken()
 	expirationDate := privilegedAccessToken.GetExpireTime().AsTime()
+	sessionLength := time.Until(expirationDate)
 
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = viper.GetBool("authproxy.verbose")
@@ -99,10 +103,10 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 		os.Exit(0)
 	}()
 
-	sessionLength := time.Until(expirationDate)
-	expiresOn := time.Now().Add(sessionLength)
-
 	util.Logger.Info("Starting auth proxy")
+	util.Logger.Infof("Privileged session will last until %s", time.Now().Add(sessionLength).Format(time.RFC1123))
+	util.Logger.Warn("Enter `exit` or press CTRL+D to quit privileged session")
+
 	go func() {
 		defer proxyServerExitDone.Done()
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
@@ -111,34 +115,20 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 		<-idleConnsClosed
 	}()
 
-	util.Logger.Info("Privileged session will last until ", expiresOn.Format(time.RFC1123))
-	util.Logger.Warn("Press CTRL-D followed by CTRL-C to quit privileged session")
-
-	// Drop the user into a interactive shell until the session expires
-	// loop:
-	// 	for expired := time.After(sessionLength); ; {
-	// 		select {
-	// 		case <-expired:
-	// 			break loop
-	// 		default:
-	// 			if err := shell.CommandPrompt(sigint, svcAcct); err != nil {
-	// 				return err
-	// 			}
-	// 		}
-	// 	}
-
+	wg.Add(1)
+	var oldState *term.State
 	go func() {
 		c := exec.Command("bash")
-		c.Env = append(c.Env, os.Environ()...)
+		c.Env = append(c.Env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
 		c.Env = append(c.Env, buildPrompt(svcAcct))
 
 		ptmx, err := pty.Start(c)
 		if err != nil {
-			retErr = fmt.Errorf("Failed to start privileged sub-shell: %v", err)
+			util.Logger.Fatalf("Failed to start privileged sub-shell: %v", err)
 		}
 		defer func() {
 			if err := ptmx.Close(); err != nil {
-				retErr = fmt.Errorf("Failed to close sub-shell file descriptor: %v", err)
+				util.Logger.Fatalf("Failed to close sub-shell file descriptor: %v", err)
 			}
 		}()
 		ch := make(chan os.Signal, 1)
@@ -146,39 +136,58 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 		go func() {
 			for range ch {
 				if err := pty.InheritSize(os.Stdin, ptmx); err != nil {
-					retErr = fmt.Errorf("Error resizing pty: %s", err)
+					util.Logger.Fatalf("Error resizing pty: %s", err)
 				}
 			}
 		}()
 		ch <- syscall.SIGWINCH
 
-		oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+		oldState, err = term.MakeRaw(int(os.Stdin.Fd()))
 		if err != nil {
-			retErr = fmt.Errorf("Failed to set sub-shell to raw mode: %v", err)
+			util.Logger.Fatalf("Failed to set sub-shell to raw mode: %v", err)
 		}
 		defer func() {
 			if err := term.Restore(int(os.Stdin.Fd()), oldState); err != nil {
-				retErr = fmt.Errorf("Failed to restore original shell: %v", err)
+				util.Logger.Fatalf("Failed to restore original shell: %v", err)
 			}
 		}()
 
 		go func() {
 			if _, err := io.Copy(ptmx, os.Stdin); err != nil {
-				retErr = fmt.Errorf("Failed to copy stdin to the pty: %v", err)
+				util.Logger.Errorf("Failed to copy stdin to the pty: %v", err)
 			}
 		}()
 		if _, err := io.Copy(os.Stdout, ptmx); err != nil {
-			retErr = fmt.Errorf("Failed to copy the pty to stdout: %v", err)
+			util.Logger.Errorf("Failed to copy the pty to stdout: %v", err)
 		}
+		wg.Done()
+	}()
+
+	// Shut down the auth proxy when the user exits the sub-shell
+	go func() {
+		wg.Wait()
+		sigint <- syscall.SIGINT
 	}()
 
 	time.Sleep(sessionLength)
 
+	if err := term.Restore(int(os.Stdin.Fd()), oldState); err != nil {
+		util.Logger.Fatalf("Failed to restore original shell: %v", err)
+	}
+	fmt.Println()
+
 	util.Logger.Info("Privileged session expired, stopping auth proxy and restoring gcloud config")
 	if err := srv.Shutdown(context.Background()); err != nil {
-		retErr = fmt.Errorf("Failed to properly shut down proxy server: %v", err)
+		return fmt.Errorf("Failed to properly shut down proxy server: %v", err)
 	}
 	if err := gcpclient.UnsetGcloudProxy(); err != nil {
+		util.Logger.Warn("Failed to revert gcloud configuration! Please run the following command to manually fix this issue:")
+		fmt.Println(dedent.Dedent(`
+			gcloud config unset proxy/address \
+			  && gcloud config unset proxy/port \
+			  && gcloud config unset proxy/type \
+			  && gcloud config unset core/custom_ca_certs_file
+		`))
 		retErr = fmt.Errorf("Failed to reset gcloud configuration: %v", err)
 	}
 	return nil

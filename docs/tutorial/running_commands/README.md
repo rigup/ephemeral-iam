@@ -1,8 +1,7 @@
 # Running a Single Command
 There are some use-cases where a user only needs to run a single `gcloud` or `kubectl` command with privileged
 access.  For convenience purposes, `eiam` provides the ability to run one-off `gcloud` and `kubectl` commands.
-As opposed to commands that are ran in a sub-shell created by the `assume-privileges` command, the output from
-the `gcloud` and `kubectl` commands can be redirected using pipes (`|`).
+The output from the `gcloud` and `kubectl` commands are sent to stdout to support redirection to pipes.
 
 ## Running a gcloud command
 
