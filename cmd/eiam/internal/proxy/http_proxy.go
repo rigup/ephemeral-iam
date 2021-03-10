@@ -4,22 +4,26 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/elazarl/goproxy"
+	"github.com/kr/pty"
 	"github.com/spf13/viper"
+	"golang.org/x/term"
 	credentialspb "google.golang.org/genproto/googleapis/iam/credentials/v1"
 
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig"
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient"
-	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/shell"
 )
 
 var (
@@ -108,20 +112,67 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 	}()
 
 	util.Logger.Info("Privileged session will last until ", expiresOn.Format(time.RFC1123))
-	util.Logger.Warn("Press CTRL+C to quit privileged session")
+	util.Logger.Warn("Press CTRL-D followed by CTRL-C to quit privileged session")
 
 	// Drop the user into a interactive shell until the session expires
-loop:
-	for expired := time.After(sessionLength); ; {
-		select {
-		case <-expired:
-			break loop
-		default:
-			if err := shell.CommandPrompt(sigint, svcAcct); err != nil {
-				return err
-			}
+	// loop:
+	// 	for expired := time.After(sessionLength); ; {
+	// 		select {
+	// 		case <-expired:
+	// 			break loop
+	// 		default:
+	// 			if err := shell.CommandPrompt(sigint, svcAcct); err != nil {
+	// 				return err
+	// 			}
+	// 		}
+	// 	}
+
+	go func() {
+		c := exec.Command("bash")
+		c.Env = append(c.Env, os.Environ()...)
+		c.Env = append(c.Env, buildPrompt(svcAcct))
+
+		ptmx, err := pty.Start(c)
+		if err != nil {
+			retErr = fmt.Errorf("Failed to start privileged sub-shell: %v", err)
 		}
-	}
+		defer func() {
+			if err := ptmx.Close(); err != nil {
+				retErr = fmt.Errorf("Failed to close sub-shell file descriptor: %v", err)
+			}
+		}()
+		ch := make(chan os.Signal, 1)
+		signal.Notify(ch, syscall.SIGWINCH)
+		go func() {
+			for range ch {
+				if err := pty.InheritSize(os.Stdin, ptmx); err != nil {
+					retErr = fmt.Errorf("Error resizing pty: %s", err)
+				}
+			}
+		}()
+		ch <- syscall.SIGWINCH
+
+		oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+		if err != nil {
+			retErr = fmt.Errorf("Failed to set sub-shell to raw mode: %v", err)
+		}
+		defer func() {
+			if err := term.Restore(int(os.Stdin.Fd()), oldState); err != nil {
+				retErr = fmt.Errorf("Failed to restore original shell: %v", err)
+			}
+		}()
+
+		go func() {
+			if _, err := io.Copy(ptmx, os.Stdin); err != nil {
+				retErr = fmt.Errorf("Failed to copy stdin to the pty: %v", err)
+			}
+		}()
+		if _, err := io.Copy(os.Stdout, ptmx); err != nil {
+			retErr = fmt.Errorf("Failed to copy the pty to stdout: %v", err)
+		}
+	}()
+
+	time.Sleep(sessionLength)
 
 	util.Logger.Info("Privileged session expired, stopping auth proxy and restoring gcloud config")
 	if err := srv.Shutdown(context.Background()); err != nil {
@@ -135,4 +186,11 @@ loop:
 
 func proxyConnectHandle(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
 	return goproxy.MitmConnect, host
+}
+
+func buildPrompt(svcAcct string) string {
+	yellow := "\\[\\e[33m\\]"
+	green := "\\[\\e[36m\\]"
+	endColor := "\\[\\e[m\\]"
+	return fmt.Sprintf("PS1=\n[%s%s%s]\n[%seiam%s] > ", yellow, svcAcct, endColor, green, endColor)
 }
