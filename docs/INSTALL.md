@@ -34,7 +34,7 @@ $ mv ./eiam /usr/local/bin/
 
 ```shell
 $ eiam version
-INFO    ephemeral-iam v0.0.3
+INFO    ephemeral-iam v0.0.4
 ```
 
 > **NOTE:** If you are on macOS and you get an error due to the binary being from an unknown publisher, remove

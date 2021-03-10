@@ -5,7 +5,7 @@ The following are basic commands offered by `eiam`
 
 ```
 $ eiam version
-INFO    ephemeral-iam v0.0.3
+INFO    ephemeral-iam v0.0.4
 ```
 
 ## Ephemeral IAM Configuration

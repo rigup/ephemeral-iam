@@ -6,7 +6,7 @@ import (
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
 )
 
-const version = "0.0.3" // TODO: Have CI set this when a release is made
+const version = "0.0.4" // TODO: Have CI set this when a release is made
 
 func newCmdVersion() *cobra.Command {
 	cmd := &cobra.Command{
