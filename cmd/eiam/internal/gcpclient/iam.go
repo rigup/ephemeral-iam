@@ -64,7 +64,7 @@ func GetServiceAccounts(project, reason string) ([]*iam.ServiceAccount, error) {
 		}
 		return nil
 	}); err != nil {
-		return []*iam.ServiceAccount{}, fmt.Errorf("An error occured while fetching service accounts: %v", err)
+		return []*iam.ServiceAccount{}, fmt.Errorf("An error occurred while fetching service accounts: %v", err)
 	}
 	return serviceAccounts, nil
 }

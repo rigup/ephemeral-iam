@@ -53,20 +53,6 @@ Instructions on how to install the `eiam` binary can be found in
 
 ## Getting Started
 
-### Generating Application Default Credentials
-`ephemeral-iam` uses [Google Application Default Credentials](https://developers.google.com/identity/protocols/application-default-credentials)
-for authorization credentials used in calling API endpoints and some commands
-will fail if no ADCs are present. 
-
-Generate Application Default Credentials:
-```shell
-$ gcloud auth application-default login
-```
-
-This will open a new window in your browser.  Login and select `Allow` when
-prompted about the `Google Auth Library`.  If successful, the output in your
-terminal should indicate where the file path that the ADC were written to.
-
 ### Help Commands
 The root `eiam` invocation and each of its sub-commands have their own help
 commands. These commands can be used to gather more information about a command
