@@ -18,13 +18,19 @@ $ cat checksums.txt | grep ephemeral-iam_${VERSION}_${ARCH}.tar.gz
 ed395b9acb603ad87819ab05b262b9d725186d9639c09dd2545898ed308720f9  ephemeral-iam_${VERSION}_${ARCH}.tar.gz
 ```
 
-3. Move the `eiam` binary into your path:
+3. Extract the downloaded archive
+
+```
+$ tar -xvf ephemeral-iam_${VERSION}_${ARCH}.tar.gz
+```
+
+4. Move the `eiam` binary into your path:
 
 ```shell
 $ mv ./eiam /usr/local/bin/
 ```
 
-4. Verify the installation
+5. Verify the installation
 
 ```shell
 $ eiam version

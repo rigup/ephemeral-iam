@@ -162,8 +162,3 @@ Global Flags:
 ### Tutorial
 To better familiarize yourself with `ephemeral-iam` and how it works, you can
 follow [the tutorial provided in the documentation](docs/tutorial).
-
-
-# TODO
-- [ ] Add NOTICE file
-- [ ] Unit tests
