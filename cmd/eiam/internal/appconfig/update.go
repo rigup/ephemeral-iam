@@ -25,11 +25,13 @@ var (
 	repoName  = "ephemeral-iam"
 
 	// Version is the currently installed eiam client version.  This is populated by goreleaser when a new release is built
-	Version = "0.0.0"
+	Version = "v0.0.0"
 )
 
 func init() {
-	CheckForNewRelease()
+	if Version != "v0.0.0" {
+		CheckForNewRelease()
+	}
 }
 
 // CheckForNewRelease checks to see if there is a new version of eiam available
