@@ -16,7 +16,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
         with:
-          template: "templates/INSTALL_md.tpl"
+          template: "templates/INSTALL.md.tpl"
           writeTo: "docs/INSTALL.md"
 
       - uses: muesli/readme-scribe@master
