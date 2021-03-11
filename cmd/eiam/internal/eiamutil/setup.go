@@ -9,11 +9,11 @@ import (
 
 // CheckDependencies ensures that the prequisites for running `eiam` are met
 func CheckDependencies() error {
-	gcloudPath, err := checkCommandExists("gcloud")
+	gcloudPath, err := CheckCommandExists("gcloud")
 	if err != nil {
 		return err
 	}
-	kubectlPath, err := checkCommandExists("kubectl")
+	kubectlPath, err := CheckCommandExists("kubectl")
 	if err != nil {
 		return err
 	}
@@ -22,7 +22,8 @@ func CheckDependencies() error {
 	return nil
 }
 
-func checkCommandExists(command string) (string, error) {
+// CheckCommandExists tries to find the location of a given binary
+func CheckCommandExists(command string) (string, error) {
 	path, err := exec.LookPath(command)
 	if err != nil {
 		return "", fmt.Errorf("Failed to find %s binary path: %v", command, err)
