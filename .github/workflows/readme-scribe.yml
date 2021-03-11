@@ -1,7 +1,7 @@
 name: Update Documentation Version Fields
 
 on:
-  push:
+  pull_request:
     branches:
       - main
 
