@@ -25,7 +25,7 @@ var (
 	repoName  = "ephemeral-iam"
 
 	// Version is the currently installed eiam client version.  This is populated by goreleaser when a new release is built
-	Version = "0.0.0"
+	Version = "v0.0.0"
 )
 
 func init() {
@@ -52,7 +52,7 @@ func CheckForNewRelease() {
 	if newestVersion == Version {
 		util.Logger.Debugf("Newest version of eiam (%s) is currently installed", newestVersion)
 	} else {
-		util.Logger.Infof("Found a new version of eiam: %s", newestVersion)
+		util.Logger.Infof("Found a new version of eiam: %s (installed version is %s)", newestVersion, Version)
 		updatePrompt := fmt.Sprintf("Would you like to install eiam %s now", newestVersion)
 		prompt := promptui.Prompt{
 			Label:     updatePrompt,
