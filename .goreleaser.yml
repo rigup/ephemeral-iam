@@ -17,7 +17,7 @@ builds:
       - linux
       - darwin
     ldflags:
-      - -s -w -X 'github.com/jessesomerville/ephemeral-iam/cmd/eiam/cmd.Version={{.Version}}'
+      - -s -w -X 'github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig.Version={{.Version}}'
 archives:
   - replacements:
       darwin: Darwin_macOS
