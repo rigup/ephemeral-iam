@@ -2,6 +2,7 @@ package gcpclient
 
 import (
 	"fmt"
+	"sync"
 
 	"golang.org/x/net/context"
 	crm "google.golang.org/api/cloudresourcemanager/v1"
@@ -14,7 +15,11 @@ import (
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
 )
 
-var ctx = context.Background()
+var (
+	ctx = context.Background()
+
+	wg sync.WaitGroup
+)
 
 // QueryTestablePermissionsOnResource gets the testable permissions on a resource
 // Modified from https://github.com/salrashid123/gcp_iam/blob/main/query/main.go#L71-L108
@@ -33,6 +38,7 @@ func QueryTestablePermissionsOnResource(resource string) ([]string, error) {
 		ps, err := permissionsService.QueryTestablePermissions(&iam.QueryTestablePermissionsRequest{
 			FullResourceName: resource,
 			PageToken:        nextPageToken,
+			PageSize:         1000,
 		}).Do()
 		if err != nil {
 			return []string{}, fmt.Errorf("Failed to query testable permissions on %s: %v", resource, err)
@@ -118,16 +124,24 @@ func QueryProjectPermissions(permsToTest []string, project, serviceAccountEmail,
 		chunked = append(chunked, permsToTest[i:end])
 	}
 
+	wg.Add(len(chunked))
+
 	var userPermissions []string
 	for _, permSet := range chunked {
-		resp, err := crmProjService.TestIamPermissions(project, &crm.TestIamPermissionsRequest{
-			Permissions: permSet,
-		}).Do()
-		if err != nil {
-			return []string{}, fmt.Errorf("Failed to test IAM permissions on project %s: %v", project, err)
-		}
-		userPermissions = append(userPermissions, resp.Permissions...)
+		go func(permissions []string, granted *[]string) {
+			util.Logger.Debugf("Testing permissions %v", permissions)
+			resp, err := crmProjService.TestIamPermissions(project, &crm.TestIamPermissionsRequest{
+				Permissions: permissions,
+			}).Do()
+			if err != nil {
+				util.Logger.Fatalf("Failed to test IAM some permissions on project %s: %v", project, err)
+			}
+			*granted = append(*granted, resp.Permissions...)
+			wg.Done()
+		}(permSet, &userPermissions)
 	}
+	// Wait until each of the go routines have finished before returning
+	wg.Wait()
 
 	return userPermissions, nil
 }

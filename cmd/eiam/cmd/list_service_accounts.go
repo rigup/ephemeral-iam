@@ -47,18 +47,22 @@ func fetchAvailableServiceAccounts() error {
 	if err != nil {
 		return err
 	}
+	util.Logger.Infof("Checking %d service accounts in %s", len(serviceAccounts), listCmdConfig.Project)
 
 	var availableSAs []*iam.ServiceAccount
-	for _, serviceAccount := range serviceAccounts {
-		hasAccess, err := gcpclient.CanImpersonate(listCmdConfig.Project, serviceAccount.Email, listCmdConfig.Reason)
-		if err != nil {
-			return fmt.Errorf("Error checking IAM permissions: %v", err)
-		} else if hasAccess {
-			availableSAs = append(availableSAs, serviceAccount)
-		}
+	for _, svcAcct := range serviceAccounts {
+		go func(serviceAccount *iam.ServiceAccount) {
+			hasAccess, err := gcpclient.CanImpersonate(listCmdConfig.Project, serviceAccount.Email, listCmdConfig.Reason)
+			if err != nil {
+				util.Logger.Errorf("Error checking IAM permissions: %v", err)
+			} else if hasAccess {
+				availableSAs = append(availableSAs, serviceAccount)
+			}
+		}(svcAcct)
 	}
 	if len(availableSAs) == 0 {
 		util.Logger.Warning("You do not have access to impersonate any accounts in this project")
+		return nil
 	}
 
 	printColumns(availableSAs)
