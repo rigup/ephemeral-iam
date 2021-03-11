@@ -76,6 +76,11 @@ func installNewVersion(release *github.RepositoryRelease) {
 			break
 		}
 	}
+	if downloadURL == "" {
+		util.Logger.Error("Failed to find a release version that matches your OS and architecture")
+		util.Logger.Error("Skipping update, please try again later\n")
+		return
+	}
 
 	if err := downloadAndExtract(downloadURL); err != nil {
 		util.Logger.Error(err)
@@ -165,7 +170,7 @@ func formatArch() string {
 	if runtime.GOOS == "linux" {
 		formatted = "Linux"
 	} else if runtime.GOOS == "darwin" {
-		formatted = "Darwin"
+		formatted = "Darwin_macOS"
 	} else {
 		util.Logger.Errorf("Failed to recognize system OS %s", runtime.GOOS)
 		util.Logger.Fatal("Supported values are darwin and linux")
