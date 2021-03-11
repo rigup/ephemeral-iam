@@ -6,7 +6,7 @@ permissions to create the a few resources used throughout.
 Before you begin, ensure that you have successfully installed the `eiam` CLI tool:
 ```
 $ eiam version
-INFO    ephemeral-iam 
+INFO    ephemeral-iam vX.Y.Z
 ```
 
 - [Basic Commands](./basic_commands/README.md)
