@@ -41,7 +41,7 @@ func newCmdListServiceAccounts() *cobra.Command {
 }
 
 func fetchAvailableServiceAccounts() error {
-	util.Logger.Info("Using current project: ", listCmdConfig.Project)
+	util.Logger.Infof("Using current project: %s", listCmdConfig.Project)
 
 	serviceAccounts, err := gcpclient.GetServiceAccounts(listCmdConfig.Project, listCmdConfig.Reason)
 	if err != nil {

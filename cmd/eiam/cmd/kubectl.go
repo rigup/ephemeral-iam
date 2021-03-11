@@ -76,7 +76,7 @@ func runKubectlCommand() error {
 		util.Logger.Fatalln("You do not have access to impersonate this service account")
 	}
 
-	util.Logger.Info("Fetching access token for ", kubectlCmdConfig.ServiceAccountEmail)
+	util.Logger.Infof("Fetching access token for %s", kubectlCmdConfig.ServiceAccountEmail)
 	accessToken, err := gcpclient.GenerateTemporaryAccessToken(kubectlCmdConfig.ServiceAccountEmail, kubectlCmdConfig.Reason)
 	if err != nil {
 		return err

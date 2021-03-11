@@ -16,9 +16,11 @@ builds:
     goos:
       - linux
       - darwin
+    ldflags:
+      - -s -w -X 'github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig.Version={{.Version}}'
 archives:
   - replacements:
-      darwin: Darwin
+      darwin: Darwin_macOS
       linux: Linux
       386: i386
       amd64: x86_64

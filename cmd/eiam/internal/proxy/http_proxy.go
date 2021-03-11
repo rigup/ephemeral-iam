@@ -119,7 +119,7 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 	var oldState *term.State
 	go func() {
 		c := exec.Command("bash")
-		c.Env = append(c.Env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
+		c.Env = append(c.Env, os.Environ()...)
 		c.Env = append(c.Env, buildPrompt(svcAcct))
 
 		ptmx, err := pty.Start(c)
