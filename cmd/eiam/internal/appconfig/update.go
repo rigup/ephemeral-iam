@@ -29,7 +29,9 @@ var (
 )
 
 func init() {
-	CheckForNewRelease()
+	if Version != "v0.0.0" {
+		CheckForNewRelease()
+	}
 }
 
 // CheckForNewRelease checks to see if there is a new version of eiam available

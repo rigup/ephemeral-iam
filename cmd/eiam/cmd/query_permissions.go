@@ -116,7 +116,7 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 			)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			util.Logger.Infof("Querying permissions granted on %s. This can take a few seconds...", resourceString)
+			util.Logger.Infof("Querying permissions granted on %s", resourceString)
 			testablePerms, err := queryiam.QueryTestablePermissionsOnResource(resourceString)
 			if err != nil {
 				util.Logger.Warnf("gcloud is configured to use %s as the default zone. If this is not correct, please provide the zone using the `--zone` flag", queryPermsCmdConfig.Zone)
@@ -161,7 +161,7 @@ func newCmdQueryProjectPermissions() *cobra.Command {
 			resourceString = fmt.Sprintf(projectsRes, queryPermsCmdConfig.Project)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			util.Logger.Infof("Querying permissions granted on %s. This can take a few seconds...", resourceString)
+			util.Logger.Infof("Querying permissions granted on %s", resourceString)
 			testablePerms, err := queryiam.QueryTestablePermissionsOnResource(resourceString)
 			if err != nil {
 				return err
@@ -207,7 +207,7 @@ func newCmdQueryPubSubPermissions() *cobra.Command {
 			resourceString = fmt.Sprintf(pubsubTopicsRes, queryPermsCmdConfig.Project, queryPermsCmdConfig.PubSubTopic)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			util.Logger.Infof("Querying permissions granted on %s. This can take a few seconds...", resourceString)
+			util.Logger.Infof("Querying permissions granted on %s", resourceString)
 			testablePerms, err := queryiam.QueryTestablePermissionsOnResource(resourceString)
 			if err != nil {
 				return err
@@ -253,7 +253,7 @@ func newCmdQueryServiceAccountPermissions() *cobra.Command {
 			resourceString = fmt.Sprintf(serviceAccountsRes, queryPermsCmdConfig.Project, queryPermsCmdConfig.ServiceAccountEmail)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			util.Logger.Infof("Querying permissions granted on %s. This can take a few seconds...", resourceString)
+			util.Logger.Infof("Querying permissions granted on %s", resourceString)
 			testablePerms, err := queryiam.QueryTestablePermissionsOnResource(resourceString)
 			if err != nil {
 				return err
@@ -297,7 +297,7 @@ func newCmdQueryStorageBucketPermissions() *cobra.Command {
 			resourceString = fmt.Sprintf(storageBucketsRes, queryPermsCmdConfig.StorageBucket)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			util.Logger.Infof("Querying permissions granted on %s. This can take a few seconds...", resourceString)
+			util.Logger.Infof("Querying permissions granted on %s", resourceString)
 			testablePerms, err := queryiam.QueryTestablePermissionsOnResource(resourceString)
 			if err != nil {
 				return err
@@ -328,13 +328,19 @@ func newCmdQueryStorageBucketPermissions() *cobra.Command {
 }
 
 func printPermissions(fullPerms, userPerms []string, isServiceAccount bool) {
+	showfullList := true
+	if len(fullPerms) > 100 {
+		showfullList = false
+	}
 	fmt.Println()
 	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 
 	fmt.Fprintln(w, "AVAILABLE\tGRANTED")
 	for _, perm := range fullPerms {
 		if util.Contains(userPerms, perm) {
-			fmt.Fprintf(w, "%s\t%s\n", perm, green("✔"))
+			if showfullList {
+				fmt.Fprintf(w, "%s\t%s\n", perm, green("✔"))
+			}
 		} else {
 			fmt.Fprintf(w, "%s\t%s\n", perm, red("✖"))
 		}
@@ -354,5 +360,7 @@ func printPermissions(fullPerms, userPerms []string, isServiceAccount bool) {
 		} else {
 			util.Logger.Info("You have full access to this resource")
 		}
+	} else if !showfullList {
+		util.Logger.Warning("The total number of permissions is greater than 100 so granted permissions are redacted from the list above")
 	}
 }
