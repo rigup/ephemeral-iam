@@ -4,8 +4,10 @@ go 1.16
 
 require (
 	cloud.google.com/go v0.77.0
+	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883 // indirect
 	github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e
 	github.com/fatih/color v1.10.0
+	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/golang/protobuf v1.4.3
 	github.com/google/go-github/v33 v33.0.0
 	github.com/kirsle/configdir v0.0.0-20170128060238-e45d2f54772f
@@ -13,6 +15,7 @@ require (
 	github.com/lithammer/dedent v1.1.0
 	github.com/manifoldco/promptui v0.8.0
 	github.com/mitchellh/go-wordwrap v1.0.1
+	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/sirupsen/logrus v1.8.0
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
