@@ -49,11 +49,11 @@ func GenerateCerts() error {
 		return fmt.Errorf("Failed to create x509 Cert: %v", err)
 	}
 
-	writeToFile(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes}, "server.pem")
+	writeToFile(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes}, "server.pem", 0o640)
 	if err != nil {
 		return err
 	}
-	writeToFile(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}, "server.key")
+	writeToFile(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}, "server.key", 0o400)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func publicKey(priv interface{}) interface{} {
 	}
 }
 
-func writeToFile(data *pem.Block, filename string) error {
+func writeToFile(data *pem.Block, filename string, perm os.FileMode) error {
 	filepath := filepath.Join(getConfigDir(), filename)
 	fd, err := os.Create(filepath)
 	if err != nil {
@@ -82,5 +82,7 @@ func writeToFile(data *pem.Block, filename string) error {
 	defer fd.Close()
 
 	pem.Encode(fd, data)
+
+	os.Chmod(filename, perm)
 	return nil
 }

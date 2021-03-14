@@ -114,15 +114,14 @@ func QueryProjectPermissions(permsToTest []string, project, serviceAccountEmail,
 
 	// TestIamPermissions accepts a max of 100 permissions at a time so we split them into chunks
 	var chunked [][]string
-	pageSize := (len(permsToTest) + 50 - 1) / 50
-	for i := 0; i < len(permsToTest); i += pageSize {
-		end := i + pageSize
-
-		if end > len(permsToTest) {
-			end = len(permsToTest)
-		}
-		chunked = append(chunked, permsToTest[i:end])
+	numOfChunks := int(len(permsToTest) / 100)
+	for i := 0; i < numOfChunks; i++ {
+		start := i * 100
+		end := start + 100
+		chunked = append(chunked, permsToTest[start:end])
 	}
+	rem := len(permsToTest) % 100
+	chunked = append(chunked, permsToTest[len(permsToTest)-rem:])
 
 	wg.Add(len(chunked))
 

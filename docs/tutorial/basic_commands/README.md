@@ -40,7 +40,7 @@ Use "eiam config [command] --help" for more information about a command.
 $ eiam config print
 
 authproxy:
-  logdir: /Users/jsomerville/Library/Application Support/ephemeral-iam/log
+  logdir: /Users/johndoe/Library/Application Support/ephemeral-iam/log
   proxyaddress: 127.0.0.1
   proxyport: "8084"
   verbose: false
