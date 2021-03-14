@@ -9,8 +9,8 @@ about how the session is handled can be found in the **Conceptual Overview** sec
 > **in its implementation, please add the details of said bug to the issue linked above.**
 
 ## Example Workflow
-Say a user (User1) needs to debug an issue in a Cloud PubSub Topic. To debug the issue, User1 needs to publish test messages
-to the topic, but their requests are being denied due to insufficient privileges.  User1's workflow
+Say a user (UserA) needs to debug an issue in a Cloud PubSub Topic. To debug the issue, UserA needs to publish test messages
+to the topic, but their requests are being denied due to insufficient privileges.  UserA's workflow
 could look something like this:
 
 1. Query their permissions on the PubSub topic
@@ -20,7 +20,7 @@ could look something like this:
 5. Start a privileged session using the `assume-privileges` command to publish their test messages
 
 ### Query their permissions on the PubSub topic
-First, User1 may want to debug why they are unable to publish messages to the topic using the `query-permissions` command:
+First, UserA may want to debug why they are unable to publish messages to the topic using the `query-permissions` command:
 
 ```
 $ eiam query-permissions pubsub --topic example-topic
@@ -37,7 +37,7 @@ pubsub.topics.update                ✖
 pubsub.topics.updateTag             ✖
 ```
 
-As the command output shows, User1 only has the ability to get PubSub topics, but they do not have the `pubsub.topics.publish`
+As the command output shows, UserA only has the ability to get PubSub topics, but they do not have the `pubsub.topics.publish`
 permission that they need.
 
 ### List the available service accounts
@@ -52,7 +52,7 @@ pubsub-admin@example-project.iam.gserviceaccount.com    Service account that gra
 ```
 
 ### Query the permissions granted to the service account
-Now that User1 has a service account email that they can use, they can ensure that it has the `pubsub.topics.publish` permission
+Now that UserA has a service account email that they can use, they can ensure that it has the `pubsub.topics.publish` permission
 that they need to debug the topic:
 
 ```
@@ -72,11 +72,11 @@ pubsub.topics.updateTag             ✔
 INFO    pubsub-admin@example-project.iam.gserviceaccount.com has full access to this resource
 ```
 
-Great!  This service account has the permission User1 needs to debug the topic.
+Great!  This service account has the permission UserA needs to debug the topic.
 
 ### Confirm access to topic
 Before starting a privileged session, it might be worth testing that the service account can indeed publish messages
-to the topic so User1 uses the `eiam gcloud` command:
+to the topic so UserA uses the `eiam gcloud` command:
 
 ```
 $ eiam gcloud pubsub topics publish projects/example-project/topics/example-topic --message="Testing" \
@@ -96,7 +96,7 @@ messageIds:
 ```
 
 ### Starting a privileged debugging session
-Now User1 can start a short-lived privileged session as the service account to continue debugging the Pub/Sub topic:
+Now UserA can start a short-lived privileged session as the service account to continue debugging the Pub/Sub topic:
 
 ```
 $ eiam assume-privileges \
