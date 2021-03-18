@@ -15,12 +15,13 @@ import (
 
 var (
 	// CertFile is the filepath pointing to the TLS cert
-	CertFile = filepath.Join(getConfigDir(), "server.pem")
+	CertFile = filepath.Join(GetConfigDir(), "server.pem")
 	// KeyFile is the filepath pointing to the TLS key
-	KeyFile = filepath.Join(getConfigDir(), "server.key")
+	KeyFile = filepath.Join(GetConfigDir(), "server.key")
 )
 
-func getConfigDir() string {
+// GetConfigDir returns the directory to use for the ephemeral-iam configurations
+func GetConfigDir() string {
 	configPath := configdir.LocalConfig("ephemeral-iam")
 
 	// Check to ensure that the path is user-specific instead of global
@@ -49,7 +50,7 @@ func initConfig() {
 	viper.SetDefault("authproxy.proxyport", "8084")
 	viper.SetDefault("authproxy.verbose", false)
 	viper.SetDefault("authproxy.writetofile", false)
-	viper.SetDefault("authproxy.logdir", filepath.Join(getConfigDir(), "log"))
+	viper.SetDefault("authproxy.logdir", filepath.Join(GetConfigDir(), "log"))
 	viper.SetDefault("logging.format", "text")
 	viper.SetDefault("logging.level", "info")
 	viper.SetDefault("logging.disableleveltruncation", true)
@@ -57,7 +58,7 @@ func initConfig() {
 
 	if err := viper.SafeWriteConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileAlreadyExistsError); !ok {
-			fmt.Fprintf(os.Stderr, "failed to write config file %s/config.yml: %v", getConfigDir(), err)
+			fmt.Fprintf(os.Stderr, "failed to write config file %s/config.yml: %v", GetConfigDir(), err)
 			os.Exit(1)
 		}
 	}

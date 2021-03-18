@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/creack/pty"
 	"github.com/elazarl/goproxy"
+	"github.com/google/uuid"
 	"github.com/lithammer/dedent"
 	"github.com/spf13/viper"
 	"golang.org/x/term"
@@ -115,12 +117,19 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 		<-idleConnsClosed
 	}()
 
+	tmpKubeConfig, err := createTempKubeconfig()
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmpKubeConfig.Name()) // Remove tmpKubeConfig after priv session ends
+
 	wg.Add(1)
 	var oldState *term.State
 	go func() {
 		c := exec.Command("bash")
 		c.Env = append(c.Env, os.Environ()...)
 		c.Env = append(c.Env, buildPrompt(svcAcct))
+		c.Env = append(c.Env, fmt.Sprintf("KUBECONFIG=%s", tmpKubeConfig.Name()))
 
 		ptmx, err := pty.Start(c)
 		if err != nil {
@@ -131,6 +140,7 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 				util.Logger.Fatalf("Failed to close sub-shell file descriptor: %v", err)
 			}
 		}()
+
 		ch := make(chan os.Signal, 1)
 		signal.Notify(ch, syscall.SIGWINCH)
 		go func() {
@@ -158,7 +168,15 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 			}
 		}()
 		if _, err := io.Copy(os.Stdout, ptmx); err != nil {
-			util.Logger.Errorf("failed to copy the pty to stdout: %v", err)
+			// On some linux systems, this error is thrown when CTRL-D is received
+			if serr, ok := err.(*fs.PathError); ok {
+				if serr.Path == "/dev/ptmx" {
+					wg.Done()
+					return
+				}
+			} else {
+				util.Logger.Errorf("failed to copy the pty to stdout: %v", err)
+			}
 		}
 		wg.Done()
 	}()
@@ -202,4 +220,14 @@ func buildPrompt(svcAcct string) string {
 	green := "\\[\\e[36m\\]"
 	endColor := "\\[\\e[m\\]"
 	return fmt.Sprintf("PS1=\n[%s%s%s]\n[%seiam%s] > ", yellow, svcAcct, endColor, green, endColor)
+}
+
+func createTempKubeconfig() (*os.File, error) {
+	configDir := appconfig.GetConfigDir()
+	tmpFileName := uuid.New().String()
+	tmpKubeConfig, err := os.CreateTemp(configDir, tmpFileName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create tmp kubeconfig: %v", err)
+	}
+	return tmpKubeConfig, nil
 }

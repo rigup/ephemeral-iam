@@ -11,6 +11,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/golang/protobuf v1.4.3
 	github.com/google/go-github/v33 v33.0.0
+	github.com/google/uuid v1.1.2
 	github.com/kirsle/configdir v0.0.0-20170128060238-e45d2f54772f
 	github.com/lithammer/dedent v1.1.0
 	github.com/manifoldco/promptui v0.8.0
@@ -22,7 +23,7 @@ require (
 	github.com/spf13/viper v1.7.1
 	golang.org/x/mod v0.4.2
 	golang.org/x/net v0.0.0-20210220033124-5f55cee0dc0d // indirect
-	golang.org/x/sys v0.0.0-20210223212115-eede4237b368 // indirect
+	golang.org/x/sys v0.0.0-20210317225723-c4fcb01b228e // indirect
 	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
 	google.golang.org/api v0.40.0
 	google.golang.org/genproto v0.0.0-20210219173056-d891e3cb3b5b
