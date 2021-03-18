@@ -29,7 +29,7 @@ func FormatReason(reason *string) error {
 func sessionID() (string, error) {
 	bytes := make([]byte, 8)
 	if _, err := rand.Read(bytes); err != nil {
-		return "", fmt.Errorf("Failed to generate random log ID: %v", err)
+		return "", fmt.Errorf("failed to generate random log ID: %v", err)
 	}
 	return hex.EncodeToString(bytes), nil
 }

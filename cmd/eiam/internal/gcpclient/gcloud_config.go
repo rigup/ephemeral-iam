@@ -1,16 +1,22 @@
 package gcpclient
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/user"
 	"path"
+	"strings"
 	"sync"
 
+	"github.com/lithammer/dedent"
+	"github.com/manifoldco/promptui"
+	"github.com/spf13/viper"
 	"gopkg.in/ini.v1"
 
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig"
-	"github.com/spf13/viper"
+	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
 )
 
 var (
@@ -22,22 +28,96 @@ var (
 func readGcloudConfigFromFile() error {
 	usr, err := user.Current()
 	if err != nil {
-		return fmt.Errorf("Failed to get current system user: %v", err)
+		return fmt.Errorf("failed to get current system user: %v", err)
 	}
 	configDir := path.Join(usr.HomeDir, ".config", "gcloud")
 
-	activeConfig, err := ioutil.ReadFile(path.Join(configDir, "active_config"))
+	activeConfig, err := getActiveConfig(configDir)
 	if err != nil {
-		return fmt.Errorf("Unable to read %s: %v", activeConfig, err)
+		return err
 	}
-	configName := fmt.Sprintf("config_%s", string(activeConfig))
+
+	configName := fmt.Sprintf("config_%s", activeConfig)
 	pathToConfig = path.Join(configDir, "configurations", configName)
 
 	gcloudConfig, err = ini.Load(pathToConfig)
 	if err != nil {
-		return fmt.Errorf("Failed to parse gcloud config %s: %v", pathToConfig, err)
+		return fmt.Errorf("failed to parse gcloud config %s: %v", pathToConfig, err)
 	}
 	return nil
+}
+
+func getActiveConfig(configDir string) (string, error) {
+	activeConfigFile := path.Join(configDir, "active_config")
+	if _, err := os.Stat(activeConfigFile); os.IsNotExist(err) {
+		util.Logger.Warn("No active gcloud config is set. Attempting to set one")
+		configurationsDir := path.Join(configDir, "configurations")
+		if _, err := os.Stat(configurationsDir); os.IsNotExist(err) {
+			if err := os.Mkdir(configurationsDir, 0o755); err != nil {
+				return "", err
+			}
+			defaultConfig := path.Join(configurationsDir, "config_default")
+			if _, err := os.Create(defaultConfig); err != nil {
+				return "", err
+			}
+		}
+
+		activeConfig, err := setActiveConfig(configurationsDir, activeConfigFile)
+		if err != nil {
+			return "", err
+		}
+		return activeConfig, nil
+	}
+
+	configFromFile, err := ioutil.ReadFile(activeConfigFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to get active gcloud config: %v", err)
+	}
+	return string(configFromFile), nil
+}
+
+func setActiveConfig(configsDir, activeConfigFile string) (string, error) {
+	var configName string
+	if configs, err := os.ReadDir(configsDir); err != nil {
+		return "", fmt.Errorf("failed to get active gcloud config: %v", err)
+	} else if len(configs) == 0 {
+		return "", errors.New("there are no existing gcloud configurations")
+	} else if len(configs) == 1 {
+		configName = strings.Split(configs[0].Name(), "_")[1]
+	} else {
+		var configNames []string
+		for _, name := range configs {
+			configNames = append(configNames, strings.Split(name.Name(), "_")[1])
+		}
+		chosenConfig, err := promptForConfigToSet(configNames)
+		if err != nil {
+			return "", errors.New("failed to select active config")
+		}
+		configName = chosenConfig
+	}
+
+	fd, err := os.Create(activeConfigFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to set active gcloud config: %v", err)
+	}
+	defer fd.Close()
+
+	util.Logger.Infof("Setting active gcloud config to %s", configName)
+	fd.Write([]byte(configName))
+	return configName, nil
+}
+
+func promptForConfigToSet(configs []string) (string, error) {
+	prompt := promptui.Select{
+		Label: "Select which config to use",
+		Items: configs,
+	}
+
+	_, result, err := prompt.Run()
+	if err != nil {
+		return "", err
+	}
+	return result, nil
 }
 
 func getGcloudConfig() (configErr error) {
@@ -58,7 +138,7 @@ func ConfigureGcloudProxy() error {
 	gcloudConfig.Section("proxy").Key("type").SetValue("http")
 	gcloudConfig.Section("core").Key("custom_ca_certs_file").SetValue(appconfig.CertFile)
 	if err := gcloudConfig.SaveTo(pathToConfig); err != nil {
-		return fmt.Errorf("Failed to update gcloud configuration: %v", err)
+		return fmt.Errorf("failed to update gcloud configuration: %v", err)
 	}
 	return nil
 }
@@ -74,9 +154,29 @@ func UnsetGcloudProxy() error {
 	gcloudConfig.Section("proxy").DeleteKey("type")
 	gcloudConfig.Section("core").DeleteKey("custom_ca_certs_file")
 	if err := gcloudConfig.SaveTo(pathToConfig); err != nil {
-		return fmt.Errorf("Failed to revert gcloud configuration: %v", err)
+		return fmt.Errorf("failed to revert gcloud configuration: %v", err)
 	}
 	return nil
+}
+
+// CheckActiveAccountSet ensures that the current gcloud config has an active account value
+func CheckActiveAccountSet() (string, error) {
+	if err := getGcloudConfig(); err != nil {
+		return "", err
+	}
+	if acct := gcloudConfig.Section("core").Key("account").String(); acct == "" {
+		return "", fmt.Errorf(dedent.Dedent(`no active account set for gcloud. please run:
+		
+		  $ gcloud auth login
+		  
+		to obtain new credentials.  If you have already logged in with a different account:
+		
+		  $ gcloud config set account ACCOUNT
+		  
+	 	to select an already authenticated account to use.`))
+	} else {
+		return acct, nil
+	}
 }
 
 // GetCurrentProject get the active project from the gcloud config

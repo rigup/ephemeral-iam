@@ -15,8 +15,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/creack/pty"
 	"github.com/elazarl/goproxy"
-	"github.com/kr/pty"
 	"github.com/lithammer/dedent"
 	"github.com/spf13/viper"
 	"golang.org/x/term"
@@ -47,7 +47,7 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 		_, err := os.Stat(viper.GetString("authproxy.logdir"))
 		if os.IsNotExist(err) {
 			if err := os.MkdirAll(viper.GetString("authproxy.logdir"), 0o755); err != nil {
-				return fmt.Errorf("Failed to create proxy log directory: %v", err)
+				return fmt.Errorf("failed to create proxy log directory: %v", err)
 			}
 		}
 		// Create log file
@@ -55,7 +55,7 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 		logFilename := filepath.Join(viper.GetString("authproxy.logdir"), fmt.Sprintf("%s_auth_proxy.log", timestamp))
 		logFile, err := os.OpenFile(logFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
 		if err != nil {
-			return fmt.Errorf("Failed to create log file: %v", err)
+			return fmt.Errorf("failed to create log file: %v", err)
 		}
 
 		// I'm not calling logFile.Close() because it gets invoked too early
@@ -93,12 +93,12 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 		// TODO: Don't think I'm handling these errors correctly
 		// An interrupt signal was received, shutdown the proxy server
 		if err := srv.Shutdown(context.Background()); err != nil {
-			retErr = fmt.Errorf("Failed to properly shut down proxy server: %v", err)
+			retErr = fmt.Errorf("failed to properly shut down proxy server: %v", err)
 		}
 		close(idleConnsClosed)
 		util.Logger.Info("Stopping auth proxy and restoring gcloud config")
 		if err := gcpclient.UnsetGcloudProxy(); err != nil {
-			retErr = fmt.Errorf("Failed to reset gcloud configuration: %v", err)
+			retErr = fmt.Errorf("failed to reset gcloud configuration: %v", err)
 		}
 		os.Exit(0)
 	}()
@@ -154,11 +154,11 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 
 		go func() {
 			if _, err := io.Copy(ptmx, os.Stdin); err != nil {
-				util.Logger.Errorf("Failed to copy stdin to the pty: %v", err)
+				util.Logger.Errorf("failed to copy stdin to the pty: %v", err)
 			}
 		}()
 		if _, err := io.Copy(os.Stdout, ptmx); err != nil {
-			util.Logger.Errorf("Failed to copy the pty to stdout: %v", err)
+			util.Logger.Errorf("failed to copy the pty to stdout: %v", err)
 		}
 		wg.Done()
 	}()
@@ -178,7 +178,7 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 
 	util.Logger.Info("Privileged session expired, stopping auth proxy and restoring gcloud config")
 	if err := srv.Shutdown(context.Background()); err != nil {
-		return fmt.Errorf("Failed to properly shut down proxy server: %v", err)
+		return fmt.Errorf("failed to properly shut down proxy server: %v", err)
 	}
 	if err := gcpclient.UnsetGcloudProxy(); err != nil {
 		util.Logger.Warn("Failed to revert gcloud configuration! Please run the following command to manually fix this issue:")
@@ -188,7 +188,7 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 			  && gcloud config unset proxy/type \
 			  && gcloud config unset core/custom_ca_certs_file
 		`))
-		retErr = fmt.Errorf("Failed to reset gcloud configuration: %v", err)
+		retErr = fmt.Errorf("failed to reset gcloud configuration: %v", err)
 	}
 	return nil
 }

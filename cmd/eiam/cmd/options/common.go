@@ -53,6 +53,9 @@ func AddProjectFlag(fs *pflag.FlagSet, project *string) {
 	util.CheckError(err)
 
 	fs.StringVarP(project, ProjectFlag.Name, ProjectFlag.Shorthand, defaultVal, "The GCP project. Inherits from the active gcloud config by default")
+	if defaultVal == "" {
+		fs.SetAnnotation(ProjectFlag.Name, RequiredAnnotation, []string{"true"})
+	}
 }
 
 // AddRegionFlag adds the --region/-r flag to the command

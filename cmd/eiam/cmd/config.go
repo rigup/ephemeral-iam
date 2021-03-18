@@ -114,25 +114,25 @@ func newCmdConfigSet() *cobra.Command {
 		Short: "Set the value of a provided config item",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
-				return errors.New("Requires both a config key and a new value")
+				return errors.New("requires both a config key and a new value")
 			}
 
 			if !util.Contains(viper.AllKeys(), args[0]) {
-				return fmt.Errorf("Invalid config key %s", args[0])
+				return fmt.Errorf("invalid config key %s", args[0])
 			}
 
 			if args[0] == "logging.level" {
 				if !util.Contains(LoggingLevels, args[1]) {
-					return fmt.Errorf("Logging level must be one of %v", LoggingLevels)
+					return fmt.Errorf("logging level must be one of %v", LoggingLevels)
 				}
 			} else if args[0] == "logging.format" {
 				if !util.Contains(LoggingFormats, args[1]) {
-					return fmt.Errorf("Logging format must be one of %v", LoggingFormats)
+					return fmt.Errorf("logging format must be one of %v", LoggingFormats)
 				}
 			} else if util.Contains(BoolConfigFields, args[0]) {
 				_, err := strconv.ParseBool(args[1])
 				if err != nil {
-					return fmt.Errorf("The %s value must be either true or false", args[0])
+					return fmt.Errorf("the %s value must be either true or false", args[0])
 				}
 			}
 			return nil

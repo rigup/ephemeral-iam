@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"text/tabwriter"
 
 	"github.com/lithammer/dedent"
@@ -16,7 +17,10 @@ import (
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient"
 )
 
-var listCmdConfig options.CmdConfig
+var (
+	listCmdConfig options.CmdConfig
+	wg            sync.WaitGroup
+)
 
 func newCmdListServiceAccounts() *cobra.Command {
 	cmd := &cobra.Command{
@@ -28,9 +32,11 @@ func newCmdListServiceAccounts() *cobra.Command {
 			GCP project (as determined by the activated gcloud config) and checks each of them to see
 			which ones the current user has access to impersonate.`),
 		Example: dedent.Dedent(`
-			eiam list-service-accounts
-		
-			eiam list`),
+			$ eiam list-service-accounts
+			$ eiam list`),
+		PreRun: func(cmd *cobra.Command, args []string) {
+			cmd.Flags().VisitAll(options.CheckRequired)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return fetchAvailableServiceAccounts()
 		},
@@ -49,17 +55,22 @@ func fetchAvailableServiceAccounts() error {
 	}
 	util.Logger.Infof("Checking %d service accounts in %s", len(serviceAccounts), listCmdConfig.Project)
 
+	wg.Add(len(serviceAccounts))
+
 	var availableSAs []*iam.ServiceAccount
 	for _, svcAcct := range serviceAccounts {
 		go func(serviceAccount *iam.ServiceAccount) {
 			hasAccess, err := gcpclient.CanImpersonate(listCmdConfig.Project, serviceAccount.Email, listCmdConfig.Reason)
 			if err != nil {
-				util.Logger.Errorf("Error checking IAM permissions: %v", err)
+				util.Logger.Errorf("error checking IAM permissions: %v", err)
 			} else if hasAccess {
 				availableSAs = append(availableSAs, serviceAccount)
 			}
+			wg.Done()
 		}(svcAcct)
 	}
+	wg.Wait()
+
 	if len(availableSAs) == 0 {
 		util.Logger.Warning("You do not have access to impersonate any accounts in this project")
 		return nil

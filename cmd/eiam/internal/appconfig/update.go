@@ -99,7 +99,7 @@ func installNewVersion(release *github.RepositoryRelease) {
 
 	tmpLoc := filepath.Join(os.TempDir(), "eiam")
 	if err := os.Rename(tmpLoc, installPath); err != nil {
-		util.Logger.Errorf("Failed to move %s to %s", tmpLoc, installPath)
+		util.Logger.Errorf("failed to move %s to %s", tmpLoc, installPath)
 		return
 	}
 	util.Logger.Info("Update completed successfully")
@@ -111,7 +111,7 @@ func downloadAndExtract(url string) error {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		return fmt.Errorf("Failed to download release from %s: %v", url, err)
+		return fmt.Errorf("failed to download release from %s: %v", url, err)
 	}
 	defer resp.Body.Close()
 
@@ -174,7 +174,7 @@ func formatArch() string {
 	} else if runtime.GOOS == "darwin" {
 		formatted = "Darwin_macOS"
 	} else {
-		util.Logger.Errorf("Failed to recognize system OS %s", runtime.GOOS)
+		util.Logger.Errorf("failed to recognize system OS %s", runtime.GOOS)
 		util.Logger.Fatal("Supported values are darwin and linux")
 	}
 

@@ -90,7 +90,7 @@ func runKubectlCommand() error {
 
 	if err := c.Run(); err != nil {
 		fullCmd := fmt.Sprintf("kubectl %s", strings.Join(kubectlCmdArgs, " "))
-		return fmt.Errorf("Error running command [%s]: %v", fullCmd, err)
+		return fmt.Errorf("error running command [%s]: %v", fullCmd, err)
 	}
 
 	return nil
