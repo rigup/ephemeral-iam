@@ -21,15 +21,14 @@ func FormatReason(reason *string) error {
 		return err
 	}
 
-	s := fmt.Sprintf("ephemeral-iam %s: %s", randomID, *reason)
-	reason = &s
+	*reason = fmt.Sprintf("ephemeral-iam %s: %s", randomID, *reason)
 	return nil
 }
 
 func sessionID() (string, error) {
 	bytes := make([]byte, 8)
 	if _, err := rand.Read(bytes); err != nil {
-		return "", fmt.Errorf("Failed to generate random log ID: %v", err)
+		return "", fmt.Errorf("failed to generate random log ID: %v", err)
 	}
 	return hex.EncodeToString(bytes), nil
 }

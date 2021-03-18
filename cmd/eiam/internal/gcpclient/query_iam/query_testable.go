@@ -1,10 +1,10 @@
 package gcpclient
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
-	"golang.org/x/net/context"
 	crm "google.golang.org/api/cloudresourcemanager/v1"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/iam/v1"
@@ -26,7 +26,7 @@ var (
 func QueryTestablePermissionsOnResource(resource string) ([]string, error) {
 	iamService, err := iam.NewService(ctx)
 	if err != nil {
-		return []string{}, fmt.Errorf("Failed to create Cloud IAM SDK Client: %v", err)
+		return []string{}, &util.SDKClientCreateError{Err: err, ResourceType: "Cloud IAM"}
 	}
 	permissionsService := iam.NewPermissionsService(iamService)
 
@@ -41,7 +41,7 @@ func QueryTestablePermissionsOnResource(resource string) ([]string, error) {
 			PageSize:         1000,
 		}).Do()
 		if err != nil {
-			return []string{}, fmt.Errorf("Failed to query testable permissions on %s: %v", resource, err)
+			return []string{}, fmt.Errorf("failed to query testable permissions on %s: %v", resource, err)
 		}
 
 		for _, perm := range ps.Permissions {
@@ -66,13 +66,13 @@ func QueryComputeInstancePermissions(permsToTest []string, project, zone, instan
 		if svc, err := compute.NewService(ctx, clientOptions...); err == nil {
 			computeService = svc
 		} else {
-			return []string{}, fmt.Errorf("Failed to create Compute SDK Client with service account %s: %v", serviceAccountEmail, err)
+			return []string{}, &util.SDKClientCreateError{Err: err, ResourceType: "Compute", ServiceAccount: serviceAccountEmail}
 		}
 	} else {
 		if svc, err := compute.NewService(ctx); err == nil {
 			computeService = svc
 		} else {
-			return []string{}, fmt.Errorf("Failed to create Compute SDK Client: %v", err)
+			return []string{}, &util.SDKClientCreateError{Err: err, ResourceType: "Compute"}
 		}
 	}
 
@@ -86,7 +86,7 @@ func QueryComputeInstancePermissions(permsToTest []string, project, zone, instan
 		Permissions: permsToTest,
 	}).Do()
 	if err != nil {
-		return []string{}, fmt.Errorf("Failed to test IAM permissions on instance %s: %v", instance, err)
+		return []string{}, fmt.Errorf("failed to test IAM permissions on instance %s: %v", instance, err)
 	}
 
 	return resp.Permissions, nil
@@ -101,13 +101,13 @@ func QueryProjectPermissions(permsToTest []string, project, serviceAccountEmail,
 		if svc, err := crm.NewService(ctx, clientOptions...); err == nil {
 			crmService = svc
 		} else {
-			return []string{}, fmt.Errorf("Failed to create Cloud Resource Manager SDK Client with service account %s: %v", serviceAccountEmail, err)
+			return []string{}, &util.SDKClientCreateError{Err: err, ResourceType: "Cloud Resource Manager", ServiceAccount: serviceAccountEmail}
 		}
 	} else {
 		if svc, err := crm.NewService(ctx); err == nil {
 			crmService = svc
 		} else {
-			return []string{}, fmt.Errorf("Failed to create Cloud Resource Manager SDK Client: %v", err)
+			return []string{}, &util.SDKClientCreateError{Err: err, ResourceType: "Cloud Resource Manager"}
 		}
 	}
 	crmProjService := crm.NewProjectsService(crmService)
@@ -153,13 +153,13 @@ func QueryPubSubPermissions(permsToTest []string, project, topic, serviceAccount
 		if svc, err := pubsub.NewService(ctx, clientOptions...); err == nil {
 			pubsubService = svc
 		} else {
-			return []string{}, fmt.Errorf("Failed to create PubSub SDK Client with service account %s: %v", serviceAccountEmail, err)
+			return []string{}, &util.SDKClientCreateError{Err: err, ResourceType: "PubSub", ServiceAccount: serviceAccountEmail}
 		}
 	} else {
 		if svc, err := pubsub.NewService(ctx); err == nil {
 			pubsubService = svc
 		} else {
-			return []string{}, fmt.Errorf("Failed to create PubSub SDK Client: %v", err)
+			return []string{}, &util.SDKClientCreateError{Err: err, ResourceType: "PubSub"}
 		}
 	}
 
@@ -170,7 +170,7 @@ func QueryPubSubPermissions(permsToTest []string, project, topic, serviceAccount
 		Permissions: permsToTest,
 	}).Do()
 	if err != nil {
-		return []string{}, fmt.Errorf("Failed to test IAM permissions on PubSub topic %s: %v", resource, err)
+		return []string{}, fmt.Errorf("failed to test IAM permissions on PubSub topic %s: %v", resource, err)
 	}
 
 	return resp.Permissions, nil
@@ -181,7 +181,7 @@ func QueryPubSubPermissions(permsToTest []string, project, topic, serviceAccount
 func QueryServiceAccountPermissions(permsToTest []string, project, email string) ([]string, error) {
 	iamService, err := iam.NewService(ctx)
 	if err != nil {
-		return []string{}, fmt.Errorf("Failed to create Cloud IAM SDK Client: %v", err)
+		return []string{}, &util.SDKClientCreateError{Err: err, ResourceType: "Cloud IAM"}
 	}
 	saIamService := iam.NewProjectsServiceAccountsService(iamService)
 
@@ -190,7 +190,7 @@ func QueryServiceAccountPermissions(permsToTest []string, project, email string)
 		Permissions: permsToTest,
 	}).Do()
 	if err != nil {
-		return []string{}, fmt.Errorf("Failed to test IAM permissions on %s: %v", resource, err)
+		return []string{}, fmt.Errorf("failed to test IAM permissions on %s: %v", resource, err)
 	}
 
 	return resp.Permissions, nil
@@ -205,13 +205,13 @@ func QueryStorageBucketPermissions(permsToTest []string, bucket, serviceAccountE
 		if svc, err := storage.NewService(ctx, clientOptions...); err == nil {
 			storageService = svc
 		} else {
-			return []string{}, fmt.Errorf("Failed to create Cloud Storage SDK Client with service account %s: %v", serviceAccountEmail, err)
+			return []string{}, &util.SDKClientCreateError{Err: err, ResourceType: "Cloud Storage", ServiceAccount: serviceAccountEmail}
 		}
 	} else {
 		if svc, err := storage.NewService(ctx); err == nil {
 			storageService = svc
 		} else {
-			return []string{}, fmt.Errorf("Failed to create Cloud Storage SDK Client: %v", err)
+			return []string{}, &util.SDKClientCreateError{Err: err, ResourceType: "Cloud Storage"}
 		}
 	}
 
@@ -223,7 +223,7 @@ func QueryStorageBucketPermissions(permsToTest []string, bucket, serviceAccountE
 
 	resp, err := storageService.Buckets.TestIamPermissions(bucket, permsToTest).Do()
 	if err != nil {
-		return []string{}, fmt.Errorf("Failed to test IAM permissions on bucket %s: %v", bucket, err)
+		return []string{}, fmt.Errorf("failed to test IAM permissions on bucket %s: %v", bucket, err)
 	}
 	return resp.Permissions, nil
 }

@@ -90,7 +90,7 @@ func runGcloudCommand() error {
 
 	if err := c.Run(); err != nil {
 		fullCmd := fmt.Sprintf("gcloud %s", strings.Join(gcloudCmdArgs, " "))
-		return fmt.Errorf("Error: %v for command [%s]", err, fullCmd)
+		return fmt.Errorf("error running command [%s]: %v", fullCmd, err)
 	}
 	return nil
 }

@@ -50,3 +50,6 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.jsondist/
+
+# Ignore local testing scripts
+scripts/

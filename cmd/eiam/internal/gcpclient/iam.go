@@ -3,6 +3,7 @@ package gcpclient
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/golang/protobuf/ptypes/duration"
 	gcp "google.golang.org/api/container/v1"
@@ -10,6 +11,7 @@ import (
 	"google.golang.org/api/option"
 	credentialspb "google.golang.org/genproto/googleapis/iam/credentials/v1"
 
+	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
 	queryiam "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient/query_iam"
 )
 
@@ -40,7 +42,7 @@ func GenerateTemporaryAccessToken(serviceAccountEmail, reason string) (*credenti
 
 	resp, err := client.GenerateAccessToken(ctx, &req)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to generate GCP access token for service account %s: %v", serviceAccountEmail, err)
+		return nil, fmt.Errorf("failed to generate GCP access token for service account %s: %v", serviceAccountEmail, err)
 	}
 	return resp, nil
 }
@@ -59,12 +61,10 @@ func GetServiceAccounts(project, reason string) ([]*iam.ServiceAccount, error) {
 	var serviceAccounts []*iam.ServiceAccount
 
 	if err := req.Pages(ctx, func(page *iam.ListServiceAccountsResponse) error {
-		for _, serviceAccount := range page.Accounts {
-			serviceAccounts = append(serviceAccounts, serviceAccount)
-		}
+		serviceAccounts = append(serviceAccounts, page.Accounts...)
 		return nil
 	}); err != nil {
-		return []*iam.ServiceAccount{}, fmt.Errorf("An error occurred while fetching service accounts: %v", err)
+		return []*iam.ServiceAccount{}, fmt.Errorf("an error occurred while fetching service accounts: %v", err)
 	}
 	return serviceAccounts, nil
 }
@@ -83,6 +83,7 @@ func CanImpersonate(project, serviceAccountEmail, reason string) (bool, error) {
 		return false, err
 	}
 
+	util.Logger.Debugf("Permissions on %s: \n%s\n", serviceAccountEmail, strings.Join(perms, "\n"))
 	for _, permission := range perms {
 		if permission == "iam.serviceAccounts.getAccessToken" {
 			return true, nil
@@ -94,7 +95,7 @@ func CanImpersonate(project, serviceAccountEmail, reason string) (bool, error) {
 func newServiceAccountClient(reason string) (*iam.ProjectsServiceAccountsService, error) {
 	iamService, err := iam.NewService(context.Background(), option.WithRequestReason(reason))
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create Cloud IAM SDK client: %v", err)
+		return nil, fmt.Errorf("failed to create Cloud IAM SDK client: %v", err)
 	}
 
 	return iam.NewProjectsServiceAccountsService(iamService), nil

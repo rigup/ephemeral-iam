@@ -1,6 +1,10 @@
 package options
 
-import "github.com/spf13/pflag"
+import (
+	"github.com/spf13/pflag"
+
+	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
+)
 
 // Flag names and shorthands
 var (
@@ -13,7 +17,9 @@ var (
 func AddComputeInstanceFlag(fs *pflag.FlagSet, instance *string, required bool) {
 	fs.StringVarP(instance, ComputeInstanceFlag.Name, ComputeInstanceFlag.Shorthand, "", "The name of the compute instance")
 	if required {
-		fs.SetAnnotation(ComputeInstanceFlag.Name, RequiredAnnotation, []string{"true"})
+		if err := fs.SetAnnotation(ComputeInstanceFlag.Name, RequiredAnnotation, []string{"true"}); err != nil {
+			util.Logger.Fatalf("failed to set required annotation on flag: %v", err)
+		}
 	}
 }
 
@@ -21,7 +27,9 @@ func AddComputeInstanceFlag(fs *pflag.FlagSet, instance *string, required bool) 
 func AddPubSubTopicFlag(fs *pflag.FlagSet, topic *string, required bool) {
 	fs.StringVarP(topic, PubSubTopicFlag.Name, PubSubTopicFlag.Shorthand, "", "The name of the Pub/Sub topic")
 	if required {
-		fs.SetAnnotation(PubSubTopicFlag.Name, RequiredAnnotation, []string{"true"})
+		if err := fs.SetAnnotation(PubSubTopicFlag.Name, RequiredAnnotation, []string{"true"}); err != nil {
+			util.Logger.Fatalf("failed to set required annotation on flag: %v", err)
+		}
 	}
 }
 
@@ -29,6 +37,8 @@ func AddPubSubTopicFlag(fs *pflag.FlagSet, topic *string, required bool) {
 func AddStorageBucketFlag(fs *pflag.FlagSet, bucket *string, required bool) {
 	fs.StringVarP(bucket, StorageBucketFlag.Name, StorageBucketFlag.Shorthand, "", "The name of the storage bucket")
 	if required {
-		fs.SetAnnotation(StorageBucketFlag.Name, RequiredAnnotation, []string{"true"})
+		if err := fs.SetAnnotation(StorageBucketFlag.Name, RequiredAnnotation, []string{"true"}); err != nil {
+			util.Logger.Fatalf("failed to set required annotation on flag: %v", err)
+		}
 	}
 }

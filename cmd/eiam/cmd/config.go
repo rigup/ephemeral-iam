@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/lithammer/dedent"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -14,9 +15,9 @@ import (
 )
 
 var (
-	loggingLevels    = []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
-	loggingFormats   = []string{"text", "json"}
-	boolConfigFields = []string{
+	LoggingLevels    = []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
+	LoggingFormats   = []string{"text", "json"}
+	BoolConfigFields = []string{
 		"authproxy.verbose",
 		"authproxy.writetofile",
 		"logging.disableleveltruncation",
@@ -28,21 +29,25 @@ var configInfo = dedent.Dedent(`
 		┏━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 		┃ Key                    ┃ Description                                         ┃
 		┡━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-		│ AuthProxy.ProxyAddress │ The address to the auth proxy. You shouldn't need   │
+		│ authproxy.proxyaddress │ The address to the auth proxy. You shouldn't need   │
 		│                        │ to update this                                      │
 		├────────────────────────┼─────────────────────────────────────────────────────┤
-		│ AuthProxy.ProxyPort    │ The port to run the auth proxy on                   │
+		│ authproxy.proxyport    │ The port to run the auth proxy on                   │
 		├────────────────────────┼─────────────────────────────────────────────────────┤
-		│ AuthProxy.Verbose      │ Enables verbose logging output from the auth proxy  │
+		│ authproxy.verbose      │ Enables verbose logging output from the auth proxy  │
 		├────────────────────────┼─────────────────────────────────────────────────────┤
-		│ AuthProxy.WriteToFile  │ Enables writing auth proxy logs to a log file       │
+		│ authproxy.writetofile  │ Enables writing auth proxy logs to a log file       │
 		├────────────────────────┼─────────────────────────────────────────────────────┤
-		│ AuthProxy.LogDir       │ The directory to write auth proxy logs to           │
+		│ authproxy.logdir       │ The directory to write auth proxy logs to           │
 		├────────────────────────┼─────────────────────────────────────────────────────┤
-		│ Logging.Format         │ The format for the console logs.                    │
+		│ binarypaths.gcloud     │ The absolute path to the gcloud binary              │
+		├────────────────────────┼─────────────────────────────────────────────────────┤
+		│ binarypaths.kubectl    │ The absolute path to the kubectl binary             │
+		├────────────────────────┼─────────────────────────────────────────────────────┤
+		│ logging.format         │ The format for the console logs.                    │
 		│                        │ Can be either 'json' or 'text'                      │
 		├────────────────────────┼─────────────────────────────────────────────────────┤
-		│ Logging.Level          │ The logging level to write to the console.          │
+		│ logging.level          │ The logging level to write to the console.          │
 		│                        │ Can be one of "trace", "debug", "info", "warn",     │
 		│                        │ "error", "fatal", "panic"                           │
 		└────────────────────────┴─────────────────────────────────────────────────────┘
@@ -110,38 +115,60 @@ func newCmdConfigSet() *cobra.Command {
 		Short: "Set the value of a provided config item",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
-				return errors.New("Requires both a config key and a new value")
+				return errors.New("requires both a config key and a new value")
 			}
 
 			if !util.Contains(viper.AllKeys(), args[0]) {
-				return fmt.Errorf("Invalid config key %s", args[0])
+				return fmt.Errorf("invalid config key %s", args[0])
 			}
 
 			if args[0] == "logging.level" {
-				if !util.Contains(loggingLevels, args[1]) {
-					return fmt.Errorf("Logging level must be one of %v", loggingLevels)
+				if !util.Contains(LoggingLevels, args[1]) {
+					return fmt.Errorf("logging level must be one of %v", LoggingLevels)
 				}
 			} else if args[0] == "logging.format" {
-				if !util.Contains(loggingFormats, args[1]) {
-					return fmt.Errorf("Logging format must be one of %v", loggingFormats)
+				if !util.Contains(LoggingFormats, args[1]) {
+					return fmt.Errorf("logging format must be one of %v", LoggingFormats)
 				}
-			} else if util.Contains(boolConfigFields, args[0]) {
+			} else if util.Contains(BoolConfigFields, args[0]) {
 				_, err := strconv.ParseBool(args[1])
 				if err != nil {
-					return fmt.Errorf("The %s value must be either true or false", args[0])
+					return fmt.Errorf("the %s value must be either true or false", args[0])
 				}
 			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			oldVal := viper.Get(args[0])
-			if util.Contains(boolConfigFields, args[0]) {
+
+			if util.Contains(BoolConfigFields, args[0]) {
 				newValue, _ := strconv.ParseBool(args[1])
 				viper.Set(args[0], newValue)
 			} else {
 				viper.Set(args[0], args[1])
 			}
-			viper.WriteConfig()
+			switch args[0] {
+			case "logging.level":
+				level, err := logrus.ParseLevel(args[1])
+				if err != nil {
+					return err
+				}
+				util.Logger.Level = level
+			case "logging.format":
+				switch args[1] {
+				case "json":
+					util.Logger.Formatter = new(logrus.JSONFormatter)
+
+				default:
+					util.Logger.Formatter = &logrus.TextFormatter{
+						DisableLevelTruncation: viper.GetBool("logging.disableleveltruncation"),
+						PadLevelText:           viper.GetBool("logging.padleveltext"),
+						DisableTimestamp:       true,
+					}
+				}
+
+			}
+			util.CheckError(viper.WriteConfig())
 			util.Logger.Infof("Updated %s from %v to %s", args[0], oldVal, args[1])
 			return nil
 		},

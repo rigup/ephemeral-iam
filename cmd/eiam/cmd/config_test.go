@@ -1,0 +1,236 @@
+package cmd
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"strings"
+	"testing"
+
+	"github.com/andreyvit/diff"
+	"github.com/lithammer/dedent"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
+)
+
+var (
+	configCommand     = newCmdConfig()
+	configViewCommand = newCmdConfigView()
+	configSetCommand  = newCmdConfigSet()
+
+	allSettings map[string]interface{}
+)
+
+func init() {
+	allSettings = make(map[string]interface{}, len(viper.AllKeys()))
+	for _, configKey := range viper.AllKeys() {
+		allSettings[configKey] = viper.Get(configKey)
+	}
+}
+
+// https://chromium.googlesource.com/external/github.com/spf13/cobra/+/refs/heads/master/command_test.go
+func executeCommand(root *cobra.Command, args ...string) (output string, err error) {
+	_, output, err = executeCommandC(root, args...)
+	return output, err
+}
+
+func executeCommandC(root *cobra.Command, args ...string) (c *cobra.Command, output string, err error) {
+	buf := new(bytes.Buffer)
+	util.Logger.Out = buf
+	root.SetOut(buf)
+	root.SetErr(buf)
+	root.SetArgs(args)
+
+	c, err = root.ExecuteC()
+
+	return c, buf.String(), err
+}
+
+func TestConfigNoSubCommand(t *testing.T) {
+	expectedOutput := dedent.Dedent(`
+        Manage configuration values
+
+        Usage:
+          config [command]
+
+        Available Commands:
+          help        Help about any command
+          info        Print information about config fields
+          print       Print the current configuration
+          set         Set the value of a provided config item
+          view        View the value of a provided config item
+
+        Flags:
+          -h, --help   help for config
+
+        Use "config [command] --help" for more information about a command.`)
+
+	output, err := executeCommand(configCommand)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if strings.TrimSpace(output) != strings.TrimSpace(expectedOutput) {
+		t.Errorf("unexpected output:\n%s", diff.LineDiff(expectedOutput, output))
+	}
+}
+
+func TestConfigViewCommand(t *testing.T) {
+	for configKey, configValue := range allSettings {
+		output, err := executeCommand(configViewCommand, configKey)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		expectedOutput := fmt.Sprintf("%s: %v", configKey, configValue)
+		if !strings.Contains(output, expectedOutput) {
+			t.Errorf("unexpected output:\nEXPECTED TO FIND: level=info msg=\"%s\"\nACTUAL: %s", expectedOutput, output)
+		}
+	}
+}
+
+func TestConfigSetCommandWithoutSufficientArgs(t *testing.T) {
+	output, err := executeCommand(configSetCommand)
+	if err == nil {
+		t.Errorf("expected error caused by passing no input arguments\nOUTPUT:\n%s", output)
+	}
+	expectedOutput := "requires both a config key and a new value"
+	if !strings.Contains(output, expectedOutput) {
+		t.Errorf("unexpected output:\nEXPECTED TO FIND: %s\nACTUAL: %v", expectedOutput, output)
+	}
+	output, err = executeCommand(configSetCommand, "logging.level")
+	if err == nil {
+		t.Errorf("expected error caused by passing only one input argument\nOUTPUT:\n%s", output)
+	}
+	if !strings.Contains(output, expectedOutput) {
+		t.Errorf("unexpected output:\nEXPECTED TO FIND: %s\nACTUAL: %s", expectedOutput, output)
+	}
+}
+
+func TestConfigSetCommandInvalidKey(t *testing.T) {
+	output, err := executeCommand(configSetCommand, "notakey.thatexists", "some value")
+	if err == nil {
+		t.Errorf("expected error caused by invalid key name 'notakey.thatexists'\nOUTPUT:\n%s", output)
+	}
+	expectedOutput := "Error: invalid config key notakey.thatexists"
+	if !strings.Contains(output, expectedOutput) {
+		t.Errorf("unexpected output:\nEXPECTED TO FIND: %s\nACTUAL: %s", expectedOutput, output)
+	}
+}
+
+func setLoggingLevel(t *testing.T, currLogLevel, newLogLevel string) {
+	output, err := executeCommand(configSetCommand, "logging.level", newLogLevel)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	expectedOutput := fmt.Sprintf("Updated logging.level from %s to %s", currLogLevel, newLogLevel)
+	if !util.Contains([]string{"trace", "debug", "info"}, newLogLevel) {
+		expectedOutput = ""
+	}
+	if !strings.Contains(output, expectedOutput) {
+		t.Errorf("unexpected output:\nEXPECTED TO FIND: level=info msg=\"%s\"\nACTUAL: %s", expectedOutput, output)
+	}
+}
+
+func TestConfigSetCommandSetLoggingLevel(t *testing.T) {
+	initialLogLevel := viper.GetString("logging.level")
+
+	// Try setting the log level to an invalid value
+	output, err := executeCommand(configSetCommand, "logging.level", "invalid")
+	if err == nil {
+		t.Errorf("expected error caused by invalid logging level value `invalid`\nOUTPUT:\n%s", output)
+	}
+
+	currLogLevel := initialLogLevel
+	setLoggingLevel(t, currLogLevel, "trace")
+	if logLevel := viper.GetString("logging.level"); logLevel != "trace" {
+		t.Error("Unexpected failure: The `eiam config set logging.level trace` command did not properly update the config")
+	}
+	currLogLevel = "trace"
+
+	setLoggingLevel(t, currLogLevel, "debug")
+	if logLevel := viper.GetString("logging.level"); logLevel != "debug" {
+		t.Error("Unexpected failure: The `eiam config set logging.level debug` command did not properly update the config")
+	}
+	currLogLevel = "debug"
+
+	setLoggingLevel(t, currLogLevel, "info")
+	if logLevel := viper.GetString("logging.level"); logLevel != "info" {
+		t.Error("Unexpected failure: The `eiam config set logging.level info` command did not properly update the config")
+	}
+	currLogLevel = "info"
+
+	setLoggingLevel(t, currLogLevel, "warn")
+	if logLevel := viper.GetString("logging.level"); logLevel != "warn" {
+		t.Error("Unexpected failure: The `eiam config set logging.level warn` command did not properly update the config")
+	}
+	currLogLevel = "warn"
+
+	setLoggingLevel(t, currLogLevel, "error")
+	if logLevel := viper.GetString("logging.level"); logLevel != "error" {
+		t.Error("Unexpected failure: The `eiam config set logging.level error` command did not properly update the config")
+	}
+	currLogLevel = "error"
+
+	setLoggingLevel(t, currLogLevel, "fatal")
+	if logLevel := viper.GetString("logging.level"); logLevel != "fatal" {
+		t.Error("Unexpected failure: The `eiam config set logging.level fatal` command did not properly update the config")
+	}
+	currLogLevel = "fatal"
+
+	setLoggingLevel(t, currLogLevel, "panic")
+	if logLevel := viper.GetString("logging.level"); logLevel != "panic" {
+		t.Error("Unexpected failure: The `eiam config set logging.level panic` command did not properly update the config")
+	}
+	currLogLevel = "panic"
+
+	setLoggingLevel(t, currLogLevel, initialLogLevel)
+}
+
+func TestConfigSetCommandSetLoggingFormat(t *testing.T) {
+	initialLogFormat := viper.GetString("logging.format")
+
+	output, err := executeCommand(configSetCommand, "logging.format", "invalid")
+	if err == nil {
+		t.Errorf("expected error caused by invalid logging format value `invalid`\nOUTPUT:\n%s", output)
+	}
+
+	output, err = executeCommand(configSetCommand, "logging.format", "text")
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	expectedOutput := fmt.Sprintf("Updated logging.format from %s to text", initialLogFormat)
+	if !strings.Contains(output, expectedOutput) {
+		t.Errorf("unexpected output:\nEXPECTED TO FIND: level=info msg=\"%s\"\nACTUAL: %s", expectedOutput, output)
+	}
+	if logFormat := viper.GetString("logging.format"); logFormat != "text" {
+		t.Error("Unexpected failure: The `eiam config set logging.format text` command did not properly update the config")
+	}
+
+	output, err = executeCommand(configSetCommand, "logging.format", "json")
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	expectedOutput = "Updated logging.format from text to json"
+	if !strings.Contains(output, expectedOutput) {
+		t.Errorf("unexpected output:\nEXPECTED TO FIND: level=info msg=\"%s\"\nACTUAL: %s", expectedOutput, output)
+	}
+	if logFormat := viper.GetString("logging.format"); logFormat != "json" {
+		t.Error("Unexpected failure: The `eiam config set logging.format json` command did not properly update the config")
+	}
+
+	output, err = executeCommand(configViewCommand, "logging.format")
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	var jsonLogEntry logrus.Entry
+	if err := json.Unmarshal([]byte(output), &jsonLogEntry); err != nil {
+		t.Errorf("failed to parse JSON logging output: %v\nOUTPUT: %s", err, output)
+	}
+
+	_, err = executeCommand(configSetCommand, "logging.format", initialLogFormat)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+}

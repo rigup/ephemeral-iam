@@ -13,7 +13,7 @@ func ClientWithReason(reason string) (*credentials.IamCredentialsClient, error) 
 	ctx := context.Background()
 	gcpClientWithReason, err := credentials.NewIamCredentialsClient(ctx, option.WithRequestReason(reason))
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create a client SDK with a reason field: %v", err)
+		return nil, fmt.Errorf("failed to create a client SDK with a reason field: %v", err)
 	}
 	return gcpClientWithReason, nil
 }

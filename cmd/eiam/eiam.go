@@ -6,8 +6,6 @@ import (
 )
 
 func main() {
-	util.CheckError(util.CheckDependencies())
-
 	cmd := cmd.NewEphemeralIamCommand()
 	util.CheckError(cmd.Execute())
 }

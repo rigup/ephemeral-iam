@@ -18,7 +18,7 @@ import (
 func GenerateCerts() error {
 	priv, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		return fmt.Errorf("Failed to generate RSA key pair: %v", err)
+		return fmt.Errorf("failed to generate RSA key pair: %v", err)
 	}
 
 	notBefore := time.Now()
@@ -27,7 +27,7 @@ func GenerateCerts() error {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		return fmt.Errorf("Failed to generate random serial number limit for x509 cert: %v", err)
+		return fmt.Errorf("failed to generate random serial number limit for x509 cert: %v", err)
 	}
 
 	template := x509.Certificate{
@@ -46,15 +46,13 @@ func GenerateCerts() error {
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, publicKey(priv), priv)
 	if err != nil {
-		return fmt.Errorf("Failed to create x509 Cert: %v", err)
+		return fmt.Errorf("failed to create x509 Cert: %v", err)
 	}
 
-	writeToFile(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes}, "server.pem", 0o640)
-	if err != nil {
+	if err := writeToFile(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes}, "server.pem", 0o640); err != nil {
 		return err
 	}
-	writeToFile(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}, "server.key", 0o400)
-	if err != nil {
+	if err := writeToFile(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}, "server.key", 0o400); err != nil {
 		return err
 	}
 
@@ -76,13 +74,17 @@ func writeToFile(data *pem.Block, filename string, perm os.FileMode) error {
 	filepath := filepath.Join(getConfigDir(), filename)
 	fd, err := os.Create(filepath)
 	if err != nil {
-		return fmt.Errorf("Failed to write file %s: %v", filename, err)
+		return fmt.Errorf("failed to write file %s: %v", filename, err)
 	}
 
 	defer fd.Close()
 
-	pem.Encode(fd, data)
+	if err := pem.Encode(fd, data); err != nil {
+		return err
+	}
 
-	os.Chmod(filename, perm)
+	if err := os.Chmod(filepath, perm); err != nil {
+		return err
+	}
 	return nil
 }

@@ -53,6 +53,11 @@ func AddProjectFlag(fs *pflag.FlagSet, project *string) {
 	util.CheckError(err)
 
 	fs.StringVarP(project, ProjectFlag.Name, ProjectFlag.Shorthand, defaultVal, "The GCP project. Inherits from the active gcloud config by default")
+	if defaultVal == "" {
+		if err := fs.SetAnnotation(ProjectFlag.Name, RequiredAnnotation, []string{"true"}); err != nil {
+			util.Logger.Fatalf("failed to set required annotation on flag: %v", err)
+		}
+	}
 }
 
 // AddRegionFlag adds the --region/-r flag to the command
@@ -62,7 +67,9 @@ func AddRegionFlag(fs *pflag.FlagSet, region *string, required bool) {
 
 	fs.StringVarP(region, RegionFlag.Name, RegionFlag.Shorthand, defaultVal, "The GCP region. Inherits from the active gcloud config by default")
 	if required {
-		fs.SetAnnotation(RegionFlag.Name, RequiredAnnotation, []string{"true"})
+		if err := fs.SetAnnotation(RegionFlag.Name, RequiredAnnotation, []string{"true"}); err != nil {
+			util.Logger.Fatalf("failed to set required annotation on flag: %v", err)
+		}
 	}
 }
 
@@ -73,7 +80,9 @@ func AddZoneFlag(fs *pflag.FlagSet, zone *string, required bool) {
 
 	fs.StringVarP(zone, ZoneFlag.Name, ZoneFlag.Shorthand, defaultVal, "The GCP zone. Inherits from the active gcloud config by default")
 	if required {
-		fs.SetAnnotation(ZoneFlag.Name, RequiredAnnotation, []string{"true"})
+		if err := fs.SetAnnotation(ZoneFlag.Name, RequiredAnnotation, []string{"true"}); err != nil {
+			util.Logger.Fatalf("failed to set required annotation on flag: %v", err)
+		}
 	}
 }
 
@@ -81,7 +90,9 @@ func AddZoneFlag(fs *pflag.FlagSet, zone *string, required bool) {
 func AddServiceAccountEmailFlag(fs *pflag.FlagSet, serviceAccountEmail *string, required bool) {
 	fs.StringVarP(serviceAccountEmail, ServiceAccountEmailFlag.Name, ServiceAccountEmailFlag.Shorthand, "", "The email address for the service account")
 	if required {
-		fs.SetAnnotation(ServiceAccountEmailFlag.Name, RequiredAnnotation, []string{"true"})
+		if err := fs.SetAnnotation(ServiceAccountEmailFlag.Name, RequiredAnnotation, []string{"true"}); err != nil {
+			util.Logger.Fatalf("failed to set required annotation on flag: %v", err)
+		}
 	}
 }
 
@@ -89,7 +100,9 @@ func AddServiceAccountEmailFlag(fs *pflag.FlagSet, serviceAccountEmail *string, 
 func AddReasonFlag(fs *pflag.FlagSet, reason *string, required bool) {
 	fs.StringVarP(reason, ReasonFlag.Name, ReasonFlag.Shorthand, "", "A detailed rationale for assuming higher permissions")
 	if required {
-		fs.SetAnnotation(ReasonFlag.Name, RequiredAnnotation, []string{"true"})
+		if err := fs.SetAnnotation(ReasonFlag.Name, RequiredAnnotation, []string{"true"}); err != nil {
+			util.Logger.Fatalf("failed to set required annotation on flag: %v", err)
+		}
 	}
 }
 
