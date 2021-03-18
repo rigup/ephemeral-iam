@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/lithammer/dedent"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -145,6 +146,27 @@ func newCmdConfigSet() *cobra.Command {
 				viper.Set(args[0], newValue)
 			} else {
 				viper.Set(args[0], args[1])
+			}
+			switch args[0] {
+			case "logging.level":
+				level, err := logrus.ParseLevel(args[1])
+				if err != nil {
+					return err
+				}
+				util.Logger.Level = level
+			case "logging.format":
+				switch args[1] {
+				case "json":
+					util.Logger.Formatter = new(logrus.JSONFormatter)
+
+				default:
+					util.Logger.Formatter = &logrus.TextFormatter{
+						DisableLevelTruncation: viper.GetBool("logging.disableleveltruncation"),
+						PadLevelText:           viper.GetBool("logging.padleveltext"),
+						DisableTimestamp:       true,
+					}
+				}
+
 			}
 			viper.WriteConfig()
 			util.Logger.Infof("Updated %s from %v to %s", args[0], oldVal, args[1])

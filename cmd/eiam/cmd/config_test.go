@@ -85,7 +85,7 @@ func TestConfigViewCommand(t *testing.T) {
 		}
 		expectedOutput := fmt.Sprintf("%s: %v", configKey, configValue)
 		if !strings.Contains(output, expectedOutput) {
-			t.Errorf("unexpected output:\nEXPECTED: level=info msg=\"%s\"\nACTUAL: %s", expectedOutput, output)
+			t.Errorf("unexpected output:\nEXPECTED TO FIND: level=info msg=\"%s\"\nACTUAL: %s", expectedOutput, output)
 		}
 	}
 }
@@ -95,16 +95,16 @@ func TestConfigSetCommandWithoutSufficientArgs(t *testing.T) {
 	if err == nil {
 		t.Errorf("expected error caused by passing no input arguments\nOUTPUT:\n%s", output)
 	}
-	expectedOutput := "Requires both a config key and a new value"
+	expectedOutput := "requires both a config key and a new value"
 	if !strings.Contains(output, expectedOutput) {
-		t.Errorf("unexpected output:\nEXPECTED: %s\nACTUAL: %v", expectedOutput, output)
+		t.Errorf("unexpected output:\nEXPECTED TO FIND: %s\nACTUAL: %v", expectedOutput, output)
 	}
 	output, err = executeCommand(configSetCommand, "logging.level")
 	if err == nil {
 		t.Errorf("expected error caused by passing only one input argument\nOUTPUT:\n%s", output)
 	}
 	if !strings.Contains(output, expectedOutput) {
-		t.Errorf("unexpected output:\nEXPECTED: %s\nACTUAL: %s", expectedOutput, output)
+		t.Errorf("unexpected output:\nEXPECTED TO FIND: %s\nACTUAL: %s", expectedOutput, output)
 	}
 }
 
@@ -113,9 +113,9 @@ func TestConfigSetCommandInvalidKey(t *testing.T) {
 	if err == nil {
 		t.Errorf("expected error caused by invalid key name 'notakey.thatexists'\nOUTPUT:\n%s", output)
 	}
-	expectedOutput := "Invalid config key notakey.thatexists"
+	expectedOutput := "Error: invalid config key notakey.thatexists"
 	if !strings.Contains(output, expectedOutput) {
-		t.Errorf("unexpected output:\nEXPECTED: %s\nACTUAL: %s", expectedOutput, output)
+		t.Errorf("unexpected output:\nEXPECTED TO FIND: %s\nACTUAL: %s", expectedOutput, output)
 	}
 }
 
@@ -125,8 +125,11 @@ func setLoggingLevel(t *testing.T, currLogLevel, newLogLevel string) {
 		t.Errorf("unexpected error: %v", err)
 	}
 	expectedOutput := fmt.Sprintf("Updated logging.level from %s to %s", currLogLevel, newLogLevel)
+	if !util.Contains([]string{"trace", "debug", "info"}, newLogLevel) {
+		expectedOutput = ""
+	}
 	if !strings.Contains(output, expectedOutput) {
-		t.Errorf("unexpected output:\nEXPECTED: level=info msg=\"%s\"\nACTUAL: %s", expectedOutput, output)
+		t.Errorf("unexpected output:\nEXPECTED TO FIND: level=info msg=\"%s\"\nACTUAL: %s", expectedOutput, output)
 	}
 }
 
@@ -199,7 +202,7 @@ func TestConfigSetCommandSetLoggingFormat(t *testing.T) {
 	}
 	expectedOutput := fmt.Sprintf("Updated logging.format from %s to text", initialLogFormat)
 	if !strings.Contains(output, expectedOutput) {
-		t.Errorf("unexpected output:\nEXPECTED: level=info msg=\"%s\"\nACTUAL: %s", expectedOutput, output)
+		t.Errorf("unexpected output:\nEXPECTED TO FIND: level=info msg=\"%s\"\nACTUAL: %s", expectedOutput, output)
 	}
 	if logFormat := viper.GetString("logging.format"); logFormat != "text" {
 		t.Error("Unexpected failure: The `eiam config set logging.format text` command did not properly update the config")
@@ -211,7 +214,7 @@ func TestConfigSetCommandSetLoggingFormat(t *testing.T) {
 	}
 	expectedOutput = "Updated logging.format from text to json"
 	if !strings.Contains(output, expectedOutput) {
-		t.Errorf("unexpected output:\nEXPECTED: level=info msg=\"%s\"\nACTUAL: %s", expectedOutput, output)
+		t.Errorf("unexpected output:\nEXPECTED TO FIND: level=info msg=\"%s\"\nACTUAL: %s", expectedOutput, output)
 	}
 	if logFormat := viper.GetString("logging.format"); logFormat != "json" {
 		t.Error("Unexpected failure: The `eiam config set logging.format json` command did not properly update the config")
@@ -223,7 +226,7 @@ func TestConfigSetCommandSetLoggingFormat(t *testing.T) {
 	}
 	var jsonLogEntry logrus.Entry
 	if err := json.Unmarshal([]byte(output), &jsonLogEntry); err != nil {
-		t.Errorf("failed to parse JSON logging output: %v", err)
+		t.Errorf("failed to parse JSON logging output: %v\nOUTPUT: %s", err, output)
 	}
 
 	_, err = executeCommand(configSetCommand, "logging.format", initialLogFormat)
