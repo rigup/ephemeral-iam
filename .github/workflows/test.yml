@@ -19,12 +19,12 @@ jobs:
           export_default_credentials: true
       - run: |-
           cp $GOOGLE_APPLICATION_CREDENTIALS ~/.config/gcloud/application_default_credentials.json
-      - run: |-
-          export GOOGLE_APPLICATION_CREDENTIALS=""
       - name: Install kubectl
         uses: azure/setup-kubectl@v1
         id: install
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Test
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ""
         run: go test ./cmd/eiam/cmd
