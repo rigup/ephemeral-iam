@@ -83,7 +83,7 @@ func writeToFile(data *pem.Block, filename string, perm os.FileMode) error {
 		return err
 	}
 
-	if err := os.Chmod(filename, perm); err != nil {
+	if err := os.Chmod(filepath, perm); err != nil {
 		return err
 	}
 	return nil
