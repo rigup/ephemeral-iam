@@ -89,7 +89,7 @@ func checkADCExists() {
 			util.Logger.Info("Application default credentials were successfully created")
 		} else {
 			fmt.Println()
-			util.Logger.Fatal("Failed to check if application default credentials exist")
+			util.Logger.Fatalf("Failed to check if application default credentials exist: %v", err)
 		}
 	}
 }
