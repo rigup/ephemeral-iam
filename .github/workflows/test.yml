@@ -18,7 +18,7 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
       - run: |-
-        gcloud info
+          gcloud info
       - name: Install kubectl
         uses: azure/setup-kubectl@v1
         id: install
