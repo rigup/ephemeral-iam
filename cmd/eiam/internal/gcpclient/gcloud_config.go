@@ -103,7 +103,9 @@ func setActiveConfig(configsDir, activeConfigFile string) (string, error) {
 	defer fd.Close()
 
 	util.Logger.Infof("Setting active gcloud config to %s", configName)
-	fd.Write([]byte(configName))
+	if _, err := fd.Write([]byte(configName)); err != nil {
+		return "", err
+	}
 	return configName, nil
 }
 

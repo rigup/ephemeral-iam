@@ -57,7 +57,9 @@ func checkDependencies() error {
 	}
 	viper.Set("binarypaths.gcloud", gcloudPath)
 	viper.Set("binarypaths.kubectl", kubectlPath)
-	viper.WriteConfig()
+	if err := viper.WriteConfig(); err != nil {
+		return err
+	}
 	return nil
 }
 

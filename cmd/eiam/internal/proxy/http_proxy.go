@@ -65,7 +65,7 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 		util.Logger.Infof("Writing auth proxy logs to %s\n", logFilename)
 	}
 
-	setCa(appconfig.CertFile, appconfig.KeyFile)
+	util.CheckError(setCa(appconfig.CertFile, appconfig.KeyFile))
 
 	proxy.OnRequest().HandleConnect(goproxy.FuncHttpsHandler(proxyConnectHandle))
 

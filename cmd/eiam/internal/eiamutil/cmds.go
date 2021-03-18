@@ -21,8 +21,7 @@ func FormatReason(reason *string) error {
 		return err
 	}
 
-	s := fmt.Sprintf("ephemeral-iam %s: %s", randomID, *reason)
-	reason = &s
+	*reason = fmt.Sprintf("ephemeral-iam %s: %s", randomID, *reason)
 	return nil
 }
 

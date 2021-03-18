@@ -168,7 +168,7 @@ func newCmdConfigSet() *cobra.Command {
 				}
 
 			}
-			viper.WriteConfig()
+			util.CheckError(viper.WriteConfig())
 			util.Logger.Infof("Updated %s from %v to %s", args[0], oldVal, args[1])
 			return nil
 		},
