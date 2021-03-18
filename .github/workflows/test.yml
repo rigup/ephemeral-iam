@@ -5,7 +5,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-lastest, macos-latest]
-      runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Install Go
         uses: actions/setup-go@v2
