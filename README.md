@@ -11,6 +11,24 @@ management tasks that require escalated permissions.
 > For more information on Ephemeral IAM's security considerations, refer to the
 > [security considerations document](docs/security_considerations.md).
 
+## FAQ
+#### Why not just use `--impersonate-service-account`?
+There are several reasons why you would use `ephemeral-iam` in favor of `--impersonate-service-account`.  Here are a few
+of note:
+ - With the `assume-privileges` command you can start a privileged session and run commands as the service account
+   without needing to provide the `--impersonate-service-account` flag each time
+ - Using `ephemeral-iam` you can enhance audit logging by adding fields to audit logs using the `request_reason` request
+   attribute. For example, you could configure an alert to trigger when a service account token is generated and no
+   `request_reason` field is provided.
+ - `ephemeral-iam` enforces session length restrictions to limit users to only impersonate a service account for 10 min
+   at a time before needing to generate a new OAuth token.
+ - This tool provides some QoL features such as being able to list the service accounts that you can impersonate and
+   being able to query your permissions on GCP resources
+ - When you run `gcloud container clusters get-credentials CLUSTER --impersonate-service-account SA_EMAIL`, a new
+   `kubeconfig` entry is generated and persisted on your filesystem.  However, `ephemeral-iam` does not persist privileged
+   `kubeconfig` entries to the filesystem for added security.
+
+
 ## Conceptual Overview
 This section explains the basic process that happens when running the `eiam assume-privileges`
 command.
