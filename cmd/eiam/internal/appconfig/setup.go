@@ -15,7 +15,7 @@ import (
 
 func init() {
 	viper.SetConfigName("config")
-	viper.AddConfigPath(getConfigDir())
+	viper.AddConfigPath(GetConfigDir())
 	viper.AutomaticEnv()
 	viper.SetConfigType("yml")
 
@@ -23,7 +23,7 @@ func init() {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			initConfig()
 		} else {
-			fmt.Fprintf(os.Stderr, "Failed to read config file %s/config.yml: %v", getConfigDir(), err)
+			fmt.Fprintf(os.Stderr, "Failed to read config file %s/config.yml: %v", GetConfigDir(), err)
 			os.Exit(1)
 		}
 	}

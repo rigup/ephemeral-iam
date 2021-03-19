@@ -71,7 +71,7 @@ func publicKey(priv interface{}) interface{} {
 }
 
 func writeToFile(data *pem.Block, filename string, perm os.FileMode) error {
-	filepath := filepath.Join(getConfigDir(), filename)
+	filepath := filepath.Join(GetConfigDir(), filename)
 	fd, err := os.Create(filepath)
 	if err != nil {
 		return fmt.Errorf("failed to write file %s: %v", filename, err)
