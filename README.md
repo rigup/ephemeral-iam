@@ -88,7 +88,7 @@ Top-level `--help`
 │  ──────────────────────────────────────────────────────    │
 │  $ eiam gcloud compute instances list --format=json \      │
 │      -s example@my-project.iam.gserviceaccount.com \       │
-│      -r "Reason"                                           │
+│      -R "Reason"                                           │
 │                                                            │
 ╰────────────────────────────────────────────────────────────╯
 
