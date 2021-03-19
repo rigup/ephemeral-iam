@@ -33,17 +33,3 @@ AND protoPayload.requestMetadata.requestAttributes.reason !~ "ephemeral-iam [a-f
 
 These logs could be sent to a Cloud Pub/Sub to trigger alerts when someone
 requests to generate a service account access token outside of the `eiam` CLI.
-
-## Kubernetes Config Persistence
-When a user authenticates to a Kubernetes cluster while impersonating a service
-account, a new `.kubeconfig` entry is created with the associated credentials.
-
-**Example:**
-```
-$ eiam gcloud container clusters get-credentials example-cluster \
-    -s example@serviceaccount.com -r 'example reason'
-```
-
-Since this new entry is stored to the user's kubeconfig, the access that it
-provides will persist past the duration of the `eiam` session (which in this case
-is a single command).

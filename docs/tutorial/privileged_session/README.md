@@ -127,11 +127,11 @@ This privileged session will last for 10 minutes and `eiam` will exit either whe
 UserA closes the sub-shell using `CTRL-C`.
 
 ## Using `kubectl`
-There is currently an [open bug](https://github.com/jessesomerville/ephemeral-iam/issues/2) regarding the behavior
-of `kubectl` when using the `assume-permissions` command. In a future version of Ephemeral IAM, `kubectl` commands
-will automatically be authenticated as the service account that is being impersonated, but for now, you must authenticate
-to a GKE cluster after starting the sub-shell.  This will generate a new entry in your `.kubeconfig` which can then be used
-to make calls to the cluster as the service account.
+When you start a privileged session it creates a temporary kubeconfig to use during the privileged session.
+Once the privileged session is exited, the kubeconfig is deleted.
+
+When you start the privileged session, you must manually authenticate to the cluster you want to
+interact with.
 
 **Start a privileged session:**
 ```
