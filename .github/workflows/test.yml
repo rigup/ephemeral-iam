@@ -1,8 +1,5 @@
 name: Test
-on: 
-  pull_request:
-    paths:
-      - '*.go'
+on: [pull_request]
 jobs:
   test:
     strategy:
