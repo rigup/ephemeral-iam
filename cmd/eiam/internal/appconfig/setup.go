@@ -98,7 +98,7 @@ func checkADCExists() {
 			util.Logger.Fatalf("Failed to check if application default credentials exist: %v", err)
 		}
 	} else if adcPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); adcPath != "" {
-		util.Logger.Warnf("The GOOGLE_APPLICATION_CREDENTIALS environment variable is set to %s", adcPath)
+		util.Logger.Warnf("The GOOGLE_APPLICATION_CREDENTIALS environment variable is set:\n\tADC Path: %s\n\n", adcPath)
 		if err := checkADCIdentity(adcPath); err != nil {
 			util.Logger.Fatal(err)
 		}
@@ -121,15 +121,15 @@ func checkADCIdentity(path string) error {
 		if err != nil {
 			return fmt.Errorf("failed to get account from gcloud config: %v", err)
 		}
-		util.Logger.Warnf("API calls made by eiam will be authenticated as %s instead of %s", email, account)
+		util.Logger.Warnf("API calls made by eiam will not be authenticated as your default account:\n\tAccount Set:     %s\n\tDefault Account: %s\n\n", email, account)
 
 		prompt := promptui.Prompt{
 			Label:     fmt.Sprintf("Authenticate as %s", email),
 			IsConfirm: true,
 		}
 
-		fmt.Println()
 		if _, err := prompt.Run(); err != nil {
+			fmt.Print("\n\n")
 			util.Logger.Info("Attempting to reconfigure eiam's authenticated account")
 			os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "")
 			checkADCExists()
@@ -181,7 +181,7 @@ func createLogDir() error {
 	logDir := viper.GetString("authproxy.logdir")
 	_, err := os.Stat(logDir)
 	if os.IsNotExist(err) {
-		util.Logger.Debug("Creating log directory: %s", logDir)
+		util.Logger.Debugf("Creating log directory: %s", logDir)
 		if err := os.MkdirAll(viper.GetString("authproxy.logdir"), 0o755); err != nil {
 			return fmt.Errorf("failed to create proxy log directory %s: %v", logDir, err)
 		}
