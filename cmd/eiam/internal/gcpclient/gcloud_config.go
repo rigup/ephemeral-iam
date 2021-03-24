@@ -15,7 +15,6 @@ import (
 	"github.com/spf13/viper"
 	"gopkg.in/ini.v1"
 
-	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig"
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
 )
 
@@ -138,7 +137,7 @@ func ConfigureGcloudProxy() error {
 	gcloudConfig.Section("proxy").Key("address").SetValue(viper.GetString("authproxy.proxyaddress"))
 	gcloudConfig.Section("proxy").Key("port").SetValue(viper.GetString("authproxy.proxyport"))
 	gcloudConfig.Section("proxy").Key("type").SetValue("http")
-	gcloudConfig.Section("core").Key("custom_ca_certs_file").SetValue(appconfig.CertFile)
+	gcloudConfig.Section("core").Key("custom_ca_certs_file").SetValue(viper.GetString("authproxy.certfile"))
 	if err := gcloudConfig.SaveTo(pathToConfig); err != nil {
 		return fmt.Errorf("failed to update gcloud configuration: %v", err)
 	}
@@ -162,6 +161,7 @@ func UnsetGcloudProxy() error {
 }
 
 // CheckActiveAccountSet ensures that the current gcloud config has an active account value
+// TODO: This is not currently being used
 func CheckActiveAccountSet() (string, error) {
 	if err := getGcloudConfig(); err != nil {
 		return "", err

@@ -13,13 +13,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-var (
-	// CertFile is the filepath pointing to the TLS cert
-	CertFile = filepath.Join(GetConfigDir(), "server.pem")
-	// KeyFile is the filepath pointing to the TLS key
-	KeyFile = filepath.Join(GetConfigDir(), "server.key")
-)
-
 // GetConfigDir returns the directory to use for the ephemeral-iam configurations
 func GetConfigDir() string {
 	configPath := configdir.LocalConfig("ephemeral-iam")
@@ -51,6 +44,8 @@ func initConfig() {
 	viper.SetDefault("authproxy.verbose", false)
 	viper.SetDefault("authproxy.writetofile", false)
 	viper.SetDefault("authproxy.logdir", filepath.Join(GetConfigDir(), "log"))
+	viper.SetDefault("authproxy.certfile", filepath.Join(GetConfigDir(), "server.pem"))
+	viper.SetDefault("authproxy.keyfile", filepath.Join(GetConfigDir(), "server.key"))
 	viper.SetDefault("logging.format", "text")
 	viper.SetDefault("logging.level", "info")
 	viper.SetDefault("logging.disableleveltruncation", true)

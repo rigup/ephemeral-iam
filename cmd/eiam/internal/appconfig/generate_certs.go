@@ -74,7 +74,13 @@ func writeToFile(data *pem.Block, filename string, perm os.FileMode) error {
 	filepath := filepath.Join(GetConfigDir(), filename)
 	fd, err := os.Create(filepath)
 	if err != nil {
-		return fmt.Errorf("failed to write file %s: %v", filename, err)
+		if os.IsPermission(err) {
+			if err := os.Remove(filepath); err != nil {
+				return fmt.Errorf("failed to update %s: %v", filepath, err)
+			}
+			return writeToFile(data, filename, perm)
+		}
+		return fmt.Errorf("failed to write file %s: %v", filepath, err)
 	}
 
 	defer fd.Close()
