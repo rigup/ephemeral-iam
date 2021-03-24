@@ -51,6 +51,8 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 			if err := os.MkdirAll(viper.GetString("authproxy.logdir"), 0o755); err != nil {
 				return fmt.Errorf("failed to create proxy log directory: %v", err)
 			}
+		} else if err != nil {
+			return fmt.Errorf("failed to find proxy log dir %s: %v", viper.GetString("authproxy.logdir"), err)
 		}
 		// Create log file
 		timestamp := time.Now().Format("20060102150405")
@@ -67,7 +69,7 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 		util.Logger.Infof("Writing auth proxy logs to %s\n", logFilename)
 	}
 
-	util.CheckError(setCa(appconfig.CertFile, appconfig.KeyFile))
+	util.CheckError(setCa(viper.GetString("authproxy.certfile"), viper.GetString("authproxy.keyfile")))
 
 	proxy.OnRequest().HandleConnect(goproxy.FuncHttpsHandler(proxyConnectHandle))
 
