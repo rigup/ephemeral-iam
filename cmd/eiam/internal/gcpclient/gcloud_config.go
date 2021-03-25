@@ -19,9 +19,10 @@ import (
 )
 
 var (
-	once         sync.Once
-	gcloudConfig *ini.File
-	pathToConfig string
+	once           sync.Once
+	gcloudConfig   *ini.File
+	pathToConfig   string
+	initialProjVal string
 )
 
 func readGcloudConfigFromFile() error {
@@ -43,6 +44,7 @@ func readGcloudConfigFromFile() error {
 	if err != nil {
 		return fmt.Errorf("failed to parse gcloud config %s: %v", pathToConfig, err)
 	}
+	initialProjVal = gcloudConfig.Section("core").Key("project").String()
 	return nil
 }
 
@@ -129,7 +131,7 @@ func getGcloudConfig() (configErr error) {
 }
 
 // ConfigureGcloudProxy configures the current gcloud configuration to use the auth proxy
-func ConfigureGcloudProxy() error {
+func ConfigureGcloudProxy(project string) error {
 	if err := getGcloudConfig(); err != nil {
 		return err
 	}
@@ -138,6 +140,10 @@ func ConfigureGcloudProxy() error {
 	gcloudConfig.Section("proxy").Key("port").SetValue(viper.GetString("authproxy.proxyport"))
 	gcloudConfig.Section("proxy").Key("type").SetValue("http")
 	gcloudConfig.Section("core").Key("custom_ca_certs_file").SetValue(viper.GetString("authproxy.certfile"))
+	// If the user specified a project flag, set it in the gcloud config
+	if project != "" {
+		gcloudConfig.Section("core").Key("project").SetValue(project)
+	}
 	if err := gcloudConfig.SaveTo(pathToConfig); err != nil {
 		return fmt.Errorf("failed to update gcloud configuration: %v", err)
 	}
@@ -154,6 +160,7 @@ func UnsetGcloudProxy() error {
 	gcloudConfig.Section("proxy").DeleteKey("port")
 	gcloudConfig.Section("proxy").DeleteKey("type")
 	gcloudConfig.Section("core").DeleteKey("custom_ca_certs_file")
+	gcloudConfig.Section("core").Key("project").SetValue(initialProjVal)
 	if err := gcloudConfig.SaveTo(pathToConfig); err != nil {
 		return fmt.Errorf("failed to revert gcloud configuration: %v", err)
 	}
