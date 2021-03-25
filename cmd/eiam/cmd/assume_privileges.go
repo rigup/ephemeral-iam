@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/lithammer/dedent"
+	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/cmd/options"
@@ -77,5 +78,37 @@ func startPrivilegedSession() error {
 		return err
 	}
 
-	return proxy.StartProxyServer(accessToken, apCmdConfig.Reason, apCmdConfig.ServiceAccountEmail)
+	clusters, err := gcpclient.GetClusters(apCmdConfig.Project, apCmdConfig.Reason)
+	if err != nil {
+		return err
+	}
+
+	defaultCluster := map[string]string{}
+	if len(clusters) == 0 {
+		util.Logger.Warnf("No clusters found in %s", apCmdConfig.Project)
+	} else if len(clusters) == 1 {
+		defaultCluster = clusters[0]
+	} else {
+		clusterNames := []string{}
+		for _, cl := range clusters {
+			clusterNames = append(clusterNames, cl["name"])
+		}
+		prompt := promptui.Select{
+			Label: "Select the default cluster to use",
+			Items: clusterNames,
+		}
+
+		_, result, err := prompt.Run()
+		if err != nil {
+			util.Logger.Warn("No cluster default cluster will be configured")
+		}
+		for _, cl := range clusters {
+			if cl["name"] == result {
+				defaultCluster = cl
+				break
+			}
+		}
+	}
+
+	return proxy.StartProxyServer(accessToken, apCmdConfig.Reason, apCmdConfig.ServiceAccountEmail, defaultCluster)
 }

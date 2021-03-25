@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/duration"
-	gcp "google.golang.org/api/container/v1"
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
 	credentialspb "google.golang.org/genproto/googleapis/iam/credentials/v1"
@@ -35,7 +34,7 @@ func GenerateTemporaryAccessToken(serviceAccountEmail, reason string) (*credenti
 		Name:     fmt.Sprintf("projects/-/serviceAccounts/%s", serviceAccountEmail),
 		Lifetime: sessionDuration,
 		Scope: []string{
-			gcp.CloudPlatformScope,
+			iam.CloudPlatformScope,
 			"https://www.googleapis.com/auth/userinfo.email",
 		},
 	}

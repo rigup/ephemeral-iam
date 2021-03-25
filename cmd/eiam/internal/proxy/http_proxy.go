@@ -37,7 +37,7 @@ var (
 )
 
 // StartProxyServer spins up the proxy that replaces the gcloud auth token
-func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenResponse, reason, svcAcct string) (retErr error) {
+func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenResponse, reason, svcAcct string, defaultCluster map[string]string) (retErr error) {
 	accessToken := privilegedAccessToken.GetAccessToken()
 	expirationDate := privilegedAccessToken.GetExpireTime().AsTime()
 	sessionLength := time.Until(expirationDate)
@@ -45,29 +45,27 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = viper.GetBool("authproxy.verbose")
 
-	if viper.GetBool("authproxy.writetofile") {
-		_, err := os.Stat(viper.GetString("authproxy.logdir"))
-		if os.IsNotExist(err) {
-			if err := os.MkdirAll(viper.GetString("authproxy.logdir"), 0o755); err != nil {
-				return fmt.Errorf("failed to create proxy log directory: %v", err)
-			}
-		} else if err != nil {
-			return fmt.Errorf("failed to find proxy log dir %s: %v", viper.GetString("authproxy.logdir"), err)
+	_, err := os.Stat(viper.GetString("authproxy.logdir"))
+	if os.IsNotExist(err) {
+		if err := os.MkdirAll(viper.GetString("authproxy.logdir"), 0o755); err != nil {
+			return fmt.Errorf("failed to create proxy log directory: %v", err)
 		}
-		// Create log file
-		timestamp := time.Now().Format("20060102150405")
-		logFilename := filepath.Join(viper.GetString("authproxy.logdir"), fmt.Sprintf("%s_auth_proxy.log", timestamp))
-		logFile, err := os.OpenFile(logFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
-		if err != nil {
-			return fmt.Errorf("failed to create log file: %v", err)
-		}
-
-		// I'm not calling logFile.Close() because it gets invoked too early
-
-		// Set auth proxy to log to file
-		proxy.Logger = log.New(logFile, "", log.LstdFlags)
-		util.Logger.Infof("Writing auth proxy logs to %s\n", logFilename)
+	} else if err != nil {
+		return fmt.Errorf("failed to find proxy log dir %s: %v", viper.GetString("authproxy.logdir"), err)
 	}
+	// Create log file
+	timestamp := time.Now().Format("20060102150405")
+	logFilename := filepath.Join(viper.GetString("authproxy.logdir"), fmt.Sprintf("%s_auth_proxy.log", timestamp))
+	logFile, err := os.OpenFile(logFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
+	if err != nil {
+		return fmt.Errorf("failed to create log file: %v", err)
+	}
+	defer logFile.Close()
+	// I'm not calling logFile.Close() because it gets invoked too early
+
+	// Set auth proxy to log to file
+	proxy.Logger = log.New(logFile, "", log.LstdFlags)
+	util.Logger.Infof("Writing auth proxy logs to %s\n", logFilename)
 
 	util.CheckError(setCa(viper.GetString("authproxy.certfile"), viper.GetString("authproxy.keyfile")))
 
@@ -107,10 +105,6 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 		os.Exit(0)
 	}()
 
-	util.Logger.Info("Starting auth proxy")
-	util.Logger.Infof("Privileged session will last until %s", time.Now().Add(sessionLength).Format(time.RFC1123))
-	util.Logger.Warn("Enter `exit` or press CTRL+D to quit privileged session")
-
 	go func() {
 		defer proxyServerExitDone.Done()
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
@@ -119,11 +113,15 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 		<-idleConnsClosed
 	}()
 
-	tmpKubeConfig, err := createTempKubeconfig()
+	tmpKubeConfig, err := createTempFile()
 	if err != nil {
 		return err
 	}
 	defer os.Remove(tmpKubeConfig.Name()) // Remove tmpKubeConfig after priv session ends
+
+	util.Logger.Info("Starting auth proxy")
+	util.Logger.Infof("Privileged session will last until %s", time.Now().Add(sessionLength).Format(time.RFC1123))
+	util.Logger.Warn("Enter `exit` or press CTRL+D to quit privileged session")
 
 	wg.Add(1)
 	var oldState *term.State
@@ -163,6 +161,12 @@ func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenRe
 				util.Logger.Fatalf("Failed to restore original shell: %v", err)
 			}
 		}()
+
+		util.Logger.Infof("Configuring credentials for %s", defaultCluster["name"])
+		cmd := fmt.Sprintf("gcloud container clusters get-credentials %s --zone %s\n", defaultCluster["name"], defaultCluster["location"])
+		if _, err := ptmx.Write([]byte(cmd)); err != nil {
+			util.Logger.Errorf("Failed to fetch credenials for kubeconfig: %v", err)
+		}
 
 		go func() {
 			if _, err := io.Copy(ptmx, os.Stdin); err != nil {
@@ -224,7 +228,7 @@ func buildPrompt(svcAcct string) string {
 	return fmt.Sprintf("PS1=\n[%s%s%s]\n[%seiam%s] > ", yellow, svcAcct, endColor, green, endColor)
 }
 
-func createTempKubeconfig() (*os.File, error) {
+func createTempFile() (*os.File, error) {
 	configDir := appconfig.GetConfigDir()
 	tmpFileName := uuid.New().String()
 	tmpKubeConfig, err := os.CreateTemp(configDir, tmpFileName)

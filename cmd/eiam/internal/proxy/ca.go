@@ -45,7 +45,7 @@ func setCa(caCertFile, caKeyFile string) error {
 	return nil
 }
 
-// See https://github.com/rhaidiz/broxy/core/cert.go
+// See https://github.com/rhaidiz/broxy/blob/master/core/cert.go
 func tlsConfigFromCA(ca *tls.Certificate) func(host string, ctx *goproxy.ProxyCtx) (*tls.Config, error) {
 	return func(host string, ctx *goproxy.ProxyCtx) (c *tls.Config, err error) {
 		parts := strings.SplitN(host, ":", 2)
@@ -76,7 +76,7 @@ func tlsConfigFromCA(ca *tls.Certificate) func(host string, ctx *goproxy.ProxyCt
 	}
 }
 
-// See https://github.com/rhaidiz/broxy/core/cert.go
+// See https://github.com/rhaidiz/broxy/blob/master/core/cert.go
 func signHost(ca *tls.Certificate, host string, port int) (cert *tls.Certificate, err error) {
 	var x509ca *x509.Certificate
 	var template x509.Certificate
@@ -100,8 +100,8 @@ func signHost(ca *tls.Certificate, host string, port int) (cert *tls.Certificate
 		Subject: pkix.Name{
 			Country:            []string{"US"},
 			Locality:           []string{""},
-			Organization:       []string{""},
-			OrganizationalUnit: []string{""},
+			Organization:       []string{"ephemeral-iam"},
+			OrganizationalUnit: []string{"https://praetorian.com/"},
 			CommonName:         "gcloud proxy cert",
 		},
 		NotBefore: notBefore,
