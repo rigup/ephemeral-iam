@@ -12,7 +12,7 @@ import (
 var Logger *logrus.Logger
 
 // NewLogger instantiates a new logging instance
-func NewLogger() {
+func NewLogger() *logrus.Logger {
 	logger := logrus.New()
 
 	level, err := logrus.ParseLevel(viper.GetString("logging.level"))
@@ -36,5 +36,5 @@ func NewLogger() {
 		}
 	}
 
-	Logger = logger
+	return logger
 }

@@ -32,7 +32,7 @@ func init() {
 		}
 	}
 
-	util.NewLogger()
+	util.Logger = util.NewLogger()
 
 	allConfigKeys := viper.AllKeys()
 	if !util.Contains(allConfigKeys, "binarypaths.gcloud") && !util.Contains(allConfigKeys, "binarypaths.kubectl") {
