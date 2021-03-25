@@ -37,7 +37,7 @@ var (
 )
 
 // StartProxyServer spins up the proxy that replaces the gcloud auth token
-func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenResponse, reason, svcAcct string, defaultCluster map[string]string) (retErr error) {
+func StartProxyServer(privilegedAccessToken *credentialspb.GenerateAccessTokenResponse, reason, svcAcct, project string, defaultCluster map[string]string) (retErr error) {
 	accessToken := privilegedAccessToken.GetAccessToken()
 	expirationDate := privilegedAccessToken.GetExpireTime().AsTime()
 	sessionLength := time.Until(expirationDate)

@@ -74,7 +74,7 @@ func startPrivilegedSession() error {
 	}
 
 	util.Logger.Info("Configuring gcloud to use auth proxy")
-	if err := gcpclient.ConfigureGcloudProxy(); err != nil {
+	if err := gcpclient.ConfigureGcloudProxy(apCmdConfig.Project); err != nil {
 		return err
 	}
 
@@ -110,5 +110,5 @@ func startPrivilegedSession() error {
 		}
 	}
 
-	return proxy.StartProxyServer(accessToken, apCmdConfig.Reason, apCmdConfig.ServiceAccountEmail, defaultCluster)
+	return proxy.StartProxyServer(accessToken, apCmdConfig.Reason, apCmdConfig.ServiceAccountEmail, apCmdConfig.Project, defaultCluster)
 }
