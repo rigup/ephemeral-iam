@@ -19,10 +19,10 @@ import (
 )
 
 var (
-	once           sync.Once
 	gcloudConfig   *ini.File
 	pathToConfig   string
 	initialProjVal string
+	once           sync.Once
 )
 
 func readGcloudConfigFromFile() error {
@@ -145,7 +145,7 @@ func ConfigureGcloudProxy(project string) error {
 		gcloudConfig.Section("core").Key("project").SetValue(project)
 	}
 	if err := gcloudConfig.SaveTo(pathToConfig); err != nil {
-		return fmt.Errorf("failed to update gcloud configuration: %v", err)
+		return err
 	}
 	return nil
 }
@@ -162,13 +162,13 @@ func UnsetGcloudProxy() error {
 	gcloudConfig.Section("core").DeleteKey("custom_ca_certs_file")
 	gcloudConfig.Section("core").Key("project").SetValue(initialProjVal)
 	if err := gcloudConfig.SaveTo(pathToConfig); err != nil {
-		return fmt.Errorf("failed to revert gcloud configuration: %v", err)
+		return err
 	}
 	return nil
 }
 
 // CheckActiveAccountSet ensures that the current gcloud config has an active account value
-// TODO: This is not currently being used
+// and if an account is set, it returns the value
 func CheckActiveAccountSet() (string, error) {
 	if err := getGcloudConfig(); err != nil {
 		return "", err

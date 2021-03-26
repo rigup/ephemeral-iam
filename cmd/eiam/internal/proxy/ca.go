@@ -68,8 +68,7 @@ func tlsConfigFromCA(ca *tls.Certificate) func(host string, ctx *goproxy.ProxyCt
 		}
 
 		config := tls.Config{
-			InsecureSkipVerify: true,
-			Certificates:       []tls.Certificate{*cert},
+			Certificates: []tls.Certificate{*cert},
 		}
 
 		return &config, nil

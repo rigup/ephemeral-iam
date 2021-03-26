@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	credentials "cloud.google.com/go/iam/credentials/apiv1"
@@ -39,10 +38,6 @@ func init() {
 		util.CheckError(checkDependencies())
 	}
 	checkADCExists()
-
-	if err := checkProxyCertificate(); err != nil {
-		util.Logger.Fatal(err)
-	}
 
 	if err := createLogDir(); err != nil {
 		util.Logger.Fatal(err)
@@ -137,43 +132,6 @@ func checkADCIdentity(path string) error {
 		}
 	}
 
-	return nil
-}
-
-func checkProxyCertificate() error {
-	certFile := viper.GetString("authproxy.certfile")
-	keyFile := viper.GetString("authproxy.keyfile")
-	if certFile == "" || keyFile == "" {
-		if keyFile == "" {
-			util.Logger.Debug("Setting authproxy.keyfile")
-			viper.Set("authproxy.keyfile", filepath.Join(GetConfigDir(), "server.key"))
-			keyFile = viper.GetString("authproxy.keyfile")
-		}
-		if certFile == "" {
-			util.Logger.Debug("Setting authproxy.certfile")
-			viper.Set("authproxy.certfile", filepath.Join(GetConfigDir(), "server.pem"))
-			certFile = viper.GetString("authproxy.certfile")
-		}
-		if err := viper.WriteConfig(); err != nil {
-			return err
-		}
-	}
-
-	_, certErr := os.Stat(certFile)
-	_, keyErr := os.Stat(keyFile)
-	certExists := !os.IsNotExist(certErr)
-	keyExists := !os.IsNotExist(keyErr)
-
-	if certExists != keyExists { // Check if only one of either the key or the cert exist
-		util.Logger.Warn("Either the auth proxy cert or key is missing. Regenerating both")
-		if err := GenerateCerts(); err != nil {
-			return err
-		}
-	} else if !certExists { // Check if neither files exist
-		if err := GenerateCerts(); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 

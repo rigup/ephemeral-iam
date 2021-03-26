@@ -40,11 +40,15 @@ Use "eiam config [command] --help" for more information about a command.
 $ eiam config print
 
 authproxy:
-  logdir: /Users/johndoe/Library/Application Support/ephemeral-iam/log
+  certfile: /Users/example/Library/Application Support/ephemeral-iam/server.pem
+  keyfile: /Users/example/Library/Application Support/ephemeral-iam/server.key
+  logdir: /Users/example/Library/Application Support/ephemeral-iam/log
   proxyaddress: 127.0.0.1
   proxyport: "8084"
-  verbose: false
-  writetofile: false
+  verbose: true
+binarypaths:
+  gcloud: /Users/example/google-cloud-sdk/bin/gcloud
+  kubectl: /usr/local/bin/kubectl
 logging:
   disableleveltruncation: true
   format: text
@@ -64,27 +68,44 @@ INFO    authproxy.proxyaddress: 127.0.0.1
 ```
 $ eiam config info
 
-┏━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Key                    ┃ Description                                         ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ AuthProxy.ProxyAddress │ The address to the auth proxy. You shouldn't need   │
-│                        │ to update this                                      │
-├────────────────────────┼─────────────────────────────────────────────────────┤
-│ AuthProxy.ProxyPort    │ The port to run the auth proxy on                   │
-├────────────────────────┼─────────────────────────────────────────────────────┤
-│ AuthProxy.Verbose      │ Enables verbose logging output from the auth proxy  │
-├────────────────────────┼─────────────────────────────────────────────────────┤
-│ AuthProxy.WriteToFile  │ Enables writing auth proxy logs to a log file       │
-├────────────────────────┼─────────────────────────────────────────────────────┤
-│ AuthProxy.LogDir       │ The directory to write auth proxy logs to           │
-├────────────────────────┼─────────────────────────────────────────────────────┤
-│ Logging.Format         │ The format for the console logs.                    │
-│                        │ Can be either 'json' or 'text'                      │
-├────────────────────────┼─────────────────────────────────────────────────────┤
-│ Logging.Level          │ The logging level to write to the console.          │
-│                        │ Can be one of "trace", "debug", "info", "warn",     │
-│                        │ "error", "fatal", "panic"                           │
-└────────────────────────┴─────────────────────────────────────────────────────┘
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Key                            ┃ Description                                 ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ authproxy.certfile             │ The path to the auth proxy's TLS            │
+│                                │ certificate                                 │
+├────────────────────────────────┼─────────────────────────────────────────────┤
+│ authproxy.keyfile              │ The path to the auth proxy's x509 key       │
+├────────────────────────────────┼─────────────────────────────────────────────┤
+│ authproxy.logdir               │ The directory that auth proxy logs will be  │
+│                                │ written to                                  │
+├────────────────────────────────┼─────────────────────────────────────────────┤
+│ authproxy.proxyaddress         │ The address that the auth proxy is hosted   │
+│                                │ on                                          │
+├────────────────────────────────┼─────────────────────────────────────────────┤
+│ authproxy.proxyport            │ The port that the auth proxy runs on        │
+├────────────────────────────────┼─────────────────────────────────────────────┤
+│ authproxy.verbose              │ When set to 'true', verbose output for      │
+│                                │ proxy logs will be enabled                  │
+├────────────────────────────────┼─────────────────────────────────────────────┤
+│ binarypaths.gcloud             │ The path to the gcloud binary on your       │
+│                                │ filesystem                                  │
+├────────────────────────────────┼─────────────────────────────────────────────┤
+│ binarypaths.kubectl            │ The path to the kubectl binary on your      │
+│                                │ filesystem                                  │
+├────────────────────────────────┼─────────────────────────────────────────────┤
+│ logging.format                 │ The format for which to write console logs  │
+│                                │ Can be either 'json' or 'text'              │
+├────────────────────────────────┼─────────────────────────────────────────────┤
+│ logging.level                  │ The logging level to write to the console   │
+│                                │ Can be one of 'trace', 'debug', 'info',     │
+│                                │ 'warn', 'error', 'fatal', or 'panic'        │
+├────────────────────────────────┼─────────────────────────────────────────────┤
+│ logging.disableleveltruncation │ When set to 'true', the level indicator for │
+│                                │ logs will not be trucated                   │
+├────────────────────────────────┼─────────────────────────────────────────────┤
+│ logging.padleveltext           │ When set to 'true', output logs will align  │
+│                                │ evenly with their output level indicator    │
+└────────────────────────────────┴─────────────────────────────────────────────┘
 ```
 
 ### Set a configuration value

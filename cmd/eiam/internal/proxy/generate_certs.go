@@ -1,4 +1,4 @@
-package appconfig
+package proxy
 
 import (
 	"crypto/ecdsa"
@@ -12,6 +12,11 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/spf13/viper"
+
+	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig"
+	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
 )
 
 // GenerateCerts creates the self signed TLS certificate for the HTTPS proxy
@@ -75,7 +80,7 @@ func publicKey(priv interface{}) interface{} {
 }
 
 func writeToFile(data *pem.Block, filename string, perm os.FileMode) error {
-	filepath := filepath.Join(GetConfigDir(), filename)
+	filepath := filepath.Join(appconfig.GetConfigDir(), filename)
 	fd, err := os.Create(filepath)
 	if err != nil {
 		if os.IsPermission(err) {
@@ -95,6 +100,43 @@ func writeToFile(data *pem.Block, filename string, perm os.FileMode) error {
 
 	if err := os.Chmod(filepath, perm); err != nil {
 		return err
+	}
+	return nil
+}
+
+func checkProxyCertificate() error {
+	certFile := viper.GetString("authproxy.certfile")
+	keyFile := viper.GetString("authproxy.keyfile")
+	if certFile == "" || keyFile == "" {
+		if keyFile == "" {
+			util.Logger.Debug("Setting authproxy.keyfile")
+			viper.Set("authproxy.keyfile", filepath.Join(appconfig.GetConfigDir(), "server.key"))
+			keyFile = viper.GetString("authproxy.keyfile")
+		}
+		if certFile == "" {
+			util.Logger.Debug("Setting authproxy.certfile")
+			viper.Set("authproxy.certfile", filepath.Join(appconfig.GetConfigDir(), "server.pem"))
+			certFile = viper.GetString("authproxy.certfile")
+		}
+		if err := viper.WriteConfig(); err != nil {
+			return err
+		}
+	}
+
+	_, certErr := os.Stat(certFile)
+	_, keyErr := os.Stat(keyFile)
+	certExists := !os.IsNotExist(certErr)
+	keyExists := !os.IsNotExist(keyErr)
+
+	if certExists != keyExists { // Check if only one of either the key or the cert exist
+		util.Logger.Warn("Either the auth proxy cert or key is missing. Regenerating both")
+		if err := GenerateCerts(); err != nil {
+			return err
+		}
+	} else if !certExists { // Check if neither files exist
+		if err := GenerateCerts(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
