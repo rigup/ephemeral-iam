@@ -17,7 +17,7 @@ import (
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
 )
 
-func startShell(svcAcct string, defaultCluster map[string]string, oldState *term.State) {
+func startShell(svcAcct string, defaultCluster map[string]string, oldState **term.State) {
 	tmpKubeConfig, err := createTempFile()
 	if err != nil {
 		util.Logger.WithError(err).Fatal("failed to create privileged kubeconfig")
@@ -68,11 +68,11 @@ func startShell(svcAcct string, defaultCluster map[string]string, oldState *term
 	ch <- syscall.SIGWINCH
 
 	// Save the state of the current shell so it can be restored later
-	if oldState, err = term.MakeRaw(int(os.Stdin.Fd())); err != nil {
-		util.Logger.WithError(err).Fatal("failed to save state of parent shell")
+	if *oldState, err = term.MakeRaw(int(os.Stdin.Fd())); err != nil {
+		util.Logger.WithError(err).Fatal("failed to save state of current shell")
 	}
 	defer func() {
-		if err := term.Restore(int(os.Stdin.Fd()), oldState); err != nil {
+		if err := term.Restore(int(os.Stdin.Fd()), *oldState); err != nil {
 			util.Logger.WithError(err).Fatal("failed to restore original shell")
 		}
 	}()
