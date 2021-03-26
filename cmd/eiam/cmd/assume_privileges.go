@@ -101,14 +101,26 @@ func startPrivilegedSession() error {
 		_, result, err := prompt.Run()
 		if err != nil {
 			util.Logger.Warn("No cluster default cluster will be configured")
-		}
-		for _, cl := range clusters {
-			if cl["name"] == result {
-				defaultCluster = cl
-				break
+		} else {
+			for _, cl := range clusters {
+				if cl["name"] == result {
+					defaultCluster = cl
+					break
+				}
+			}
+			if defaultCluster == nil {
+				util.Logger.Warnf("Invalid cluster name selected: %s", result)
 			}
 		}
 	}
-
-	return proxy.StartProxyServer(accessToken, apCmdConfig.Reason, apCmdConfig.ServiceAccountEmail, apCmdConfig.Project, defaultCluster)
+	token := accessToken.GetAccessToken()
+	expirationDate := accessToken.GetExpireTime().AsTime()
+	return proxy.StartProxyServer(
+		token,
+		apCmdConfig.Reason,
+		apCmdConfig.ServiceAccountEmail,
+		apCmdConfig.Project,
+		expirationDate,
+		defaultCluster,
+	)
 }

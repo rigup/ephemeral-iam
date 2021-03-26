@@ -116,6 +116,8 @@ $ eiam query-permissions compute-instance \
 
 ### Query Permissions Granted at the Project Level
 
+Since there are so many testable permissions on project resources, this command
+will only output the permissions that are not granted on the project.
 ```
 $ eiam query-permissions project
 ```

@@ -8,19 +8,32 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/kirsle/configdir"
 	"github.com/spf13/viper"
 )
 
+var (
+	configDir string
+	once      sync.Once
+)
+
 // GetConfigDir returns the directory to use for the ephemeral-iam configurations
 func GetConfigDir() string {
+	once.Do(func() {
+		configDir = getGcloudConfig()
+	})
+	return configDir
+}
+
+func getGcloudConfig() string {
 	configPath := configdir.LocalConfig("ephemeral-iam")
 
 	// Check to ensure that the path is user-specific instead of global
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
-		log.Fatalf("Failed to get user home directory: %v", err)
+		log.Fatalf("failed to get user home directory: %v", err)
 	}
 	if !strings.HasPrefix(configPath, userHomeDir) {
 		if runtime.GOOS == "linux" {
@@ -33,7 +46,7 @@ func GetConfigDir() string {
 	}
 
 	if err := configdir.MakePath(configPath); err != nil {
-		log.Fatalf("Failed to get default configuration path: %v", err)
+		log.Fatalf("failed to get default configuration path: %v", err)
 	}
 	return configPath
 }
@@ -42,7 +55,6 @@ func initConfig() {
 	viper.SetDefault("authproxy.proxyaddress", "127.0.0.1")
 	viper.SetDefault("authproxy.proxyport", "8084")
 	viper.SetDefault("authproxy.verbose", false)
-	viper.SetDefault("authproxy.writetofile", false)
 	viper.SetDefault("authproxy.logdir", filepath.Join(GetConfigDir(), "log"))
 	viper.SetDefault("authproxy.certfile", filepath.Join(GetConfigDir(), "server.pem"))
 	viper.SetDefault("authproxy.keyfile", filepath.Join(GetConfigDir(), "server.key"))

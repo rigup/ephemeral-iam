@@ -5,9 +5,6 @@ This is accomplished using the `assume-privileges` (or just `priv`) command. Whe
 will drop you into a shell that is configured to use the permissions of the provided service account. Detailed information
 about how the session is handled can be found in the **Conceptual Overview** section of the [README](../../../README.md).
 
-> **It is not currently feasible to test the sub-shell for complete POSIX compliance; therefore, if you come across any bugs**
-> **in its implementation, please add the details of said bug to the issue linked above.**
-
 ## Example Workflow
 Say a user (UserA) needs to debug an issue in a Cloud PubSub Topic. To debug the issue, UserA needs to publish test messages
 to the topic, but their requests are being denied due to insufficient privileges.  UserA's workflow
@@ -110,8 +107,8 @@ Reason ------------- Debugging Pub/Sub topic (JIRA-1234)
 Continue: y
 INFO    Fetching short-lived access token for pubsub-admin@example-project.iam.gserviceaccount.com
 INFO    Configuring gcloud to use auth proxy
-INFO    Starting auth proxy
-INFO    Privileged session will last until Tue, 09 Mar 2021 09:08:33 CST
+INFO    Writing auth proxy logs to /Users/example/Library/Application Support/ephemeral-iam/log/20210325201631_auth_proxy.log
+INFO    Starting auth proxy. Privileged session will last until Tue, 09 Mar 2021 09:08:33 CST
 WARNING Press CTRL+C to quit privileged session
 
 [pubsub-admin@example-project.iam.gserviceaccount.com]
@@ -124,29 +121,36 @@ messageIds:
 ```
 
 This privileged session will last for 10 minutes and `eiam` will exit either when that time is up, or when
-UserA closes the sub-shell using `CTRL-C`.
+UserA closes the sub-shell using `CTRL-D`.
 
 ## Using `kubectl`
 When you start a privileged session it creates a temporary kubeconfig to use during the privileged session.
-Once the privileged session is exited, the kubeconfig is deleted.
-
-When you start the privileged session, you must manually authenticate to the cluster you want to
-interact with.
+Once the privileged session is exited, the kubeconfig is deleted.  If any GKE clusters exist in the current
+project, `eiam` will automatically create a new kubeconfig entry for the privileged service account.  If
+there are more than one cluster, you will be prompted to select which one you would like to set as the default.
 
 **Start a privileged session:**
 ```
 $ eiam assume-privileges \
   --service-account-email gke-debug@example-project.iam.gserviceaccount.com \
-  --reason "Debugging GKE workload (JIRA-1234)"
+  --reason "Debugging GKE workload (JIRA-1234)" -y
+
+INFO    Fetching short-lived access token for gke-debug@example-project.iam.gserviceaccount.com
+INFO    Configuring gcloud to use auth proxy
+
+Use the arrow keys to navigate: ↓ ↑ → ←
+? Select the default cluster to use:
+  ▸ break-glass-test
+    tmp-eiam-test
+  
+INFO    Writing auth proxy logs to /Users/example/Library/Application Support/ephemeral-iam/log/20210325201631_auth_proxy.log
+INFO    Starting auth proxy. Privileged session will last until Thu, 25 Mar 2021 20:26:20 CDT
+INFO    kubectl is now authenticated as gke-debug@example-project.iam.gserviceaccount.com
+WARNING Enter `exit` or press CTRL+D to quit privileged session
 ```
 
-**Authenticate to the GKE cluster:**
+**List the pods in the current namespace:**
 ```
-[gke-debug@example-project.iam.gserviceaccount.com]
-[eiam] > gcloud container clusters get-credentials break-glass-test --zone us-central1-c
-Fetching cluster endpoint and auth data.
-kubeconfig entry generated for break-glass-test.
-
 [gke-debug@example-project.iam.gserviceaccount.com]
 [eiam] > kubectl get pods
 NAME                            READY   STATUS    RESTARTS   AGE

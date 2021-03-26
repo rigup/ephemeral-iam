@@ -19,38 +19,50 @@ var (
 	LoggingFormats   = []string{"text", "json"}
 	BoolConfigFields = []string{
 		"authproxy.verbose",
-		"authproxy.writetofile",
 		"logging.disableleveltruncation",
 		"logging.padleveltext",
 	}
 )
 
 var configInfo = dedent.Dedent(`
-		┏━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-		┃ Key                    ┃ Description                                         ┃
-		┡━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-		│ authproxy.proxyaddress │ The address to the auth proxy. You shouldn't need   │
-		│                        │ to update this                                      │
-		├────────────────────────┼─────────────────────────────────────────────────────┤
-		│ authproxy.proxyport    │ The port to run the auth proxy on                   │
-		├────────────────────────┼─────────────────────────────────────────────────────┤
-		│ authproxy.verbose      │ Enables verbose logging output from the auth proxy  │
-		├────────────────────────┼─────────────────────────────────────────────────────┤
-		│ authproxy.writetofile  │ Enables writing auth proxy logs to a log file       │
-		├────────────────────────┼─────────────────────────────────────────────────────┤
-		│ authproxy.logdir       │ The directory to write auth proxy logs to           │
-		├────────────────────────┼─────────────────────────────────────────────────────┤
-		│ binarypaths.gcloud     │ The absolute path to the gcloud binary              │
-		├────────────────────────┼─────────────────────────────────────────────────────┤
-		│ binarypaths.kubectl    │ The absolute path to the kubectl binary             │
-		├────────────────────────┼─────────────────────────────────────────────────────┤
-		│ logging.format         │ The format for the console logs.                    │
-		│                        │ Can be either 'json' or 'text'                      │
-		├────────────────────────┼─────────────────────────────────────────────────────┤
-		│ logging.level          │ The logging level to write to the console.          │
-		│                        │ Can be one of "trace", "debug", "info", "warn",     │
-		│                        │ "error", "fatal", "panic"                           │
-		└────────────────────────┴─────────────────────────────────────────────────────┘
+		┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+		┃ Key                            ┃ Description                                 ┃
+		┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+		│ authproxy.certfile             │ The path to the auth proxy's TLS            │
+		│                                │ certificate                                 │
+		├────────────────────────────────┼─────────────────────────────────────────────┤
+		│ authproxy.keyfile              │ The path to the auth proxy's x509 key       │
+		├────────────────────────────────┼─────────────────────────────────────────────┤
+		│ authproxy.logdir               │ The directory that auth proxy logs will be  │
+		│                                │ written to                                  │
+		├────────────────────────────────┼─────────────────────────────────────────────┤
+		│ authproxy.proxyaddress         │ The address that the auth proxy is hosted   │
+		│                                │ on                                          │
+		├────────────────────────────────┼─────────────────────────────────────────────┤
+		│ authproxy.proxyport            │ The port that the auth proxy runs on        │
+		├────────────────────────────────┼─────────────────────────────────────────────┤
+		│ authproxy.verbose              │ When set to 'true', verbose output for      │
+		│                                │ proxy logs will be enabled                  │
+		├────────────────────────────────┼─────────────────────────────────────────────┤
+		│ binarypaths.gcloud             │ The path to the gcloud binary on your       │
+		│                                │ filesystem                                  │
+		├────────────────────────────────┼─────────────────────────────────────────────┤
+		│ binarypaths.kubectl            │ The path to the kubectl binary on your      │
+		│                                │ filesystem                                  │
+		├────────────────────────────────┼─────────────────────────────────────────────┤
+		│ logging.format                 │ The format for which to write console logs  │
+		│                                │ Can be either 'json' or 'text'              │
+		├────────────────────────────────┼─────────────────────────────────────────────┤
+		│ logging.level                  │ The logging level to write to the console   │
+		│                                │ Can be one of 'trace', 'debug', 'info',     │
+		│                                │ 'warn', 'error', 'fatal', or 'panic'        │
+		├────────────────────────────────┼─────────────────────────────────────────────┤
+		│ logging.disableleveltruncation │ When set to 'true', the level indicator for │
+		│                                │ logs will not be trucated                   │
+		├────────────────────────────────┼─────────────────────────────────────────────┤
+		│ logging.padleveltext           │ When set to 'true', output logs will align  │
+		│                                │ evenly with their output level indicator    │
+		└────────────────────────────────┴─────────────────────────────────────────────┘
 `)
 
 func newCmdConfig() *cobra.Command {

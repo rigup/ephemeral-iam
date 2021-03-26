@@ -31,8 +31,9 @@ func NewLogger() *logrus.Logger {
 	default:
 		logger.Formatter = &logrus.TextFormatter{
 			DisableLevelTruncation: viper.GetBool("logging.disableleveltruncation"),
-			PadLevelText:           viper.GetBool("logging.padleveltext"),
+			DisableQuote:           true,
 			DisableTimestamp:       true,
+			PadLevelText:           viper.GetBool("logging.padleveltext"),
 		}
 	}
 
