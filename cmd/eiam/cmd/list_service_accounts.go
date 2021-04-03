@@ -24,9 +24,10 @@ var (
 
 func newCmdListServiceAccounts() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "list-service-accounts",
-		Aliases: []string{"list"},
-		Short:   "List service accounts that can be impersonated [alias: list]",
+		Use:        "list-service-accounts",
+		Aliases:    []string{"list"},
+		Short:      "List service accounts that can be impersonated [alias: list]",
+		SuggestFor: []string{"ls"},
 		Long: dedent.Dedent(`
 			The "list-service-accounts" command fetches all Cloud IAM Service Accounts in the current
 			GCP project (as determined by the activated gcloud config) and checks each of them to see

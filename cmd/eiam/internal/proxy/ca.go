@@ -98,9 +98,9 @@ func signHost(ca *tls.Certificate, host string, port int) (cert *tls.Certificate
 		Issuer:       x509ca.Subject,
 		Subject: pkix.Name{
 			Country:            []string{"US"},
-			Locality:           []string{""},
-			Organization:       []string{"ephemeral-iam"},
-			OrganizationalUnit: []string{"https://praetorian.com/"},
+			Locality:           []string{"Unknown"},
+			Organization:       []string{"Unknown"},
+			OrganizationalUnit: []string{"Unknown"},
 			CommonName:         "gcloud proxy cert",
 		},
 		NotBefore: notBefore,

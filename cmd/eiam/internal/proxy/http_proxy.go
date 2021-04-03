@@ -99,14 +99,6 @@ func createProxy(accessToken, reason string) (*http.Server, error) {
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = viper.GetBool("authproxy.verbose")
 
-	_, err := os.Stat(viper.GetString("authproxy.logdir"))
-	if os.IsNotExist(err) {
-		if err := os.MkdirAll(viper.GetString("authproxy.logdir"), 0o755); err != nil {
-			return nil, fmt.Errorf("failed to create proxy log directory: %v", err)
-		}
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to find proxy log dir %s: %v", viper.GetString("authproxy.logdir"), err)
-	}
 	// Create log file
 	timestamp := time.Now().Format("20060102150405")
 	logFilename := filepath.Join(viper.GetString("authproxy.logdir"), fmt.Sprintf("%s_auth_proxy.log", timestamp))
