@@ -39,7 +39,7 @@ func CheckForNewRelease() {
 	githubClient := github.NewClient(nil)
 	releases, _, err := githubClient.Repositories.ListReleases(context.Background(), repoOwner, repoName, nil)
 	if err != nil {
-		util.Logger.Error("Unable to check for new eiam releases")
+		util.Logger.WithError(err).Error("unable to check for new eiam releases")
 	}
 
 	newestVersion := Version
@@ -79,21 +79,19 @@ func installNewVersion(release *github.RepositoryRelease) {
 		}
 	}
 	if downloadURL == "" {
-		util.Logger.Error("Failed to find a release version that matches your OS and architecture")
-		util.Logger.Error("Skipping update, please try again later\n")
+		err := fmt.Errorf("failed to find a release version that matches your OS and architecture")
+		util.Logger.WithError(err).Error("Skipping update, please try again later\n")
 		return
 	}
 
 	if err := downloadAndExtract(downloadURL); err != nil {
-		util.Logger.Error(err)
-		util.Logger.Error("Skipping update, please try again later\n")
+		util.Logger.WithError(err).Error("Skipping update, please try again later")
 		return
 	}
 
 	installPath, err := CheckCommandExists("eiam")
 	if err != nil {
-		util.Logger.Error(err)
-		util.Logger.Error("Skipping update, please try again later\n")
+		util.Logger.WithError(err).Error("Skipping update, please try again later\n")
 		return
 	}
 
@@ -174,8 +172,7 @@ func formatArch() string {
 	} else if runtime.GOOS == "darwin" {
 		formatted = "Darwin_macOS"
 	} else {
-		util.Logger.Errorf("failed to recognize system OS %s", runtime.GOOS)
-		util.Logger.Fatal("Supported values are darwin and linux")
+		util.Logger.WithError(fmt.Errorf("%s is not a supported OS", runtime.GOOS)).Fatal("ephemeral-iam is only supported on darwin and linux systems")
 	}
 
 	if runtime.GOARCH == "386" {

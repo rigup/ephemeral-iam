@@ -8,10 +8,14 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"io/ioutil"
 	"math/big"
 	"os"
 	"path/filepath"
+	"regexp"
 	"time"
+
+	"golang.org/x/mod/semver"
 
 	"github.com/spf13/viper"
 
@@ -42,8 +46,8 @@ func GenerateCerts() error {
 			Country:            []string{"US"},
 			Locality:           []string{"Unknown"},
 			Organization:       []string{"Unknown"},
-			OrganizationalUnit: []string{"Unknown"},
-			CommonName:         "Unknown",
+			OrganizationalUnit: []string{"ephemeral-iam"},
+			CommonName:         fmt.Sprintf("gcloud proxy CA %s", appconfig.Version),
 		},
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,
@@ -130,13 +134,59 @@ func checkProxyCertificate() error {
 
 	if certExists != keyExists { // Check if only one of either the key or the cert exist
 		util.Logger.Warn("Either the auth proxy cert or key is missing. Regenerating both")
-		if err := GenerateCerts(); err != nil {
-			return err
-		}
+		return GenerateCerts()
 	} else if !certExists { // Check if neither files exist
-		if err := GenerateCerts(); err != nil {
-			return err
-		}
+		util.Logger.Debug("Generating proxy cert and key files")
+		return GenerateCerts()
+	}
+
+	return validateProxyCert(certFile)
+}
+
+func validateProxyCert(certFile string) (err error) {
+	cert, err := readCert(certFile)
+	if err != nil {
+		return err
+	}
+
+	// Check if certificate version matches eiam version
+	certCN := cert.Subject.CommonName
+	commonNamePattern := regexp.MustCompile(`^gcloud proxy CA (v[\d]+\.[\d]+\.[\d]+)$`)
+	if !commonNamePattern.MatchString(certCN) {
+		util.Logger.Warnf("Regenerating certs due to unrecognized CN field: %s", certCN)
+		return GenerateCerts()
+	}
+	var certSemVer string
+	if semverGrp := commonNamePattern.FindStringSubmatch(certCN); len(semverGrp) > 0 {
+		certSemVer = semverGrp[0]
+	} else {
+		util.Logger.Warnf("Regenerating cert due to invalid cert common name: %s", certCN)
+		return GenerateCerts()
+	}
+	if semver.Compare(appconfig.Version, certSemVer) > 0 {
+		util.Logger.Debug("Certificate is outdated, generating new one")
+		return GenerateCerts()
+	}
+
+	if !cert.IsCA {
+		util.Logger.Warn("Regenerating cert due to invalid existing certificate options")
+		return GenerateCerts()
 	}
 	return nil
+}
+
+func readCert(certFile string) (cert *x509.Certificate, err error) {
+	var certBytes []byte
+	var certBlock *pem.Block
+
+	if certBytes, err = ioutil.ReadFile(certFile); err != nil {
+		return nil, fmt.Errorf("failed to read certificate file: %v", err)
+	}
+	if certBlock, _ = pem.Decode(certBytes); certBlock == nil {
+		return nil, fmt.Errorf("failed to decode certificate bytes: %v", err)
+	}
+	if cert, err = x509.ParseCertificate(certBlock.Bytes); err != nil {
+		return nil, fmt.Errorf("failed to parse certificate bytes: %v", err)
+	}
+	return cert, nil
 }

@@ -1,12 +1,14 @@
 package proxy
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"os/exec"
 	"os/signal"
+	"path"
 	"syscall"
 
 	"github.com/creack/pty"
@@ -18,29 +20,32 @@ import (
 )
 
 func startShell(svcAcct string, defaultCluster map[string]string, oldState **term.State) {
-	tmpKubeConfig, err := createTempFile()
+	tmpKubeConfig, err := createTempKubeConfig()
 	if err != nil {
 		util.Logger.WithError(err).Fatal("failed to create privileged kubeconfig")
 	}
 	defer os.Remove(tmpKubeConfig.Name()) // Remove tmpKubeConfig after priv session ends
 
-	// Create the kubeconfig entry for the privileged service account
-	c := exec.Command("gcloud", "container", "clusters", "get-credentials", defaultCluster["name"], "--zone", defaultCluster["location"])
-
 	// Copy environment variables from user, set PS1 prompt, and set the KUBECONFIG env var
-	c.Env = append(c.Env, os.Environ()...)
-	c.Env = append(c.Env, buildPrompt(svcAcct))
-	c.Env = append(c.Env, fmt.Sprintf("KUBECONFIG=%s", tmpKubeConfig.Name()))
+	cmdEnv := append(os.Environ(), buildPrompt(svcAcct), fmt.Sprintf("KUBECONFIG=%s", tmpKubeConfig.Name()))
 
-	if err := c.Run(); err != nil {
-		util.Logger.WithError(err).Errorf("failed to fetch credentials for cluster %s", defaultCluster["name"])
-	} else {
-		util.Logger.Infof("kubectl is now authenticated as %s", svcAcct)
+	if len(defaultCluster) > 0 {
+		// Create the kubeconfig entry for the privileged service account
+		c := exec.Command("gcloud", "container", "clusters", "get-credentials", defaultCluster["name"], "--zone", defaultCluster["location"])
+		c.Env = cmdEnv
+		errOut := bytes.Buffer{}
+		c.Stderr = &errOut
+
+		if err := c.Run(); err != nil {
+			util.Logger.Errorf(errOut.String())
+		} else {
+			util.Logger.Infof("kubectl is now authenticated as %s", svcAcct)
+		}
 	}
 
 	// Create the shell command and copy the environment variables from the previous command
 	shellCmd := exec.Command("bash")
-	shellCmd.Env = c.Env
+	shellCmd.Env = cmdEnv
 
 	util.Logger.Warn("Enter `exit` or press CTRL+D to quit privileged session")
 
@@ -106,10 +111,10 @@ func buildPrompt(svcAcct string) string {
 	return fmt.Sprintf("PS1=\n[%s%s%s]\n[%seiam%s] > ", yellow, svcAcct, endColor, green, endColor)
 }
 
-func createTempFile() (*os.File, error) {
-	configDir := appconfig.GetConfigDir()
+func createTempKubeConfig() (*os.File, error) {
+	kubeConfigDir := path.Join(appconfig.GetConfigDir(), "tmp_kube_config")
 	tmpFileName := uuid.New().String()
-	tmpKubeConfig, err := os.CreateTemp(configDir, tmpFileName)
+	tmpKubeConfig, err := os.CreateTemp(kubeConfigDir, tmpFileName)
 	if err != nil {
 		return nil, err
 	}

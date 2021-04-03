@@ -2,10 +2,13 @@ package eiamutil
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/lithammer/dedent"
 )
+
+var invalidCommandErrMsg = regexp.MustCompile(`unknown command "[\S]+" for "[a-z\-]+"`)
 
 // SDKClientCreateError is used for errors caused when attempting to
 // create a GCP SDK client/service.
@@ -40,6 +43,8 @@ func CheckError(err error) {
 	if err != nil {
 		if strings.Contains(err.Error(), "could not find default credentials") {
 			Logger.Fatal("No Application Default Credentials were found. Please run the following command to remediate this issue:\n\n  $ gcloud auth application-default login\n\n")
+		} else if invalidCommandErrMsg.MatchString(err.Error()) {
+			Logger.Errorf("%v", err)
 		} else {
 			Logger.WithError(err).Error("eiam crashed due to an unhandled error")
 		}

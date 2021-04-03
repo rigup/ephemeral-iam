@@ -82,7 +82,7 @@ func CanImpersonate(project, serviceAccountEmail, reason string) (bool, error) {
 		return false, err
 	}
 
-	util.Logger.Debugf("Permissions on %s: \n%s\n", serviceAccountEmail, strings.Join(perms, "\n"))
+	util.Logger.Debugf("Permissions on %s: \n%s\n", serviceAccountEmail, strings.Join(perms, ", "))
 	for _, permission := range perms {
 		if permission == "iam.serviceAccounts.getAccessToken" {
 			return true, nil
