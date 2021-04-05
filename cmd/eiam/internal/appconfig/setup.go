@@ -2,16 +2,15 @@ package appconfig
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
 
-	credentials "cloud.google.com/go/iam/credentials/apiv1"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/viper"
+	"google.golang.org/api/oauth2/v1"
 
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient"
@@ -38,7 +37,10 @@ func init() {
 	if !util.Contains(allConfigKeys, "binarypaths.gcloud") && !util.Contains(allConfigKeys, "binarypaths.kubectl") {
 		util.CheckError(checkDependencies())
 	}
-	checkADCExists()
+
+	if err := checkValidADCExists(); err != nil {
+		util.Logger.WithError(err).Fatal("setup error")
+	}
 
 	if err := createLogDir(); err != nil {
 		util.Logger.WithError(err).Fatal("setup error")
@@ -76,9 +78,11 @@ func CheckCommandExists(command string) (string, error) {
 	return path, nil
 }
 
-func checkADCExists() {
+// checkValidADCExists checks that application default credentials exist, that
+// they are valid, and that they are for the correct user
+func checkValidADCExists() error {
 	ctx := context.Background()
-	_, err := credentials.NewIamCredentialsClient(ctx)
+	oauth2Service, err := oauth2.NewService(ctx)
 	if err != nil {
 		if strings.Contains(err.Error(), "could not find default credentials") {
 			util.Logger.Warn("No Application Default Credentials were found, attempting to generate them\n")
@@ -88,42 +92,37 @@ func checkADCExists() {
 			cmd.Stdout = os.Stdout
 			cmd.Stdin = os.Stdin
 			if err := cmd.Run(); err != nil {
-				util.Logger.WithError(err).Error("unable to create application default credentials")
+				return fmt.Errorf("unable to create application default credentials: %v", err)
 			}
 			fmt.Println()
 			util.Logger.Info("Application default credentials were successfully created")
 		} else {
-			fmt.Println()
-			util.Logger.Fatalf("failed to check if application default credentials exist: %v", err)
+			return fmt.Errorf("failed to check if application default credentials exist: %v", err)
 		}
-	} else if adcPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); adcPath != "" {
-		util.Logger.Warnf("The GOOGLE_APPLICATION_CREDENTIALS environment variable is set:\n\tADC Path: %s\n\n", adcPath)
-		if err := checkADCIdentity(adcPath); err != nil {
-			util.Logger.Fatal(err)
+	} else {
+		util.Logger.Debug("Checking validity of application default credentials")
+		tokenInfo, err := oauth2Service.Tokeninfo().Do()
+		if err != nil {
+			return fmt.Errorf("failed to parse OAuth2 Token: %v", err)
 		}
+
+		return checkADCIdentity(tokenInfo.Email)
 	}
+	return nil
 }
 
-func checkADCIdentity(path string) error {
-	data, err := os.ReadFile(path)
+func checkADCIdentity(tokenEmail string) error {
+	account, err := gcpclient.CheckActiveAccountSet()
 	if err != nil {
-		return fmt.Errorf("failed to read ADC file %s: %v", path, err)
+		return err
 	}
 
-	var adcMap map[string]interface{}
-	if err := json.Unmarshal(data, &adcMap); err != nil {
-		return fmt.Errorf("failed to unmarshal ADC file %s: %v", path, err)
-	}
-
-	if email, ok := adcMap["client_email"]; ok {
-		account, err := gcpclient.CheckActiveAccountSet()
-		if err != nil {
-			return fmt.Errorf("failed to get account from gcloud config: %v", err)
-		}
-		util.Logger.Warnf("API calls made by eiam will not be authenticated as your default account:\n\tAccount Set:     %s\n\tDefault Account: %s\n\n", email, account)
+	util.Logger.Debugf("OAuth 2.0 Token Email: %s", tokenEmail)
+	if account != tokenEmail {
+		util.Logger.Warnf("API calls made by eiam will not be authenticated as your default account:\n\tAccount Set:     %s\n\tDefault Account: %s\n\n", tokenEmail, account)
 
 		prompt := promptui.Prompt{
-			Label:     fmt.Sprintf("Authenticate as %s", email),
+			Label:     fmt.Sprintf("Authenticate as %s", tokenEmail),
 			IsConfirm: true,
 		}
 
@@ -131,7 +130,9 @@ func checkADCIdentity(path string) error {
 			fmt.Print("\n\n")
 			util.Logger.Info("Attempting to reconfigure eiam's authenticated account")
 			os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "")
-			checkADCExists()
+			if err := checkValidADCExists(); err != nil {
+				util.Logger.Fatal(err)
+			}
 			util.Logger.Infof("Success. You should now be authenticated as %s", account)
 		}
 	}
@@ -165,7 +166,9 @@ func createTempKubeConfigDir() error {
 		return fmt.Errorf("failed to find temp kubeconfig dir %s: %v", kubeConfigDir, err)
 	}
 	// Clear any leftover kubeconfigs from improper shutdowns
-	os.RemoveAll(kubeConfigDir)
+	if err := os.RemoveAll(kubeConfigDir); err != nil {
+		return fmt.Errorf("failed to clear old kubeconfigs: %v", err)
+	}
 	if err := os.MkdirAll(kubeConfigDir, 0o755); err != nil {
 		return fmt.Errorf("failed to recreate temp kubeconfig directory: %v", err)
 	}
