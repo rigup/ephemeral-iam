@@ -11,6 +11,7 @@ import (
 	credentialspb "google.golang.org/genproto/googleapis/iam/credentials/v1"
 
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/errors"
 	queryiam "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient/query_iam"
 )
 
@@ -41,6 +42,7 @@ func GenerateTemporaryAccessToken(serviceAccountEmail, reason string) (*credenti
 
 	resp, err := client.GenerateAccessToken(ctx, &req)
 	if err != nil {
+		util.Logger.Errorf("Failed to generate GCP access token for service account %s", serviceAccountEmail)
 		return nil, err
 	}
 	return resp, nil
@@ -63,6 +65,7 @@ func GetServiceAccounts(project, reason string) ([]*iam.ServiceAccount, error) {
 		serviceAccounts = append(serviceAccounts, page.Accounts...)
 		return nil
 	}); err != nil {
+		util.Logger.Error("Failed to list service accounts")
 		return []*iam.ServiceAccount{}, err
 	}
 	return serviceAccounts, nil
@@ -94,7 +97,7 @@ func CanImpersonate(project, serviceAccountEmail, reason string) (bool, error) {
 func newServiceAccountClient(reason string) (*iam.ProjectsServiceAccountsService, error) {
 	iamService, err := iam.NewService(context.Background(), option.WithRequestReason(reason))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Cloud IAM SDK client: %v", err)
+		return nil, &errorsutil.SDKClientCreateError{Err: err, ResourceType: "Cloud IAM"}
 	}
 
 	return iam.NewProjectsServiceAccountsService(iamService), nil
