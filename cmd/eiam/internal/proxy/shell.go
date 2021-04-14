@@ -24,7 +24,7 @@ import (
 )
 
 func startShell(svcAcct, accessToken, expiry string, defaultCluster map[string]string, oldState **term.State) {
-	tmpKubeConfig, err := createTempKubeConfig(accessToken, expiry)
+	tmpKubeConfig, err := createTempKubeConfig()
 	if err != nil {
 		util.Logger.WithError(err).Fatal("failed to create temp kubeconfig")
 	}
@@ -45,6 +45,10 @@ func startShell(svcAcct, accessToken, expiry string, defaultCluster map[string]s
 		} else {
 			util.Logger.Infof("kubectl is now authenticated as %s", svcAcct)
 		}
+	}
+
+	if err := writeCredsToKubeConfig(tmpKubeConfig, accessToken, expiry); err != nil {
+		util.Logger.WithError(err).Fatal("failed to write credentials to temp kubeconfig")
 	}
 
 	// Create the shell command and copy the environment variables from the previous command
@@ -115,20 +119,25 @@ func buildPrompt(svcAcct string) string {
 	return fmt.Sprintf("PS1=\n[%s%s%s]\n[%seiam%s] > ", yellow, svcAcct, endColor, green, endColor)
 }
 
-func createTempKubeConfig(accessToken, expiry string) (*os.File, error) {
+func createTempKubeConfig() (*os.File, error) {
 	kubeConfigDir := path.Join(appconfig.GetConfigDir(), "tmp_kube_config")
 	tmpFileName := uuid.New().String()
 	tmpKubeConfig, err := os.CreateTemp(kubeConfigDir, tmpFileName)
 	if err != nil {
 		return nil, err
 	}
+	return tmpKubeConfig, nil
+}
 
+func writeCredsToKubeConfig(tmpKubeConfig *os.File, accessToken, expiry string) error {
 	// Read the tmpKubeConfig into a client-go config object
 	config := clientcmdapi.NewConfig()
-	if configBytes, err := ioutil.ReadFile(tmpKubeConfig.Name()); err != nil {
-		return nil, fmt.Errorf("failed to read generated tmp kubeconfig: %v", err)
-	} else if err := runtime.DecodeInto(clientcmdapilatest.Codec, configBytes, config); err != nil {
-		return nil, fmt.Errorf("failed to deserialize generated tmp kubeconfig: %v", err)
+	configBytes, err := ioutil.ReadFile(tmpKubeConfig.Name())
+	if err != nil {
+		return fmt.Errorf("failed to read generated tmp kubeconfig: %v", err)
+	}
+	if err := runtime.DecodeInto(clientcmdapilatest.Codec, configBytes, config); err != nil {
+		return fmt.Errorf("failed to deserialize generated tmp kubeconfig: %v", err)
 	}
 
 	// There should only be one, this is an efficient way of getting it
@@ -139,11 +148,12 @@ func createTempKubeConfig(accessToken, expiry string) (*os.File, error) {
 	}
 
 	// Serialize the updated config and write it back to the file
-	if newConfigBytes, err := runtime.Encode(clientcmdapilatest.Codec, config); err != nil {
-		return nil, fmt.Errorf("failed to serialize updated tmp kubeconfig: %v", err)
-	} else if _, err := tmpKubeConfig.Write(newConfigBytes); err != nil {
-		return nil, fmt.Errorf("failed to write updated tmp kubeconfig: %v", err)
+	newConfigBytes, err := runtime.Encode(clientcmdapilatest.Codec, config)
+	if err != nil {
+		return fmt.Errorf("failed to serialize updated tmp kubeconfig: %v", err)
 	}
-
-	return tmpKubeConfig, nil
+	if _, err := tmpKubeConfig.Write(newConfigBytes); err != nil {
+		return fmt.Errorf("failed to write updated tmp kubeconfig: %v", err)
+	}
+	return nil
 }
