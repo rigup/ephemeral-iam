@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -14,15 +15,18 @@ import (
 	"github.com/creack/pty"
 	"github.com/google/uuid"
 	"golang.org/x/term"
+	"k8s.io/apimachinery/pkg/runtime"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	clientcmdapilatest "k8s.io/client-go/tools/clientcmd/api/latest"
 
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig"
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
 )
 
-func startShell(svcAcct string, defaultCluster map[string]string, oldState **term.State) {
-	tmpKubeConfig, err := createTempKubeConfig()
+func startShell(svcAcct, accessToken, expiry string, defaultCluster map[string]string, oldState **term.State) {
+	tmpKubeConfig, err := createTempKubeConfig(accessToken, expiry)
 	if err != nil {
-		util.Logger.WithError(err).Fatal("failed to create privileged kubeconfig")
+		util.Logger.WithError(err).Fatal("failed to create temp kubeconfig")
 	}
 	defer os.Remove(tmpKubeConfig.Name()) // Remove tmpKubeConfig after priv session ends
 
@@ -111,12 +115,35 @@ func buildPrompt(svcAcct string) string {
 	return fmt.Sprintf("PS1=\n[%s%s%s]\n[%seiam%s] > ", yellow, svcAcct, endColor, green, endColor)
 }
 
-func createTempKubeConfig() (*os.File, error) {
+func createTempKubeConfig(accessToken, expiry string) (*os.File, error) {
 	kubeConfigDir := path.Join(appconfig.GetConfigDir(), "tmp_kube_config")
 	tmpFileName := uuid.New().String()
 	tmpKubeConfig, err := os.CreateTemp(kubeConfigDir, tmpFileName)
 	if err != nil {
 		return nil, err
 	}
+
+	// Read the tmpKubeConfig into a client-go config object
+	config := clientcmdapi.NewConfig()
+	if configBytes, err := ioutil.ReadFile(tmpKubeConfig.Name()); err != nil {
+		return nil, fmt.Errorf("failed to read generated tmp kubeconfig: %v", err)
+	} else if err := runtime.DecodeInto(clientcmdapilatest.Codec, configBytes, config); err != nil {
+		return nil, fmt.Errorf("failed to deserialize generated tmp kubeconfig: %v", err)
+	}
+
+	// There should only be one, this is an efficient way of getting it
+	for _, authInfo := range config.AuthInfos {
+		// Write the service account's token to the temp kubeconfig
+		authInfo.AuthProvider.Config["access-token"] = accessToken
+		authInfo.AuthProvider.Config["expiry"] = expiry
+	}
+
+	// Serialize the updated config and write it back to the file
+	if newConfigBytes, err := runtime.Encode(clientcmdapilatest.Codec, config); err != nil {
+		return nil, fmt.Errorf("failed to serialize updated tmp kubeconfig: %v", err)
+	} else if _, err := tmpKubeConfig.Write(newConfigBytes); err != nil {
+		return nil, fmt.Errorf("failed to write updated tmp kubeconfig: %v", err)
+	}
+
 	return tmpKubeConfig, nil
 }
