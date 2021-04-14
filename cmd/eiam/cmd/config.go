@@ -180,7 +180,10 @@ func newCmdConfigSet() *cobra.Command {
 				}
 
 			}
-			util.CheckError(viper.WriteConfig())
+			if err := viper.WriteConfig(); err != nil {
+				util.Logger.Error("Failed to write updated configuration")
+				return err
+			}
 			util.Logger.Infof("Updated %s from %v to %s", args[0], oldVal, args[1])
 			return nil
 		},

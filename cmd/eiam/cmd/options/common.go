@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/pflag"
 
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/errors"
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient"
 )
 
@@ -50,7 +51,7 @@ func AddPersistentFlags(fs *pflag.FlagSet) {
 // AddProjectFlag adds the --project/-p flag to the command
 func AddProjectFlag(fs *pflag.FlagSet, project *string) {
 	defaultVal, err := gcpclient.GetCurrentProject()
-	util.CheckError(err)
+	errorsutil.CheckError(err)
 
 	fs.StringVarP(project, ProjectFlag.Name, ProjectFlag.Shorthand, defaultVal, "The GCP project. Inherits from the active gcloud config by default")
 	if defaultVal == "" {
@@ -63,7 +64,7 @@ func AddProjectFlag(fs *pflag.FlagSet, project *string) {
 // AddRegionFlag adds the --region/-r flag to the command
 func AddRegionFlag(fs *pflag.FlagSet, region *string, required bool) {
 	defaultVal, err := gcpclient.GetCurrentRegion()
-	util.CheckError(err)
+	errorsutil.CheckError(err)
 
 	fs.StringVarP(region, RegionFlag.Name, RegionFlag.Shorthand, defaultVal, "The GCP region. Inherits from the active gcloud config by default")
 	if required {
@@ -76,7 +77,7 @@ func AddRegionFlag(fs *pflag.FlagSet, region *string, required bool) {
 // AddZoneFlag adds the --zone/-z flag to the command
 func AddZoneFlag(fs *pflag.FlagSet, zone *string, required bool) {
 	defaultVal, err := gcpclient.GetCurrentZone()
-	util.CheckError(err)
+	errorsutil.CheckError(err)
 
 	fs.StringVarP(zone, ZoneFlag.Name, ZoneFlag.Shorthand, defaultVal, "The GCP zone. Inherits from the active gcloud config by default")
 	if required {

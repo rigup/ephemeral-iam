@@ -13,6 +13,7 @@ import (
 	"google.golang.org/api/oauth2/v1"
 
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/errors"
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient"
 )
 
@@ -35,7 +36,7 @@ func init() {
 
 	allConfigKeys := viper.AllKeys()
 	if !util.Contains(allConfigKeys, "binarypaths.gcloud") && !util.Contains(allConfigKeys, "binarypaths.kubectl") {
-		util.CheckError(checkDependencies())
+		errorsutil.CheckError(checkDependencies())
 	}
 
 	if err := checkValidADCExists(); err != nil {
@@ -126,7 +127,7 @@ func checkADCIdentity(tokenEmail string) error {
 			IsConfirm: true,
 		}
 
-		if _, err := prompt.Run(); err != nil {
+		if ans, err := prompt.Run(); err != nil && strings.ToLower(ans) == "y" {
 			fmt.Print("\n\n")
 			util.Logger.Info("Attempting to reconfigure eiam's authenticated account")
 			os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "")

@@ -26,6 +26,7 @@ require (
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
 	google.golang.org/api v0.40.0
 	google.golang.org/genproto v0.0.0-20210219173056-d891e3cb3b5b
+	google.golang.org/grpc v1.35.0
 	gopkg.in/ini.v1 v1.62.0
 	k8s.io/apimachinery v0.21.0
 	k8s.io/client-go v0.21.0

@@ -18,6 +18,7 @@ import (
 	"golang.org/x/term"
 
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/errors"
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient"
 )
 
@@ -52,7 +53,7 @@ func StartProxyServer(accessToken, reason, svcAcct, project string, expirationDa
 		}
 		close(idleConnsClosed)
 		util.Logger.Info("Stopping auth proxy and restoring gcloud config")
-		util.CheckRevertGcloudConfigError(gcpclient.UnsetGcloudProxy())
+		errorsutil.CheckRevertGcloudConfigError(gcpclient.UnsetGcloudProxy())
 		os.Exit(0)
 	}()
 
@@ -91,7 +92,7 @@ func StartProxyServer(accessToken, reason, svcAcct, project string, expirationDa
 	if err := srv.Shutdown(context.Background()); err != nil {
 		return fmt.Errorf("failed to properly shut down proxy server: %v", err)
 	}
-	util.CheckRevertGcloudConfigError(gcpclient.UnsetGcloudProxy())
+	errorsutil.CheckRevertGcloudConfigError(gcpclient.UnsetGcloudProxy())
 	return nil
 }
 
@@ -112,7 +113,10 @@ func createProxy(accessToken, reason string) (*http.Server, error) {
 	proxy.Logger = log.New(logFile, "", log.LstdFlags)
 	util.Logger.Infof("Writing auth proxy logs to %s\n", logFilename)
 
-	util.CheckError(setCa(viper.GetString("authproxy.certfile"), viper.GetString("authproxy.keyfile")))
+	if err := setCa(viper.GetString("authproxy.certfile"), viper.GetString("authproxy.keyfile")); err != nil {
+		util.Logger.Error("Failed to set proxy certificate authority")
+		return nil, err
+	}
 
 	proxy.OnRequest().HandleConnect(goproxy.FuncHttpsHandler(proxyConnectHandle))
 

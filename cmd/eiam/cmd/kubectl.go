@@ -37,11 +37,13 @@ func newCmdKubectl() *cobra.Command {
 			  | jq`),
 		Args:               cobra.ArbitraryArgs,
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
-		PreRun: func(cmd *cobra.Command, args []string) {
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			cmd.Flags().VisitAll(options.CheckRequired)
 
 			kubectlCmdArgs = util.ExtractUnknownArgs(cmd.Flags(), os.Args)
-			util.CheckError(util.FormatReason(&kubectlCmdConfig.Reason))
+			if err := util.FormatReason(&kubectlCmdConfig.Reason); err != nil {
+				return err
+			}
 
 			if !options.YesOption {
 				util.Confirm(map[string]string{
@@ -51,6 +53,7 @@ func newCmdKubectl() *cobra.Command {
 					"Command":         fmt.Sprintf("kubectl %s", strings.Join(kubectlCmdArgs, " ")),
 				})
 			}
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runKubectlCommand()

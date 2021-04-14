@@ -41,7 +41,7 @@ func GenerateTemporaryAccessToken(serviceAccountEmail, reason string) (*credenti
 
 	resp, err := client.GenerateAccessToken(ctx, &req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate GCP access token for service account %s: %v", serviceAccountEmail, err)
+		return nil, err
 	}
 	return resp, nil
 }
@@ -63,7 +63,7 @@ func GetServiceAccounts(project, reason string) ([]*iam.ServiceAccount, error) {
 		serviceAccounts = append(serviceAccounts, page.Accounts...)
 		return nil
 	}); err != nil {
-		return []*iam.ServiceAccount{}, fmt.Errorf("an error occurred while fetching service accounts: %v", err)
+		return []*iam.ServiceAccount{}, err
 	}
 	return serviceAccounts, nil
 }
