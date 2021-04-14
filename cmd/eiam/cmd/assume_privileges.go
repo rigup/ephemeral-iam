@@ -30,10 +30,12 @@ func newCmdAssumePrivileges() *cobra.Command {
 				eiam assume-privileges \
 				  --service-account-email example@my-project.iam.gserviceaccount.com \
 				  --reason "Emergency security patch (JIRA-1234)"`),
-		PreRun: func(cmd *cobra.Command, args []string) {
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			cmd.Flags().VisitAll(options.CheckRequired)
 
-			util.CheckError(util.FormatReason(&apCmdConfig.Reason))
+			if err := util.FormatReason(&apCmdConfig.Reason); err != nil {
+				return err
+			}
 
 			if !options.YesOption {
 				util.Confirm(map[string]string{
@@ -42,6 +44,7 @@ func newCmdAssumePrivileges() *cobra.Command {
 					"Reason":          apCmdConfig.Reason,
 				})
 			}
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return startPrivilegedSession()

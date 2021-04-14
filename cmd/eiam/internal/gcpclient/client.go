@@ -2,9 +2,9 @@ package gcpclient
 
 import (
 	"context"
-	"fmt"
 
 	credentials "cloud.google.com/go/iam/credentials/apiv1"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/errors"
 	"google.golang.org/api/option"
 )
 
@@ -13,7 +13,7 @@ func ClientWithReason(reason string) (*credentials.IamCredentialsClient, error) 
 	ctx := context.Background()
 	gcpClientWithReason, err := credentials.NewIamCredentialsClient(ctx, option.WithRequestReason(reason))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create a client SDK with a reason field: %v", err)
+		return nil, &errorsutil.SDKClientCreateError{Err: err, ResourceType: "Credentials"}
 	}
 	return gcpClientWithReason, nil
 }

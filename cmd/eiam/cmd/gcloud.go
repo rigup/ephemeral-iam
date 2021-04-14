@@ -37,11 +37,13 @@ func newCmdGcloud() *cobra.Command {
 			| jq`),
 		Args:               cobra.ArbitraryArgs,
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
-		PreRun: func(cmd *cobra.Command, args []string) {
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			cmd.Flags().VisitAll(options.CheckRequired)
 
 			gcloudCmdArgs = util.ExtractUnknownArgs(cmd.Flags(), os.Args)
-			util.CheckError(util.FormatReason(&gcloudCmdConfig.Reason))
+			if err := util.FormatReason(&gcloudCmdConfig.Reason); err != nil {
+				return err
+			}
 
 			if !options.YesOption {
 				util.Confirm(map[string]string{
@@ -51,6 +53,7 @@ func newCmdGcloud() *cobra.Command {
 					"Command":         fmt.Sprintf("gcloud %s", strings.Join(gcloudCmdArgs, " ")),
 				})
 			}
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGcloudCommand()
