@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	rt "github.com/banzaicloud/logrus-runtime-formatter"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -27,7 +28,18 @@ func NewLogger() *logrus.Logger {
 	switch viper.GetString("logging.format") {
 	case "json":
 		logger.Formatter = new(logrus.JSONFormatter)
-
+	// The 'debug' formatter will include the filename, function, and line number
+	// that a log entry is written from
+	case "debug":
+		logger.Formatter = &rt.Formatter{
+			ChildFormatter: &logrus.TextFormatter{
+				DisableLevelTruncation: viper.GetBool("logging.disableleveltruncation"),
+				DisableQuote:           true,
+				DisableTimestamp:       true,
+				PadLevelText:           viper.GetBool("logging.padleveltext"),
+			},
+			Line: true,
+		}
 	default:
 		logger.Formatter = &logrus.TextFormatter{
 			DisableLevelTruncation: viper.GetBool("logging.disableleveltruncation"),

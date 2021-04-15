@@ -22,12 +22,12 @@ var (
 // GetConfigDir returns the directory to use for the ephemeral-iam configurations
 func GetConfigDir() string {
 	once.Do(func() {
-		configDir = getGcloudConfig()
+		configDir = getConfigDir()
 	})
 	return configDir
 }
 
-func getGcloudConfig() string {
+func getConfigDir() string {
 	configPath := configdir.LocalConfig("ephemeral-iam")
 
 	// Check to ensure that the path is user-specific instead of global

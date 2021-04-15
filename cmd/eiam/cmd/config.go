@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/lithammer/dedent"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -16,7 +15,7 @@ import (
 
 var (
 	LoggingLevels    = []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
-	LoggingFormats   = []string{"text", "json"}
+	LoggingFormats   = []string{"text", "json", "debug"}
 	BoolConfigFields = []string{
 		"authproxy.verbose",
 		"logging.disableleveltruncation",
@@ -51,7 +50,7 @@ var configInfo = dedent.Dedent(`
 		│                                │ filesystem                                  │
 		├────────────────────────────────┼─────────────────────────────────────────────┤
 		│ logging.format                 │ The format for which to write console logs  │
-		│                                │ Can be either 'json' or 'text'              │
+		│                                │ Can be 'json', 'text', or 'debug'           │
 		├────────────────────────────────┼─────────────────────────────────────────────┤
 		│ logging.level                  │ The logging level to write to the console   │
 		│                                │ Can be one of 'trace', 'debug', 'info',     │
@@ -158,27 +157,6 @@ func newCmdConfigSet() *cobra.Command {
 				viper.Set(args[0], newValue)
 			} else {
 				viper.Set(args[0], args[1])
-			}
-			switch args[0] {
-			case "logging.level":
-				level, err := logrus.ParseLevel(args[1])
-				if err != nil {
-					return err
-				}
-				util.Logger.Level = level
-			case "logging.format":
-				switch args[1] {
-				case "json":
-					util.Logger.Formatter = new(logrus.JSONFormatter)
-
-				default:
-					util.Logger.Formatter = &logrus.TextFormatter{
-						DisableLevelTruncation: viper.GetBool("logging.disableleveltruncation"),
-						PadLevelText:           viper.GetBool("logging.padleveltext"),
-						DisableTimestamp:       true,
-					}
-				}
-
 			}
 			if err := viper.WriteConfig(); err != nil {
 				util.Logger.Error("Failed to write updated configuration")

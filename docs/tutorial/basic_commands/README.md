@@ -94,7 +94,7 @@ $ eiam config info
 │                                │ filesystem                                  │
 ├────────────────────────────────┼─────────────────────────────────────────────┤
 │ logging.format                 │ The format for which to write console logs  │
-│                                │ Can be either 'json' or 'text'              │
+│                                │ Can be either 'json', 'text', or 'debug'    │
 ├────────────────────────────────┼─────────────────────────────────────────────┤
 │ logging.level                  │ The logging level to write to the console   │
 │                                │ Can be one of 'trace', 'debug', 'info',     │

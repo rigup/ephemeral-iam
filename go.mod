@@ -5,6 +5,7 @@ go 1.16
 require (
 	cloud.google.com/go v0.77.0
 	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883
+	github.com/banzaicloud/logrus-runtime-formatter v0.0.0-20190729070250-5ae5475bae5e
 	github.com/creack/pty v1.1.11
 	github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e
 	github.com/fatih/color v1.10.0

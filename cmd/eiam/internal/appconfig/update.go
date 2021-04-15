@@ -89,7 +89,7 @@ func installNewVersion(release *github.RepositoryRelease) {
 		return
 	}
 
-	installPath, err := CheckCommandExists("eiam")
+	installPath, err := checkCommandExists("eiam")
 	if err != nil {
 		util.Logger.WithError(err).Error("Skipping update, please try again later\n")
 		return
@@ -165,6 +165,8 @@ func downloadAndExtract(url string) error {
 	}
 }
 
+// formarArch formats the architecture string of the current runtime to determine
+// which release version to download
 func formatArch() string {
 	var formatted string
 	if runtime.GOOS == "linux" {
