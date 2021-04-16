@@ -200,7 +200,10 @@ func TestConfigSetCommandSetLoggingFormat(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	expectedOutput := fmt.Sprintf("Updated logging.format from %s to text", initialLogFormat)
+	expectedOutput := "New value is the same as the current one"
+	if initialLogFormat != "text" {
+		expectedOutput = fmt.Sprintf("Updated logging.format from %s to text", initialLogFormat)
+	}
 	if !strings.Contains(output, expectedOutput) {
 		t.Errorf("unexpected output:\nEXPECTED TO FIND: level=info msg=\"%s\"\nACTUAL: %s", expectedOutput, output)
 	}
