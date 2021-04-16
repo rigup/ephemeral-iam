@@ -1,14 +1,17 @@
-# Ephemeral IAM
+# ephemeral-iam
+
+![ephemeral-iam logo](docs/img/logo.png)
+
 A CLI tool that utilizes service account token generation to enable users to
 temporarily authenticate `gcloud` commands as a service account.  The intended
 use-case for this tool is to restrict the permissions that users are granted
 by default in their GCP organization while still allowing them to complete
 management tasks that require escalated permissions.
 
-> **Notice:** Ephemeral IAM requires granting users the `Service Account Token Generator`
+> **Notice:** ephemeral-iam requires granting users the `Service Account Token Generator`
 > role and does not include any controls to prevent users from using these
-> privileges in contexts outside of Ephemeral IAM in its current state.
-> For more information on Ephemeral IAM's security considerations, refer to the
+> privileges in contexts outside of ephemeral-iam in its current state.
+> For more information on ephemeral-iam's security considerations, refer to the
 > [security considerations document](docs/security_considerations.md).
 
 ## FAQ
@@ -33,7 +36,7 @@ of note:
 This section explains the basic process that happens when running the `eiam assume-privileges`
 command.
 
-Ephemeral IAM uses the `projects.serviceAccounts.generateAccessToken` method
+ephemeral-iam uses the `projects.serviceAccounts.generateAccessToken` method
 to generate OAuth 2.0 tokens for service accounts which are then used in subsequent
 API calls.  When a user runs the `assume-privileges` command, `eiam` makes a call
 to generate an OAuth 2.0 token for the specified service account that expires
@@ -82,7 +85,7 @@ Top-level `--help`
 
 ╭────────────────────────────────────────────────────────────╮
 │                                                            │
-│                        Ephemeral IAM                       │
+│                        ephemeral-iam                       │
 │  ──────────────────────────────────────────────────────    │
 │  A CLI tool for temporarily escalating GCP IAM privileges  │
 │  to perform high privilege tasks.                          │

@@ -15,7 +15,7 @@ func NewEphemeralIamCommand() *cobra.Command {
 		Long: dedent.Dedent(`
 			╭────────────────────────────────────────────────────────────╮
 			│                                                            │
-			│                        Ephemeral IAM                       │
+			│                        ephemeral-iam                       │
 			│  ──────────────────────────────────────────────────────    │
 			│  A CLI tool for temporarily escalating GCP IAM privileges  │
 			│  to perform high privilege tasks.                          │

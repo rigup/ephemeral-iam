@@ -8,7 +8,7 @@ $ eiam version
 INFO    ephemeral-iam vX.Y.Z
 ```
 
-## Ephemeral IAM Configuration
+## ephemeral-iam Configuration
 When you run `eiam` for the first time it will generate a baseline configuration that works for most use cases.
 There are a few commands that you can use to view and edit this config based on your needs.
 
