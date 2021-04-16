@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/lithammer/dedent"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -152,11 +153,34 @@ func newCmdConfigSet() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			oldVal := viper.Get(args[0])
 
+			if oldVal == args[1] {
+				util.Logger.Warn("New value is the same as the current one")
+				return nil
+			}
 			if util.Contains(BoolConfigFields, args[0]) {
 				newValue, _ := strconv.ParseBool(args[1])
 				viper.Set(args[0], newValue)
 			} else {
 				viper.Set(args[0], args[1])
+			}
+			// Update the logger (for testing)
+			switch args[0] {
+			case "logging.level":
+				if level, err := logrus.ParseLevel(args[1]); err != nil {
+					return err
+				} else {
+					util.Logger.Level = level
+				}
+			case "logging.format":
+				switch args[1] {
+				case "debug":
+					util.Logger.Formatter = util.NewRuntimeFormatter()
+				case "json":
+					util.Logger.Formatter = util.NewJSONFormatter()
+				default:
+					util.Logger.Formatter = util.NewTextFormatter()
+				}
+
 			}
 			if err := viper.WriteConfig(); err != nil {
 				util.Logger.Error("Failed to write updated configuration")
