@@ -89,7 +89,7 @@ func installNewVersion(release *github.RepositoryRelease) {
 		return
 	}
 
-	installPath, err := checkCommandExists("eiam")
+	installPath, err := CheckCommandExists("eiam")
 	if err != nil {
 		util.Logger.WithError(err).Error("Skipping update, please try again later\n")
 		return

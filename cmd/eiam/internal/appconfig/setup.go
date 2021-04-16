@@ -53,11 +53,11 @@ func init() {
 
 // checkDependencies checks if gcloud and kubectl are installed
 func checkDependencies() error {
-	gcloudPath, err := checkCommandExists("gcloud")
+	gcloudPath, err := CheckCommandExists("gcloud")
 	if err != nil {
 		return err
 	}
-	kubectlPath, err := checkCommandExists("kubectl")
+	kubectlPath, err := CheckCommandExists("kubectl")
 	if err != nil {
 		return err
 	}
@@ -70,8 +70,8 @@ func checkDependencies() error {
 	return nil
 }
 
-// checkCommandExists tries to find the location of a given binary
-func checkCommandExists(command string) (string, error) {
+// CheckCommandExists tries to find the location of a given binary
+func CheckCommandExists(command string) (string, error) {
 	path, err := exec.LookPath(command)
 	if err != nil {
 		util.Logger.Errorf("Error while checking for %s binary", command)

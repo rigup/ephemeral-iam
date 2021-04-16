@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
+	"os/exec"
 	"text/tabwriter"
 
 	"github.com/fatih/color"
@@ -10,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/cmd/options"
+	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig"
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
 	queryiam "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient/query_iam"
 )
@@ -328,25 +332,63 @@ func newCmdQueryStorageBucketPermissions() *cobra.Command {
 }
 
 func printPermissions(fullPerms, userPerms []string, isServiceAccount bool) {
-	showfullList := true
-	if len(fullPerms) > 100 {
-		showfullList = false
-	}
 	fmt.Println()
-	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
+	var buf bytes.Buffer
+	w := tabwriter.NewWriter(&buf, 0, 4, 4, ' ', 0)
 
 	fmt.Fprintln(w, "AVAILABLE\tGRANTED")
-	for _, perm := range fullPerms {
-		if util.Contains(userPerms, perm) {
-			if showfullList {
-				fmt.Fprintf(w, "%s\t%s\n", perm, green("✔"))
-			}
-		} else {
-			fmt.Fprintf(w, "%s\t%s\n", perm, red("✖"))
+
+	// If the list of permissions is really long and the user has the less command
+	// available, pipe the command to less to paginate the output
+	lessPath, err := appconfig.CheckCommandExists("less")
+	if err == nil && len(fullPerms) > 100 {
+		// Create command for less with a stdin pipe that we can write to
+		cmd := exec.Command(lessPath)
+		cmd.Stdout = os.Stdout
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			util.Logger.Fatal(err)
 		}
+
+		// Write the output in a goroutine so less can be ready to read it
+		go func() {
+			for _, perm := range fullPerms {
+				if util.Contains(userPerms, perm) {
+					fmt.Fprintf(w, "%s\t%s\n", perm, "✔") // No colors because we don't want the escape codes in the less output
+				} else {
+					fmt.Fprintf(w, "%s\t%s\n", perm, "✖")
+				}
+			}
+			w.Flush()
+
+			defer stdin.Close()
+			if _, err := io.WriteString(stdin, buf.String()); err != nil {
+				util.Logger.Error("Failed to paginate permissions list output")
+			}
+			fmt.Println()
+		}()
+		if err := cmd.Run(); err != nil {
+			for _, perm := range fullPerms {
+				if util.Contains(userPerms, perm) {
+					fmt.Fprintf(w, "%s\t%s\n", perm, green("✔"))
+				} else {
+					fmt.Fprintf(w, "%s\t%s\n", perm, red("✖"))
+				}
+			}
+			w.Flush()
+			fmt.Fprint(os.Stderr, buf.String())
+		}
+	} else {
+		for _, perm := range fullPerms {
+			if util.Contains(userPerms, perm) {
+				fmt.Fprintf(w, "%s\t%s\n", perm, green("✔"))
+			} else {
+				fmt.Fprintf(w, "%s\t%s\n", perm, red("✖"))
+			}
+		}
+		w.Flush()
+		fmt.Fprint(os.Stderr, buf.String())
 	}
-	w.Flush()
-	fmt.Println()
 
 	if len(userPerms) == 0 {
 		if isServiceAccount {
@@ -360,7 +402,5 @@ func printPermissions(fullPerms, userPerms []string, isServiceAccount bool) {
 		} else {
 			util.Logger.Info("You have full access to this resource")
 		}
-	} else if !showfullList {
-		util.Logger.Warning("The total number of permissions is greater than 100 so granted permissions are redacted from the list above")
 	}
 }
