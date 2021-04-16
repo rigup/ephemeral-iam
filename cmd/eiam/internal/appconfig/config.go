@@ -1,7 +1,6 @@
 package appconfig
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path"
@@ -65,8 +64,7 @@ func initConfig() {
 
 	if err := viper.SafeWriteConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileAlreadyExistsError); !ok {
-			fmt.Fprintf(os.Stderr, "failed to write config file %s/config.yml: %v", GetConfigDir(), err)
-			os.Exit(1)
+			log.Fatalf("failed to write config file %s/config.yml: %v", GetConfigDir(), err)
 		}
 	}
 }

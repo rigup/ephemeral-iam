@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"golang.org/x/mod/semver"
@@ -17,6 +16,7 @@ import (
 	"github.com/google/go-github/v33/github"
 	"github.com/manifoldco/promptui"
 
+	archutil "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig/arch_util"
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
 )
 
@@ -69,11 +69,9 @@ func CheckForNewRelease() {
 }
 
 func installNewVersion(release *github.RepositoryRelease) {
-	releaseType := formatArch()
-
 	var downloadURL string
 	for _, asset := range release.Assets {
-		if strings.Contains(asset.GetName(), releaseType) {
+		if strings.Contains(asset.GetName(), archutil.FormattedArch) {
 			downloadURL = asset.GetBrowserDownloadURL()
 			break
 		}
@@ -162,26 +160,5 @@ func downloadAndExtract(url string) error {
 			// to wait until all operations have completed.
 			f.Close()
 		}
-	}
-}
-
-// formarArch formats the architecture string of the current runtime to determine
-// which release version to download
-func formatArch() string {
-	var formatted string
-	if runtime.GOOS == "linux" {
-		formatted = "Linux"
-	} else if runtime.GOOS == "darwin" {
-		formatted = "Darwin_macOS"
-	} else {
-		util.Logger.WithError(fmt.Errorf("%s is not a supported OS", runtime.GOOS)).Fatal("ephemeral-iam is only supported on darwin and linux systems")
-	}
-
-	if runtime.GOARCH == "386" {
-		return fmt.Sprintf("%s_i386", formatted)
-	} else if runtime.GOARCH == "amd64" {
-		return fmt.Sprintf("%s_x86_64", formatted)
-	} else {
-		return fmt.Sprintf("%s_arm64", formatted)
 	}
 }

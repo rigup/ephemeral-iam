@@ -1,7 +1,7 @@
 package eiamutil
 
 import (
-	"fmt"
+	"log"
 	"os"
 
 	rt "github.com/banzaicloud/logrus-runtime-formatter"
@@ -18,7 +18,7 @@ func NewLogger() *logrus.Logger {
 
 	level, err := logrus.ParseLevel(viper.GetString("logging.level"))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create logger instance: %v", err)
+		log.Fatalf("Failed to create logger instance: %v", err)
 		os.Exit(1)
 	}
 

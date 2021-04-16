@@ -61,12 +61,19 @@ the local proxy.
 ```
 
 For the duration of the privileged session (either until the token expires or
-when the user manually stops it with CTRL-C), all API calls made with `gcloud`
-will be intercepted by the proxy which will replace the `Authorization` header
-with the generated OAuth 2.0 token to authorize the request as the service account.
+when the user manually stops it), all API calls made with `gcloud` will be 
+intercepted by the proxy which will replace the `Authorization` header with the
+generated OAuth 2.0 token to authorize the request as the service account.
+
+For `kubectl` commands, a temporary `kubeconfig` is generated, the `KUBECONFIG`
+environment variable is set to the path of the temporary `kubeconfig`,
+`gcloud container clusters get-credentials` is called to generate a context
+with the GCP Auth Provider, then the OAuth 2.0 token is written to the token
+cache fields in that context. See [Issue #49](https://github.com/jessesomerville/ephemeral-iam/issues/49)
+for more information about why this is done this way.
 
 Once the session is over, `eiam` gracefully shuts down the proxy server and reverts
-the users `gcloud` config to its original state.
+the users `gcloud` config to its original state and deletes the temporary `kubeconfig`.
 
 ## Installation
 Instructions on how to install the `eiam` binary can be found in
