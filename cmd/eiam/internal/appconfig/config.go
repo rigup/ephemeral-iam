@@ -1,7 +1,6 @@
 package appconfig
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path"
@@ -22,12 +21,12 @@ var (
 // GetConfigDir returns the directory to use for the ephemeral-iam configurations
 func GetConfigDir() string {
 	once.Do(func() {
-		configDir = getGcloudConfig()
+		configDir = getConfigDir()
 	})
 	return configDir
 }
 
-func getGcloudConfig() string {
+func getConfigDir() string {
 	configPath := configdir.LocalConfig("ephemeral-iam")
 
 	// Check to ensure that the path is user-specific instead of global
@@ -65,8 +64,7 @@ func initConfig() {
 
 	if err := viper.SafeWriteConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileAlreadyExistsError); !ok {
-			fmt.Fprintf(os.Stderr, "failed to write config file %s/config.yml: %v", GetConfigDir(), err)
-			os.Exit(1)
+			log.Fatalf("failed to write config file %s/config.yml: %v", GetConfigDir(), err)
 		}
 	}
 }

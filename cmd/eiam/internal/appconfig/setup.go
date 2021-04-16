@@ -35,23 +35,23 @@ func init() {
 	util.Logger = util.NewLogger()
 
 	allConfigKeys := viper.AllKeys()
-	if !util.Contains(allConfigKeys, "binarypaths.gcloud") && !util.Contains(allConfigKeys, "binarypaths.kubectl") {
+	if !util.Contains(allConfigKeys, "binarypaths.gcloud") || !util.Contains(allConfigKeys, "binarypaths.kubectl") {
 		errorsutil.CheckError(checkDependencies())
 	}
 
 	if err := checkValidADCExists(); err != nil {
-		util.Logger.WithError(err).Fatal("setup error")
+		util.Logger.WithError(err).Fatal("Setup error")
 	}
 
 	if err := createLogDir(); err != nil {
-		util.Logger.WithError(err).Fatal("setup error")
+		util.Logger.WithError(err).Fatal("Setup error")
 	}
 	if err := createTempKubeConfigDir(); err != nil {
-		util.Logger.WithError(err).Fatal("setup error")
+		util.Logger.WithError(err).Fatal("Setup error")
 	}
 }
 
-// checkDependencies ensures that the prequisites for running `eiam` are met
+// checkDependencies checks if gcloud and kubectl are installed
 func checkDependencies() error {
 	gcloudPath, err := CheckCommandExists("gcloud")
 	if err != nil {
@@ -64,6 +64,7 @@ func checkDependencies() error {
 	viper.Set("binarypaths.gcloud", gcloudPath)
 	viper.Set("binarypaths.kubectl", kubectlPath)
 	if err := viper.WriteConfig(); err != nil {
+		util.Logger.Error("Failed to write config file")
 		return err
 	}
 	return nil
@@ -73,6 +74,7 @@ func checkDependencies() error {
 func CheckCommandExists(command string) (string, error) {
 	path, err := exec.LookPath(command)
 	if err != nil {
+		util.Logger.Errorf("Error while checking for %s binary", command)
 		return "", err
 	}
 	util.Logger.Debugf("Found binary %s at %s\n", command, path)
@@ -93,18 +95,21 @@ func checkValidADCExists() error {
 			cmd.Stdout = os.Stdout
 			cmd.Stdin = os.Stdin
 			if err := cmd.Run(); err != nil {
-				return fmt.Errorf("unable to create application default credentials: %v", err)
+				util.Logger.Error("Failed to create application default credentials")
+				return err
 			}
 			fmt.Println()
 			util.Logger.Info("Application default credentials were successfully created")
 		} else {
-			return fmt.Errorf("failed to check if application default credentials exist: %v", err)
+			util.Logger.Error("Failed to check if application default credentials exist")
+			return err
 		}
 	} else {
 		util.Logger.Debug("Checking validity of application default credentials")
 		tokenInfo, err := oauth2Service.Tokeninfo().Do()
 		if err != nil {
-			return fmt.Errorf("failed to parse OAuth2 Token: %v", err)
+			util.Logger.Error("Failed to parse OAuth token")
+			return err
 		}
 
 		return checkADCIdentity(tokenInfo.Email)
@@ -112,6 +117,8 @@ func checkValidADCExists() error {
 	return nil
 }
 
+// checkADCIdentity checks the active account set in the users gcloud config
+// against the identity associated with the application default credentials
 func checkADCIdentity(tokenEmail string) error {
 	account, err := gcpclient.CheckActiveAccountSet()
 	if err != nil {
@@ -127,20 +134,24 @@ func checkADCIdentity(tokenEmail string) error {
 			IsConfirm: true,
 		}
 
-		if ans, err := prompt.Run(); err != nil && strings.ToLower(ans) == "y" {
-			fmt.Print("\n\n")
-			util.Logger.Info("Attempting to reconfigure eiam's authenticated account")
-			os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "")
-			if err := checkValidADCExists(); err != nil {
-				util.Logger.Fatal(err)
+		if ans, err := prompt.Run(); err != nil {
+			if strings.ToLower(ans) == "y" {
+				fmt.Print("\n\n")
+				util.Logger.Info("Attempting to reconfigure eiam's authenticated account")
+				os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "")
+				if err := checkValidADCExists(); err != nil {
+					util.Logger.Fatal(err)
+				}
+				util.Logger.Infof("Success. You should now be authenticated as %s", account)
 			}
-			util.Logger.Infof("Success. You should now be authenticated as %s", account)
+		} else {
+			util.Logger.Error("Prompt to select authenticated user failed")
 		}
 	}
-
 	return nil
 }
 
+// createLogDir creates the directory to store log files
 func createLogDir() error {
 	logDir := viper.GetString("authproxy.logdir")
 	_, err := os.Stat(logDir)
@@ -150,11 +161,14 @@ func createLogDir() error {
 			return fmt.Errorf("failed to create proxy log directory %s: %v", logDir, err)
 		}
 	} else if err != nil {
-		return fmt.Errorf("failed to find proxy log dir %s: %v", logDir, err)
+		util.Logger.Errorf("Failed to find proxy log directory: %s", logDir)
+		return err
 	}
 	return nil
 }
 
+// createTempKubeConfigDir creates the directory to hold the temporary kubeconfigs
+// used in the assume-privileges command
 func createTempKubeConfigDir() error {
 	configDir := GetConfigDir()
 	kubeConfigDir := path.Join(configDir, "tmp_kube_config")

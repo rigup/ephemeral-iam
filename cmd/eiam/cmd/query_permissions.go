@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
+	"os/exec"
 	"text/tabwriter"
 
 	"github.com/fatih/color"
@@ -10,7 +13,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/cmd/options"
+	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig"
 	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
+	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient"
 	queryiam "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient/query_iam"
 )
 
@@ -133,12 +138,15 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if queryPermsCmdConfig.ServiceAccountEmail != "" {
-				printPermissions(util.Uniq(testablePerms), userPerms, true)
+			if svcAcct := queryPermsCmdConfig.ServiceAccountEmail; svcAcct != "" {
+				return printPermissions(util.Uniq(testablePerms), userPerms, svcAcct)
 			} else {
-				printPermissions(util.Uniq(testablePerms), userPerms, false)
+				userAcct, err := gcpclient.CheckActiveAccountSet()
+				if err != nil {
+					return err
+				}
+				return printPermissions(util.Uniq(testablePerms), userPerms, userAcct)
 			}
-			return nil
 		},
 	}
 
@@ -175,12 +183,15 @@ func newCmdQueryProjectPermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if queryPermsCmdConfig.ServiceAccountEmail != "" {
-				printPermissions(util.Uniq(testablePerms), userPerms, true)
+			if svcAcct := queryPermsCmdConfig.ServiceAccountEmail; svcAcct != "" {
+				return printPermissions(util.Uniq(testablePerms), userPerms, svcAcct)
 			} else {
-				printPermissions(util.Uniq(testablePerms), userPerms, false)
+				userAcct, err := gcpclient.CheckActiveAccountSet()
+				if err != nil {
+					return err
+				}
+				return printPermissions(util.Uniq(testablePerms), userPerms, userAcct)
 			}
-			return nil
 		},
 	}
 
@@ -222,12 +233,15 @@ func newCmdQueryPubSubPermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if queryPermsCmdConfig.ServiceAccountEmail != "" {
-				printPermissions(util.Uniq(testablePerms), userPerms, true)
+			if svcAcct := queryPermsCmdConfig.ServiceAccountEmail; svcAcct != "" {
+				return printPermissions(util.Uniq(testablePerms), userPerms, svcAcct)
 			} else {
-				printPermissions(util.Uniq(testablePerms), userPerms, false)
+				userAcct, err := gcpclient.CheckActiveAccountSet()
+				if err != nil {
+					return err
+				}
+				return printPermissions(util.Uniq(testablePerms), userPerms, userAcct)
 			}
-			return nil
 		},
 	}
 
@@ -266,12 +280,15 @@ func newCmdQueryServiceAccountPermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if queryPermsCmdConfig.ServiceAccountEmail != "" {
-				printPermissions(util.Uniq(testablePerms), userPerms, true)
+			if svcAcct := queryPermsCmdConfig.ServiceAccountEmail; svcAcct != "" {
+				return printPermissions(util.Uniq(testablePerms), userPerms, svcAcct)
 			} else {
-				printPermissions(util.Uniq(testablePerms), userPerms, false)
+				userAcct, err := gcpclient.CheckActiveAccountSet()
+				if err != nil {
+					return err
+				}
+				return printPermissions(util.Uniq(testablePerms), userPerms, userAcct)
 			}
-			return nil
 		},
 	}
 
@@ -311,12 +328,15 @@ func newCmdQueryStorageBucketPermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if queryPermsCmdConfig.ServiceAccountEmail != "" {
-				printPermissions(util.Uniq(testablePerms), userPerms, true)
+			if svcAcct := queryPermsCmdConfig.ServiceAccountEmail; svcAcct != "" {
+				return printPermissions(util.Uniq(testablePerms), userPerms, svcAcct)
 			} else {
-				printPermissions(util.Uniq(testablePerms), userPerms, false)
+				userAcct, err := gcpclient.CheckActiveAccountSet()
+				if err != nil {
+					return err
+				}
+				return printPermissions(util.Uniq(testablePerms), userPerms, userAcct)
 			}
-			return nil
 		},
 	}
 
@@ -327,40 +347,63 @@ func newCmdQueryStorageBucketPermissions() *cobra.Command {
 	return cmd
 }
 
-func printPermissions(fullPerms, userPerms []string, isServiceAccount bool) {
-	showfullList := true
+func printPermissions(fullPerms, userPerms []string, acctEmail string) error {
 	if len(fullPerms) > 100 {
-		showfullList = false
+		// If the list of permissions is really long and the user has the less command
+		// available, pipe the command to less to paginate the output
+		lessPath, err := appconfig.CheckCommandExists("less")
+		if err != nil {
+			printPermissionsList(os.Stderr, fullPerms, userPerms, acctEmail, true)
+		}
+
+		// Create command for less with a stdin pipe that we can write to
+		cmd := exec.Command(lessPath)
+		cmd.Stdout = os.Stdout
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			util.Logger.Error("Failed to create stdin pipe for less command")
+			return err
+		}
+
+		// Write the output in a goroutine so less can be ready to read it
+		go func() {
+			defer stdin.Close()
+			printPermissionsList(stdin, fullPerms, userPerms, acctEmail, false)
+		}()
+		if err := cmd.Run(); err != nil {
+			printPermissionsList(os.Stderr, fullPerms, userPerms, acctEmail, true)
+		}
+	} else {
+		printPermissionsList(os.Stderr, fullPerms, userPerms, acctEmail, true)
 	}
-	fmt.Println()
-	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
+	return nil
+}
+
+func printPermissionsList(out io.Writer, fullPerms, userPerms []string, acctEmail string, color bool) {
+	yes, no := "✔", "✖"
+	if color {
+		yes, no = green(yes), red(no)
+	}
+
+	var buf bytes.Buffer
+	w := tabwriter.NewWriter(&buf, 0, 4, 4, ' ', 0)
 
 	fmt.Fprintln(w, "AVAILABLE\tGRANTED")
+
 	for _, perm := range fullPerms {
 		if util.Contains(userPerms, perm) {
-			if showfullList {
-				fmt.Fprintf(w, "%s\t%s\n", perm, green("✔"))
-			}
+			fmt.Fprintf(w, "%s\t%s\n", perm, yes)
 		} else {
-			fmt.Fprintf(w, "%s\t%s\n", perm, red("✖"))
+			fmt.Fprintf(w, "%s\t%s\n", perm, no)
 		}
 	}
 	w.Flush()
+	fmt.Fprintf(out, "\n%s\n\n", buf.String())
 	fmt.Println()
 
 	if len(userPerms) == 0 {
-		if isServiceAccount {
-			util.Logger.Warnf("%s does not have any access to this resource", queryPermsCmdConfig.ServiceAccountEmail)
-		} else {
-			util.Logger.Warn("You do not have any access to this resource")
-		}
+		util.Logger.Warnf("%s does not have any access to this resource", acctEmail)
 	} else if len(userPerms) == len(fullPerms) {
-		if isServiceAccount {
-			util.Logger.Infof("%s has full access to this resource", queryPermsCmdConfig.ServiceAccountEmail)
-		} else {
-			util.Logger.Info("You have full access to this resource")
-		}
-	} else if !showfullList {
-		util.Logger.Warning("The total number of permissions is greater than 100 so granted permissions are redacted from the list above")
+		util.Logger.Infof("%s has full access to this resource", acctEmail)
 	}
 }

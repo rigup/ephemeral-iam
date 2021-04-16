@@ -1,9 +1,10 @@
 package eiamutil
 
 import (
-	"fmt"
+	"log"
 	"os"
 
+	rt "github.com/banzaicloud/logrus-runtime-formatter"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -17,7 +18,7 @@ func NewLogger() *logrus.Logger {
 
 	level, err := logrus.ParseLevel(viper.GetString("logging.level"))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create logger instance: %v", err)
+		log.Fatalf("Failed to create logger instance: %v", err)
 		os.Exit(1)
 	}
 
@@ -26,16 +27,39 @@ func NewLogger() *logrus.Logger {
 
 	switch viper.GetString("logging.format") {
 	case "json":
-		logger.Formatter = new(logrus.JSONFormatter)
-
+		logger.Formatter = NewJSONFormatter()
+	case "debug":
+		// The 'debug' formatter will include the filename, function, and line number
+		// that a log entry is written from
+		logger.Formatter = NewRuntimeFormatter()
 	default:
-		logger.Formatter = &logrus.TextFormatter{
+		logger.Formatter = NewTextFormatter()
+	}
+
+	return logger
+}
+
+func NewTextFormatter() *logrus.TextFormatter {
+	return &logrus.TextFormatter{
+		DisableLevelTruncation: viper.GetBool("logging.disableleveltruncation"),
+		DisableQuote:           true,
+		DisableTimestamp:       true,
+		PadLevelText:           viper.GetBool("logging.padleveltext"),
+	}
+}
+
+func NewJSONFormatter() *logrus.JSONFormatter {
+	return new(logrus.JSONFormatter)
+}
+
+func NewRuntimeFormatter() *rt.Formatter {
+	return &rt.Formatter{
+		ChildFormatter: &logrus.TextFormatter{
 			DisableLevelTruncation: viper.GetBool("logging.disableleveltruncation"),
 			DisableQuote:           true,
 			DisableTimestamp:       true,
 			PadLevelText:           viper.GetBool("logging.padleveltext"),
-		}
+		},
+		Line: true,
 	}
-
-	return logger
 }

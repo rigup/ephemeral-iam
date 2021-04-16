@@ -16,7 +16,7 @@ import (
 
 var (
 	LoggingLevels    = []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
-	LoggingFormats   = []string{"text", "json"}
+	LoggingFormats   = []string{"text", "json", "debug"}
 	BoolConfigFields = []string{
 		"authproxy.verbose",
 		"logging.disableleveltruncation",
@@ -51,7 +51,7 @@ var configInfo = dedent.Dedent(`
 		│                                │ filesystem                                  │
 		├────────────────────────────────┼─────────────────────────────────────────────┤
 		│ logging.format                 │ The format for which to write console logs  │
-		│                                │ Can be either 'json' or 'text'              │
+		│                                │ Can be 'json', 'text', or 'debug'           │
 		├────────────────────────────────┼─────────────────────────────────────────────┤
 		│ logging.level                  │ The logging level to write to the console   │
 		│                                │ Can be one of 'trace', 'debug', 'info',     │
@@ -153,30 +153,32 @@ func newCmdConfigSet() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			oldVal := viper.Get(args[0])
 
+			if oldVal == args[1] {
+				util.Logger.Warn("New value is the same as the current one")
+				return nil
+			}
 			if util.Contains(BoolConfigFields, args[0]) {
 				newValue, _ := strconv.ParseBool(args[1])
 				viper.Set(args[0], newValue)
 			} else {
 				viper.Set(args[0], args[1])
 			}
+			// Update the logger (for testing)
 			switch args[0] {
 			case "logging.level":
-				level, err := logrus.ParseLevel(args[1])
-				if err != nil {
+				if level, err := logrus.ParseLevel(args[1]); err != nil {
 					return err
+				} else {
+					util.Logger.Level = level
 				}
-				util.Logger.Level = level
 			case "logging.format":
 				switch args[1] {
+				case "debug":
+					util.Logger.Formatter = util.NewRuntimeFormatter()
 				case "json":
-					util.Logger.Formatter = new(logrus.JSONFormatter)
-
+					util.Logger.Formatter = util.NewJSONFormatter()
 				default:
-					util.Logger.Formatter = &logrus.TextFormatter{
-						DisableLevelTruncation: viper.GetBool("logging.disableleveltruncation"),
-						PadLevelText:           viper.GetBool("logging.padleveltext"),
-						DisableTimestamp:       true,
-					}
+					util.Logger.Formatter = util.NewTextFormatter()
 				}
 
 			}

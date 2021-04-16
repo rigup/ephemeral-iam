@@ -28,7 +28,8 @@ func FormatReason(reason *string) error {
 func sessionID() (string, error) {
 	bytes := make([]byte, 8)
 	if _, err := rand.Read(bytes); err != nil {
-		return "", fmt.Errorf("failed to generate random log ID: %v", err)
+		Logger.Error("Failed to generate session ID for audit logs")
+		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
 }
@@ -61,7 +62,10 @@ func Confirm(vals map[string]string) {
 	}
 }
 
-// ExtractUnknownArgs fetches unknown args passed to a command
+// ExtractUnknownArgs fetches unknown args passed to a command.  This is used
+// in the kubectl and gcloud commands to extract only the fields that should
+// be used in the invoked command.
+//
 // Modified from https://github.com/davidovich/summon/blob/master/cmd/run.go
 // see https://github.com/spf13/pflag/pull/160
 // and https://github.com/spf13/cobra/issues/739
