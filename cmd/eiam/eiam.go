@@ -2,10 +2,11 @@ package main
 
 import (
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/cmd"
-	errorsutil "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/errors"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
 )
 
 func main() {
-	cmd := cmd.NewEphemeralIamCommand()
+	cmd, err := cmd.NewEphemeralIamCommand()
+	errorsutil.CheckError(err)
 	errorsutil.CheckError(cmd.Execute())
 }

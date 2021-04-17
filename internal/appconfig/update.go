@@ -16,8 +16,8 @@ import (
 	"github.com/google/go-github/v33/github"
 	"github.com/manifoldco/promptui"
 
-	archutil "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig/arch_util"
-	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
+	archutil "github.com/jessesomerville/ephemeral-iam/internal/appconfig/arch_util"
+	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
 )
 
 var (

@@ -12,9 +12,9 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/api/oauth2/v1"
 
-	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
-	errorsutil "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/errors"
-	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient"
+	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
+	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
 )
 
 func init() {
@@ -145,7 +145,7 @@ func checkADCIdentity(tokenEmail string) error {
 				util.Logger.Infof("Success. You should now be authenticated as %s", account)
 			}
 		} else {
-			util.Logger.Error("Prompt to select authenticated user failed")
+			util.Logger.Error("prompt to select authenticated user failed")
 		}
 	}
 	return nil
@@ -154,14 +154,13 @@ func checkADCIdentity(tokenEmail string) error {
 // createLogDir creates the directory to store log files
 func createLogDir() error {
 	logDir := viper.GetString("authproxy.logdir")
-	_, err := os.Stat(logDir)
-	if os.IsNotExist(err) {
+	if _, err := os.Stat(logDir); os.IsNotExist(err) {
 		util.Logger.Debugf("Creating log directory: %s", logDir)
 		if err := os.MkdirAll(viper.GetString("authproxy.logdir"), 0o755); err != nil {
 			return fmt.Errorf("failed to create proxy log directory %s: %v", logDir, err)
 		}
 	} else if err != nil {
-		util.Logger.Errorf("Failed to find proxy log directory: %s", logDir)
+		util.Logger.Errorf("failed to find proxy log directory: %s", logDir)
 		return err
 	}
 	return nil

@@ -8,7 +8,7 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/status"
 
-	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
+	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
 )
 
 const (

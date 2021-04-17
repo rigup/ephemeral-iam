@@ -6,9 +6,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/cmd/options"
-	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
-	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient"
-	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/proxy"
+	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
+	"github.com/jessesomerville/ephemeral-iam/internal/proxy"
 )
 
 var apCmdConfig options.CmdConfig

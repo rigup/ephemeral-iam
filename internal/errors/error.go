@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
+	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
 )
 
 var invalidCommandErrMsg = regexp.MustCompile(`unknown command "[\S]+" for "[a-z\-]+"`)

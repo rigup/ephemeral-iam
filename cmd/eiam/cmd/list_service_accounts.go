@@ -13,8 +13,8 @@ import (
 	"google.golang.org/api/iam/v1"
 
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/cmd/options"
-	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
-	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient"
+	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
 )
 
 var (

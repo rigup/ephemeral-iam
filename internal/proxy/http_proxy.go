@@ -17,9 +17,9 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/term"
 
-	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
-	errorsutil "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/errors"
-	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient"
+	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
+	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
 )
 
 var (

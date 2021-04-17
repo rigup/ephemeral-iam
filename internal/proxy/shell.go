@@ -19,8 +19,8 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	clientcmdapilatest "k8s.io/client-go/tools/clientcmd/api/latest"
 
-	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig"
-	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
+	"github.com/jessesomerville/ephemeral-iam/internal/appconfig"
+	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
 )
 
 func startShell(svcAcct, accessToken, expiry string, defaultCluster map[string]string, oldState **term.State) {

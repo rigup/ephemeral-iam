@@ -4,7 +4,7 @@ import (
 	"context"
 
 	credentials "cloud.google.com/go/iam/credentials/apiv1"
-	errorsutil "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/errors"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
 	"google.golang.org/api/option"
 )
 

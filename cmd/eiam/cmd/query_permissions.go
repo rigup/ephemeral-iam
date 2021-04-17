@@ -13,10 +13,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/cmd/options"
-	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/appconfig"
-	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
-	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient"
-	queryiam "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient/query_iam"
+	"github.com/jessesomerville/ephemeral-iam/internal/appconfig"
+	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
+	queryiam "github.com/jessesomerville/ephemeral-iam/internal/gcpclient/query_iam"
 )
 
 // Resource string templates

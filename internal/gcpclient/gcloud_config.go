@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/viper"
 	"gopkg.in/ini.v1"
 
-	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
+	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
 )
 
 var (
