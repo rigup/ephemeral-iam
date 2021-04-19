@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
+	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
 )
 
 var invalidCommandErrMsg = regexp.MustCompile(`unknown command "[\S]+" for "[a-z\-]+"`)
@@ -46,6 +46,10 @@ func CheckError(err error) {
 		} else if checkGoogleRPCError(err) {
 			return
 		}
+
+		// ERROR   An error occurred                             error=plugin.Open("/Users/jsomerville/Library/Application Support/ephemeral-iam/plugins/cool_plugin"): plugin was built with a different version of package github.com/jessesomerville/ephemeral-iam/internal/eiamutil function=CheckError line=55
+		// panic: runtime error: invalid memory address or nil pointer dereference
+		// [signal SIGSEGV: segmentation violation code=0x1 addr=0x0 pc=0x48b76cb]
 
 		if strings.Contains(err.Error(), "could not find default credentials") {
 			util.Logger.Fatal("No Application Default Credentials were found. Please run the following command to remediate this issue:\n\n  $ gcloud auth application-default login\n\n")

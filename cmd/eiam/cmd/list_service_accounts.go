@@ -12,9 +12,9 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iam/v1"
 
-	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/cmd/options"
-	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
-	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient"
+	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
+	"github.com/jessesomerville/ephemeral-iam/pkg/options"
 )
 
 var (
@@ -83,8 +83,7 @@ func fetchAvailableServiceAccounts() error {
 
 func printColumns(serviceAccounts []*iam.ServiceAccount) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
-	fmt.Println()
-	fmt.Fprintln(w, "EMAIL\tDESCRIPTION")
+	fmt.Fprintln(w, "\nEMAIL\tDESCRIPTION")
 	for _, sa := range serviceAccounts {
 		desc := strings.Split(wordwrap.WrapString(sa.Description, 75), "\n")
 		if len(desc) == 1 {

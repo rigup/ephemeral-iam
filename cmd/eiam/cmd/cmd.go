@@ -4,12 +4,15 @@ import (
 	"github.com/lithammer/dedent"
 	"github.com/spf13/cobra"
 
-	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/cmd/options"
+	eiam "github.com/jessesomerville/ephemeral-iam/internal"
+	"github.com/jessesomerville/ephemeral-iam/pkg/options"
 )
 
+var RootCommand *eiam.RootCommand
+
 // NewEphemeralIamCommand returns cobra.Command to run eiam command
-func NewEphemeralIamCommand() *cobra.Command {
-	cmds := &cobra.Command{
+func NewEphemeralIamCommand() (*eiam.RootCommand, error) {
+	cmds := &eiam.RootCommand{Command: cobra.Command{
 		Use:   "eiam",
 		Short: "Utility for granting short-lived, privileged access to GCP APIs.",
 		Long: dedent.Dedent(`
@@ -48,7 +51,7 @@ func NewEphemeralIamCommand() *cobra.Command {
 		`),
 		SilenceErrors: true,
 		SilenceUsage:  true,
-	}
+	}}
 
 	cmds.ResetFlags()
 
@@ -57,9 +60,15 @@ func NewEphemeralIamCommand() *cobra.Command {
 	cmds.AddCommand(newCmdGcloud())
 	cmds.AddCommand(newCmdKubectl())
 	cmds.AddCommand(newCmdListServiceAccounts())
+	cmds.AddCommand(newCmdPlugins())
 	cmds.AddCommand(newCmdQueryPermissions())
 	cmds.AddCommand(newCmdVersion())
+	if err := cmds.LoadPlugins(); err != nil {
+		return nil, err
+	}
 	options.AddPersistentFlags(cmds.PersistentFlags())
 
-	return cmds
+	RootCommand = cmds
+
+	return cmds, nil
 }

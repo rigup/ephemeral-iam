@@ -1,7 +1,7 @@
 package errors
 
 import (
-	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
+	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
 	"google.golang.org/api/googleapi"
 )
 

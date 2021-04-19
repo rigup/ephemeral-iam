@@ -3,16 +3,15 @@ package gcpclient
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/golang/protobuf/ptypes/duration"
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
 	credentialspb "google.golang.org/genproto/googleapis/iam/credentials/v1"
 
-	util "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/eiamutil"
-	errorsutil "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/errors"
-	queryiam "github.com/jessesomerville/ephemeral-iam/cmd/eiam/internal/gcpclient/query_iam"
+	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
+	queryiam "github.com/jessesomerville/ephemeral-iam/internal/gcpclient/query_iam"
 )
 
 var (
@@ -85,7 +84,7 @@ func CanImpersonate(project, serviceAccountEmail, reason string) (bool, error) {
 		return false, err
 	}
 
-	util.Logger.Debugf("Permissions on %s: \n%s\n", serviceAccountEmail, strings.Join(perms, ", "))
+	// util.Logger.Debugf("Permissions on %s: \n%s\n", serviceAccountEmail, strings.Join(perms, ", "))
 	for _, permission := range perms {
 		if permission == "iam.serviceAccounts.getAccessToken" {
 			return true, nil
