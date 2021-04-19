@@ -4,9 +4,11 @@ import (
 	"github.com/lithammer/dedent"
 	"github.com/spf13/cobra"
 
-	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/cmd/options"
 	eiam "github.com/jessesomerville/ephemeral-iam/internal"
+	"github.com/jessesomerville/ephemeral-iam/pkg/options"
 )
+
+var RootCommand *eiam.RootCommand
 
 // NewEphemeralIamCommand returns cobra.Command to run eiam command
 func NewEphemeralIamCommand() (*eiam.RootCommand, error) {
@@ -58,12 +60,15 @@ func NewEphemeralIamCommand() (*eiam.RootCommand, error) {
 	cmds.AddCommand(newCmdGcloud())
 	cmds.AddCommand(newCmdKubectl())
 	cmds.AddCommand(newCmdListServiceAccounts())
+	cmds.AddCommand(newCmdPlugins())
 	cmds.AddCommand(newCmdQueryPermissions())
 	cmds.AddCommand(newCmdVersion())
 	if err := cmds.LoadPlugins(); err != nil {
 		return nil, err
 	}
 	options.AddPersistentFlags(cmds.PersistentFlags())
+
+	RootCommand = cmds
 
 	return cmds, nil
 }

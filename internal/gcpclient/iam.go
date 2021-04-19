@@ -3,7 +3,6 @@ package gcpclient
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/golang/protobuf/ptypes/duration"
 	"google.golang.org/api/iam/v1"
@@ -85,7 +84,7 @@ func CanImpersonate(project, serviceAccountEmail, reason string) (bool, error) {
 		return false, err
 	}
 
-	util.Logger.Debugf("Permissions on %s: \n%s\n", serviceAccountEmail, strings.Join(perms, ", "))
+	// util.Logger.Debugf("Permissions on %s: \n%s\n", serviceAccountEmail, strings.Join(perms, ", "))
 	for _, permission := range perms {
 		if permission == "iam.serviceAccounts.getAccessToken" {
 			return true, nil

@@ -39,6 +39,8 @@ func Confirm(vals map[string]string) {
 	var buf bytes.Buffer
 	w := tabwriter.NewWriter(&buf, 0, 4, 4, '-', 0)
 
+	fmt.Fprintln(w)
+
 	for key, val := range vals {
 		fmt.Fprintf(w, "%s \t %s\n", key, val)
 	}
@@ -46,7 +48,6 @@ func Confirm(vals map[string]string) {
 	w.Flush()
 	cmdInfo := strings.Split(buf.String(), "\n")
 
-	fmt.Println()
 	for _, line := range cmdInfo {
 		fmt.Println(line)
 	}

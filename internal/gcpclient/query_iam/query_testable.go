@@ -47,7 +47,7 @@ func QueryTestablePermissionsOnResource(resource string) ([]string, error) {
 		}
 
 		for _, perm := range ps.Permissions {
-			util.Logger.Debugf("Adding testable permission: %s", perm.Name)
+			// util.Logger.Debugf("Adding testable permission: %s", perm.Name)
 			permsToTest = append(permsToTest, perm.Name)
 		}
 
@@ -131,7 +131,7 @@ func QueryProjectPermissions(permsToTest []string, project, serviceAccountEmail,
 	var userPermissions []string
 	for _, permSet := range chunked {
 		go func(permissions []string, granted *[]string) {
-			util.Logger.Debugf("Testing permissions %v", permissions)
+			// util.Logger.Debugf("Testing permissions %v", permissions)
 			resp, err := crmProjService.TestIamPermissions(project, &crm.TestIamPermissionsRequest{
 				Permissions: permissions,
 			}).Do()
