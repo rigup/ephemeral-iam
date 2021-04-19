@@ -1,6 +1,10 @@
 package eiamplugin
 
-import "github.com/spf13/cobra"
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+)
 
 type EphemeralIamPlugin struct {
 	*cobra.Command
@@ -19,4 +23,22 @@ func (eiamp *EphemeralIamPlugin) Desc() string {
 
 func (eiamp *EphemeralIamPlugin) Version() string {
 	return eiamp.version
+}
+
+func New() *EphemeralIamPlugin {
+	return &EphemeralIamPlugin{
+		Command: newCommand(),
+		name:    "plugin-template",
+		desc:    "Baseline template for new plugins for ephemeral-iam",
+		version: "v0.0.0",
+	}
+}
+
+func newCommand() *cobra.Command {
+	return &cobra.Command{
+		Use: "plugin-template",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println("TODO: Tutorial on writing plugins")
+		},
+	}
 }
