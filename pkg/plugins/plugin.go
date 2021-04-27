@@ -12,6 +12,7 @@ type EphemeralIamPlugin struct {
 	Name    string
 	Desc    string
 	Version string
+	Path    string
 }
 
 func Logger() *logrus.Logger {

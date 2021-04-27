@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/status"
 
@@ -30,7 +29,7 @@ func checkGoogleRPCError(err error) bool {
 			switch detail.GetTypeUrl() {
 			case RPCStatusBadRequest:
 				badReq := &errdetails.BadRequest{}
-				if err := ptypes.UnmarshalAny(detail, badReq); err != nil {
+				if err := detail.UnmarshalTo(badReq); err != nil {
 					util.Logger.Errorf("Failed to unmarshal %s from Any protobuf: %v", RPCStatusBadRequest, err)
 				} else if violations := badReq.GetFieldViolations(); len(violations) > 0 {
 					fmt.Fprint(&buf, "  Violating Fields:\n")
@@ -41,7 +40,7 @@ func checkGoogleRPCError(err error) bool {
 				}
 			case RPCStatusDebugInfo:
 				debugInfo := &errdetails.DebugInfo{}
-				if err := ptypes.UnmarshalAny(detail, debugInfo); err != nil {
+				if err := detail.UnmarshalTo(debugInfo); err != nil {
 					util.Logger.Errorf("Failed to unmarshal %s from Any protobuf: %v", RPCStatusDebugInfo, err)
 				} else {
 					traces := debugInfo.GetStackEntries()
@@ -58,7 +57,7 @@ func checkGoogleRPCError(err error) bool {
 				}
 			case RPCStatusErrorInfo:
 				errInfo := &errdetails.ErrorInfo{}
-				if err := ptypes.UnmarshalAny(detail, errInfo); err != nil {
+				if err := detail.UnmarshalTo(errInfo); err != nil {
 					util.Logger.Errorf("Failed to unmarshal %s from Any protobuf: %v", RPCStatusErrorInfo, err)
 				} else {
 					domain := errInfo.GetDomain()
@@ -86,7 +85,7 @@ func checkGoogleRPCError(err error) bool {
 				}
 			case RPCStatusHelp:
 				errHelp := &errdetails.Help{}
-				if err := ptypes.UnmarshalAny(detail, errHelp); err != nil {
+				if err := detail.UnmarshalTo(errHelp); err != nil {
 					util.Logger.Errorf("Failed to unmarshal %s from Any protobuf: %v", RPCStatusHelp, err)
 				} else if links := errHelp.GetLinks(); len(links) > 0 {
 					// URL(s) pointing to additional information on handling the current error.
@@ -97,7 +96,7 @@ func checkGoogleRPCError(err error) bool {
 				}
 			case RPCStatusPreconditionFailure:
 				preconFailure := &errdetails.PreconditionFailure{}
-				if err := ptypes.UnmarshalAny(detail, preconFailure); err != nil {
+				if err := detail.UnmarshalTo(preconFailure); err != nil {
 					util.Logger.Errorf("Failed to unmarshal %s from Any protobuf: %v", RPCStatusPreconditionFailure, err)
 				} else if violations := preconFailure.GetViolations(); len(violations) > 0 {
 					fmt.Fprint(&buf, "  Violations Details:\n")
@@ -108,7 +107,7 @@ func checkGoogleRPCError(err error) bool {
 				}
 			case RPCStatusQuotaFailure:
 				quotaFailure := &errdetails.QuotaFailure{}
-				if err := ptypes.UnmarshalAny(detail, quotaFailure); err != nil {
+				if err := detail.UnmarshalTo(quotaFailure); err != nil {
 					util.Logger.Errorf("Failed to unmarshal %s from Any protobuf: %v", RPCStatusQuotaFailure, err)
 				} else if violations := quotaFailure.GetViolations(); len(violations) > 0 {
 					fmt.Fprint(&buf, "  Violations Details:\n")
@@ -119,7 +118,7 @@ func checkGoogleRPCError(err error) bool {
 				}
 			case RPCStatusRetryInfo:
 				retryInfo := &errdetails.RetryInfo{}
-				if err := ptypes.UnmarshalAny(detail, retryInfo); err != nil {
+				if err := detail.UnmarshalTo(retryInfo); err != nil {
 					util.Logger.Errorf("Failed to unmarshal %s from Any protobuf: %v", RPCStatusRetryInfo, err)
 				} else {
 					errDetails["Retry Info"] = fmt.Sprintf("Please wait %d seconds before retrying request\n", retryInfo.RetryDelay.Seconds)
