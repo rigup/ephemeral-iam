@@ -57,6 +57,7 @@ func (rc *RootCommand) LoadPlugins() error {
 			return err
 		} else {
 			rc.AddCommand(p.Command)
+			p.Path = path
 			loadedPlugins = append(loadedPlugins, p)
 		}
 	}
