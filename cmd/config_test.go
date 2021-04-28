@@ -113,7 +113,7 @@ func TestConfigSetCommandInvalidKey(t *testing.T) {
 	if err == nil {
 		t.Errorf("expected error caused by invalid key name 'notakey.thatexists'\nOUTPUT:\n%s", output)
 	}
-	expectedOutput := "Error: invalid config key notakey.thatexists"
+	expectedOutput := "invalid config key notakey.thatexists"
 	if !strings.Contains(output, expectedOutput) {
 		t.Errorf("unexpected output:\nEXPECTED TO FIND: %s\nACTUAL: %s", expectedOutput, output)
 	}
