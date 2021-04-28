@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	repoOwner = "jessesomerville"
+	repoOwner = "rigup"
 	repoName  = "ephemeral-iam"
 
 	// Version is the currently installed eiam client version.  This is populated by goreleaser when a new release is built
