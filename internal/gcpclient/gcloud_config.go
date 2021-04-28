@@ -14,8 +14,8 @@ import (
 	"github.com/spf13/viper"
 	"gopkg.in/ini.v1"
 
-	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
-	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 )
 
 var (

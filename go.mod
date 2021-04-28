@@ -1,4 +1,4 @@
-module github.com/jessesomerville/ephemeral-iam
+module github.com/rigup/ephemeral-iam
 
 go 1.16
 

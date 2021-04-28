@@ -4,8 +4,8 @@ import (
 	"github.com/lithammer/dedent"
 	"github.com/spf13/cobra"
 
-	eiam "github.com/jessesomerville/ephemeral-iam/internal"
-	"github.com/jessesomerville/ephemeral-iam/pkg/options"
+	eiam "github.com/rigup/ephemeral-iam/internal"
+	"github.com/rigup/ephemeral-iam/pkg/options"
 )
 
 var RootCommand *eiam.RootCommand
@@ -23,7 +23,7 @@ func NewEphemeralIamCommand() (*eiam.RootCommand, error) {
 			│  A CLI tool for temporarily escalating GCP IAM privileges  │
 			│  to perform high privilege tasks.                          │
 			│                                                            │
-			│      https://github.com/jessesomerville/ephemeral-iam      │
+			│      https://github.com/rigup/ephemeral-iam      │
 			│                                                            │
 			╰────────────────────────────────────────────────────────────╯
 			
@@ -47,7 +47,7 @@ func NewEphemeralIamCommand() (*eiam.RootCommand, error) {
 			╰────────────────────────────────────────────────────────────╯
 		
 			Please report any bugs or feature requests by opening a new
-			issue at https://github.com/jessesomerville/ephemeral-iam/issues
+			issue at https://github.com/rigup/ephemeral-iam/issues
 		`),
 		SilenceErrors: true,
 		SilenceUsage:  true,

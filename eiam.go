@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/jessesomerville/ephemeral-iam/cmd"
-	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
+	"github.com/rigup/ephemeral-iam/cmd"
+	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 )
 
 func main() {

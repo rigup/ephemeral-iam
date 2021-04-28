@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 	"github.com/sirupsen/logrus"
 )
 

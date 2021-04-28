@@ -2,7 +2,7 @@
 
 ## Option 1: Install a release binary
 
-1. Download the binary for your OS from the [releases page](https://github.com/jessesomerville/ephemeral-iam/releases)
+1. Download the binary for your OS from the [releases page](https://github.com/rigup/ephemeral-iam/releases)
 
 2. OPTIONAL: Download the `checksums.txt` and `checksums.txt.sig` files to verify the integrity of the archive
 
@@ -69,7 +69,7 @@ export PATH="${PATH}:${GOPATH}/bin
 ### Install the package
 ```shell
 # Install using go get
-$ GO111MODULE="on" go get github.com/jessesomerville/ephemeral-iam
+$ GO111MODULE="on" go get github.com/rigup/ephemeral-iam
 ```
 
 This will create the `eiam` binary in your `$GOPATH/bin` directory. You can

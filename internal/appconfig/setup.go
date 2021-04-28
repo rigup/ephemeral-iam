@@ -12,9 +12,9 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/api/oauth2/v1"
 
-	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
-	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
-	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
+	"github.com/rigup/ephemeral-iam/internal/gcpclient"
 )
 
 func init() {
@@ -82,7 +82,7 @@ func checkDependencies() error {
 func CheckCommandExists(command string) (string, error) {
 	path, err := exec.LookPath(command)
 	if err != nil {
-		util.Logger.Errorf("Error while checking for %s binary", command)
+		util.Logger.Debugf("Error while checking for %s binary", command)
 		return "", err
 	}
 	util.Logger.Debugf("Found binary %s at %s\n", command, path)

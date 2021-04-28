@@ -19,9 +19,9 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/jessesomerville/ephemeral-iam/internal/appconfig"
-	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
-	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
+	"github.com/rigup/ephemeral-iam/internal/appconfig"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 )
 
 // GenerateCerts creates the self signed TLS certificate for the HTTPS proxy

@@ -5,10 +5,10 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
-	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
-	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
-	"github.com/jessesomerville/ephemeral-iam/internal/proxy"
-	"github.com/jessesomerville/ephemeral-iam/pkg/options"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
+	"github.com/rigup/ephemeral-iam/internal/gcpclient"
+	"github.com/rigup/ephemeral-iam/internal/proxy"
+	"github.com/rigup/ephemeral-iam/pkg/options"
 )
 
 var apCmdConfig options.CmdConfig

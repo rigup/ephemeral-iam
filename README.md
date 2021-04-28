@@ -69,7 +69,7 @@ For `kubectl` commands, a temporary `kubeconfig` is generated, the `KUBECONFIG`
 environment variable is set to the path of the temporary `kubeconfig`,
 `gcloud container clusters get-credentials` is called to generate a context
 with the GCP Auth Provider, then the OAuth 2.0 token is written to the token
-cache fields in that context. See [Issue #49](https://github.com/jessesomerville/ephemeral-iam/issues/49)
+cache fields in that context. See [Issue #49](https://github.com/rigup/ephemeral-iam/issues/49)
 for more information about why this is done this way.
 
 Once the session is over, `eiam` gracefully shuts down the proxy server and reverts
@@ -97,7 +97,7 @@ Top-level `--help`
 │  A CLI tool for temporarily escalating GCP IAM privileges  │
 │  to perform high privilege tasks.                          │
 │                                                            │
-│      https://github.com/jessesomerville/ephemeral-iam      │
+│      https://github.com/rigup/ephemeral-iam      │
 │                                                            │
 ╰────────────────────────────────────────────────────────────╯
 

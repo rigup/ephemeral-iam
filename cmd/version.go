@@ -3,8 +3,8 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/jessesomerville/ephemeral-iam/internal/appconfig"
-	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	"github.com/rigup/ephemeral-iam/internal/appconfig"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 )
 
 func newCmdVersion() *cobra.Command {

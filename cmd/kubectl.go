@@ -10,10 +10,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
-	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
-	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
-	"github.com/jessesomerville/ephemeral-iam/pkg/options"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
+	"github.com/rigup/ephemeral-iam/internal/gcpclient"
+	"github.com/rigup/ephemeral-iam/pkg/options"
 )
 
 var (

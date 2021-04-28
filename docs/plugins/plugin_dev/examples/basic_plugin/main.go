@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	eiamplugin "github.com/jessesomerville/ephemeral-iam/pkg/plugins"
+	eiamplugin "github.com/rigup/ephemeral-iam/pkg/plugins"
 )
 
 var (

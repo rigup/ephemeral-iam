@@ -12,9 +12,9 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iam/v1"
 
-	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
-	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
-	"github.com/jessesomerville/ephemeral-iam/pkg/options"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
+	"github.com/rigup/ephemeral-iam/internal/gcpclient"
+	"github.com/rigup/ephemeral-iam/pkg/options"
 )
 
 var (

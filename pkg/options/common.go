@@ -3,9 +3,9 @@ package options
 import (
 	"github.com/spf13/pflag"
 
-	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
-	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
-	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
+	"github.com/rigup/ephemeral-iam/internal/gcpclient"
 )
 
 // Flag annotation strings

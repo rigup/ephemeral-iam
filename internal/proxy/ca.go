@@ -16,8 +16,8 @@ import (
 
 	"github.com/elazarl/goproxy"
 
-	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
-	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 )
 
 // See https://github.com/rhaidiz/broxy/modules/coreproxy/coreproxy.go
