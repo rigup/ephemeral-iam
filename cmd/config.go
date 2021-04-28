@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
-	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 )
 
 var (

@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	container "cloud.google.com/go/container/apiv1"
-	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
-	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 	"google.golang.org/api/option"
 	containerpb "google.golang.org/genproto/googleapis/container/v1"
 )

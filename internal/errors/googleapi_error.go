@@ -3,7 +3,7 @@ package errors
 import (
 	"fmt"
 
-	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 	"google.golang.org/api/googleapi"
 )
 

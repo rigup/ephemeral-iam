@@ -11,10 +11,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/jessesomerville/ephemeral-iam/internal/appconfig"
-	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
-	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
-	eiamplugin "github.com/jessesomerville/ephemeral-iam/pkg/plugins"
+	"github.com/rigup/ephemeral-iam/internal/appconfig"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
+	eiamplugin "github.com/rigup/ephemeral-iam/pkg/plugins"
 )
 
 type RootCommand struct {

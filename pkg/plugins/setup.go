@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jessesomerville/ephemeral-iam/internal/appconfig"
-	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
-	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
+	"github.com/rigup/ephemeral-iam/internal/appconfig"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 )
 
 var PluginDir string

@@ -4,8 +4,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/jessesomerville/ephemeral-iam/pkg/options"
-	eiamplugin "github.com/jessesomerville/ephemeral-iam/pkg/plugins"
+	"github.com/rigup/ephemeral-iam/pkg/options"
+	eiamplugin "github.com/rigup/ephemeral-iam/pkg/plugins"
 )
 
 var (

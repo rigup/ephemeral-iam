@@ -6,7 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 )
 
 type EiamError struct {
