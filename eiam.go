@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/jessesomerville/ephemeral-iam/cmd/eiam/cmd"
+	"github.com/jessesomerville/ephemeral-iam/cmd"
 	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
 )
 

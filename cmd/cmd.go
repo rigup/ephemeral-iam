@@ -56,6 +56,7 @@ func NewEphemeralIamCommand() (*eiam.RootCommand, error) {
 	cmds.ResetFlags()
 
 	cmds.AddCommand(newCmdAssumePrivileges())
+	cmds.AddCommand(newCmdCloudSqlProxy())
 	cmds.AddCommand(newCmdConfig())
 	cmds.AddCommand(newCmdGcloud())
 	cmds.AddCommand(newCmdKubectl())

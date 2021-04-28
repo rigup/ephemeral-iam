@@ -21,13 +21,18 @@ import (
 
 	"github.com/jessesomerville/ephemeral-iam/internal/appconfig"
 	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
 )
 
 // GenerateCerts creates the self signed TLS certificate for the HTTPS proxy
 func GenerateCerts() error {
 	priv, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		return fmt.Errorf("failed to generate RSA key pair: %v", err)
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to generate RSA key pair",
+			Err: err,
+		}
 	}
 
 	notBefore := time.Now()
@@ -36,7 +41,11 @@ func GenerateCerts() error {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		return fmt.Errorf("failed to generate random serial number limit for x509 cert: %v", err)
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to generate random serial number limit for x509 cert",
+			Err: err,
+		}
 	}
 
 	template := x509.Certificate{
@@ -59,14 +68,26 @@ func GenerateCerts() error {
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, publicKey(priv), priv)
 	if err != nil {
-		return fmt.Errorf("failed to create x509 Cert: %v", err)
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to create x509 Cert",
+			Err: err,
+		}
 	}
 
 	if err := writeToFile(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes}, "server.pem", 0o640); err != nil {
-		return err
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to write server.pem file",
+			Err: err,
+		}
 	}
 	if err := writeToFile(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}, "server.key", 0o400); err != nil {
-		return err
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to write server.key file",
+			Err: err,
+		}
 	}
 
 	return nil
@@ -89,21 +110,37 @@ func writeToFile(data *pem.Block, filename string, perm os.FileMode) error {
 	if err != nil {
 		if os.IsPermission(err) {
 			if err := os.Remove(filepath); err != nil {
-				return fmt.Errorf("failed to update %s: %v", filepath, err)
+				return errorsutil.EiamError{
+					Log: util.Logger.WithError(err),
+					Msg: fmt.Sprintf("Failed to update %s", filepath),
+					Err: err,
+				}
 			}
 			return writeToFile(data, filename, perm)
 		}
-		return fmt.Errorf("failed to write file %s: %v", filepath, err)
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: fmt.Sprintf("Failed to write file %s", filepath),
+			Err: err,
+		}
 	}
 
 	defer fd.Close()
 
 	if err := pem.Encode(fd, data); err != nil {
-		return err
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to write PEM encoding to a file",
+			Err: err,
+		}
 	}
 
 	if err := os.Chmod(filepath, perm); err != nil {
-		return err
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: fmt.Sprintf("Failed to update the file permissions for %s", filepath),
+			Err: err,
+		}
 	}
 	return nil
 }
@@ -123,7 +160,11 @@ func checkProxyCertificate() error {
 			certFile = viper.GetString("authproxy.certfile")
 		}
 		if err := viper.WriteConfig(); err != nil {
-			return err
+			return errorsutil.EiamError{
+				Log: util.Logger.WithError(err),
+				Msg: "Failed to write configuration file",
+				Err: err,
+			}
 		}
 	}
 
@@ -180,13 +221,25 @@ func readCert(certFile string) (cert *x509.Certificate, err error) {
 	var certBlock *pem.Block
 
 	if certBytes, err = ioutil.ReadFile(certFile); err != nil {
-		return nil, fmt.Errorf("failed to read certificate file: %v", err)
+		return nil, errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to read certificate file",
+			Err: err,
+		}
 	}
 	if certBlock, _ = pem.Decode(certBytes); certBlock == nil {
-		return nil, fmt.Errorf("failed to decode certificate bytes: %v", err)
+		return nil, errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to decode certificate bytes",
+			Err: err,
+		}
 	}
 	if cert, err = x509.ParseCertificate(certBlock.Bytes); err != nil {
-		return nil, fmt.Errorf("failed to parse certificate bytes: %v", err)
+		return nil, errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to parse certificate bytes",
+			Err: err,
+		}
 	}
 	return cert, nil
 }

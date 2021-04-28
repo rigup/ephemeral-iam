@@ -27,4 +27,4 @@ jobs:
       - name: Test
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ""
-        run: go test ./cmd/eiam/cmd
+        run: go test ./cmd

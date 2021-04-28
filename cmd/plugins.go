@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
 	eiamplugin "github.com/jessesomerville/ephemeral-iam/pkg/plugins"
 	"github.com/lithammer/dedent"
 	"github.com/manifoldco/promptui"
@@ -82,7 +84,11 @@ func newCmdPluginsRemove() *cobra.Command {
 			}
 
 			if err := os.Remove(plugin.Path); err != nil {
-				return err
+				return errorsutil.EiamError{
+					Log: util.Logger.WithError(err),
+					Msg: fmt.Sprintf("Failed to remove plugin file %s", plugin.Path),
+					Err: err,
+				}
 			}
 			util.Logger.Infof("Successfully removed %s", plugin.Name)
 			return nil
@@ -110,7 +116,11 @@ func selectPlugin() (*eiamplugin.EphemeralIamPlugin, error) {
 	}
 
 	if i, _, err := prompt.Run(); err != nil {
-		return nil, err
+		return nil, errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Select-plugin prompt failed",
+			Err: err,
+		}
 	} else {
 		return RootCommand.Plugins[i], nil
 	}

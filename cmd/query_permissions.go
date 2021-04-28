@@ -14,6 +14,7 @@ import (
 
 	"github.com/jessesomerville/ephemeral-iam/internal/appconfig"
 	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
 	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
 	queryiam "github.com/jessesomerville/ephemeral-iam/internal/gcpclient/query_iam"
 	"github.com/jessesomerville/ephemeral-iam/pkg/options"
@@ -124,8 +125,11 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 			util.Logger.Infof("Querying permissions granted on %s", resourceString)
 			testablePerms, err := queryiam.QueryTestablePermissionsOnResource(resourceString)
 			if err != nil {
-				util.Logger.Warnf("gcloud is configured to use %s as the default zone. If this is not correct, please provide the zone using the `--zone` flag", queryPermsCmdConfig.Zone)
-				return err
+				return errorsutil.EiamError{
+					Log: util.Logger.WithError(err),
+					Msg: fmt.Sprintf("gcloud is configured to use %s as the default zone. If this is not correct, please provide the zone using the `--zone` flag", queryPermsCmdConfig.Zone),
+					Err: err,
+				}
 			}
 			userPerms, err := queryiam.QueryComputeInstancePermissions(
 				testablePerms,
@@ -361,8 +365,11 @@ func printPermissions(fullPerms, userPerms []string, acctEmail string) error {
 		cmd.Stdout = os.Stdout
 		stdin, err := cmd.StdinPipe()
 		if err != nil {
-			util.Logger.Error("Failed to create stdin pipe for less command")
-			return err
+			return errorsutil.EiamError{
+				Log: util.Logger.WithError(err),
+				Msg: "Failed to create stdin pipe for less command",
+				Err: err,
+			}
 		}
 
 		// Write the output in a goroutine so less can be ready to read it

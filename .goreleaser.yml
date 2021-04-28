@@ -8,7 +8,6 @@ before:
     # - go generate ./...
 builds:
   - id: "eiam"
-    dir: ./cmd/eiam
     main: eiam.go
     binary: eiam
     env:

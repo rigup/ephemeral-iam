@@ -13,28 +13,40 @@ import (
 
 	"github.com/jessesomerville/ephemeral-iam/internal/appconfig"
 	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
 	eiamplugin "github.com/jessesomerville/ephemeral-iam/pkg/plugins"
 )
 
 type RootCommand struct {
-	cobra.Command
 	Plugins []*eiamplugin.EphemeralIamPlugin
+	cobra.Command
 }
 
-// TODO: custom error type for plugins
-func (rc *RootCommand) loadPlugin(pluginPath string) (*eiamplugin.EphemeralIamPlugin, error) {
+func (rc *RootCommand) loadPlugin(pluginPath string) (*eiamplugin.EphemeralIamPlugin, bool, error) {
 	pluginLib, err := plugin.Open(pluginPath)
 	if err != nil {
-		return nil, err
+		if serr := errorsutil.CheckPluginError(err); serr != nil {
+			return nil, false, serr
+		}
+		return nil, false, nil
 	}
+
 	newPlugin, err := pluginLib.Lookup("Plugin")
 	if err != nil {
-		return nil, fmt.Errorf("%s is missing the EphemeralIamPlugin symbol", pluginPath)
+		return nil, false, errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: fmt.Sprintf("The plugin %s is missing the EphemeralIamPlugin symbol", pluginPath),
+			Err: err,
+		}
 	}
 	if p, ok := newPlugin.(**eiamplugin.EphemeralIamPlugin); ok {
-		return *p, nil
+		return *p, true, nil
 	}
-	return nil, fmt.Errorf("failed to load plugin %s: plugin of type %T should be *eiamplugin.EphemeralIamPlugin", pluginPath, newPlugin)
+	return nil, false, errorsutil.EiamError{
+		Log: util.Logger.WithError(err),
+		Msg: fmt.Sprintf("Failed to load plugin %s: plugin of type %T should be *eiamplugin.EphemeralIamPlugin", pluginPath, newPlugin),
+		Err: err,
+	}
 }
 
 func (rc *RootCommand) LoadPlugins() error {
@@ -48,20 +60,24 @@ func (rc *RootCommand) LoadPlugins() error {
 		return nil
 	})
 	if err != nil {
-		return err
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to list files in plugins directory",
+			Err: err,
+		}
 	}
 
 	loadedPlugins := []*eiamplugin.EphemeralIamPlugin{}
 	for _, path := range pluginPaths {
-		if p, err := rc.loadPlugin(path); err != nil {
+		if p, loaded, err := rc.loadPlugin(path); err != nil {
 			return err
-		} else {
+		} else if loaded {
 			rc.AddCommand(p.Command)
 			p.Path = path
 			loadedPlugins = append(loadedPlugins, p)
 		}
 	}
-	if len(pluginPaths) != 0 {
+	if len(rc.Plugins) != 0 {
 		util.Logger.Debugf("Successfully loaded %d plugins", len(pluginPaths))
 		rc.Plugins = loadedPlugins
 	}

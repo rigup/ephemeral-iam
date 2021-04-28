@@ -15,26 +15,45 @@ import (
 	"time"
 
 	"github.com/elazarl/goproxy"
+
+	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
 )
 
 // See https://github.com/rhaidiz/broxy/modules/coreproxy/coreproxy.go
 func setCa(caCertFile, caKeyFile string) error {
 	caCert, err := ioutil.ReadFile(caCertFile)
 	if err != nil {
-		return err
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: fmt.Sprintf("Failed to read CA certificate file %s", caCertFile),
+			Err: err,
+		}
 	}
 	caKey, err := ioutil.ReadFile(caKeyFile)
 	if err != nil {
-		return err
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: fmt.Sprintf("Failed to read CA certificate key file %s", caCertFile),
+			Err: err,
+		}
 	}
 
 	goproxyCa, err := tls.X509KeyPair(caCert, caKey)
 	if err != nil {
-		return err
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to parse X509 public/private key pair",
+			Err: err,
+		}
 	}
 
 	if goproxyCa.Leaf, err = x509.ParseCertificate(goproxyCa.Certificate[0]); err != nil {
-		return err
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to parse x509 certificate",
+			Err: err,
+		}
 	}
 
 	goproxy.GoproxyCa = goproxyCa
