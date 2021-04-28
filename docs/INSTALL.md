@@ -1,6 +1,6 @@
 # Installation
 
-### Option 1: Install a release binary
+## Option 1: Install a release binary
 
 1. Download the binary for your OS from the [releases page](https://github.com/jessesomerville/ephemeral-iam/releases)
 
@@ -44,8 +44,8 @@ INFO    ephemeral-iam vX.Y.Z
 $ xattr -d com.apple.quarantine /path/to/eiam
 ```
 
-### Option 2: Installing with `go get`
-#### Prerequisites
+## Option 2: Installing with `go get`
+### Prerequisites
 
 1. You must have [`go`](https://golang.org/doc/install) installed.
 
@@ -54,7 +54,7 @@ $ xattr -d com.apple.quarantine /path/to/eiam
    a bug while using this tool on on other platforms/architecture, please open a
    new issue.
 
-#### Configure Go Environment
+### Configure Go Environment
 
 You will want to configure your `GOPATH` environment variable and add it to
 your `PATH`.  Additionally, you may want to add them to your shell configuration
@@ -66,7 +66,7 @@ export GOPATH="${HOME}/go"
 export PATH="${PATH}:${GOPATH}/bin
 ```
 
-#### Install the package
+### Install the package
 ```shell
 # Install using go get
 $ GO111MODULE="on" go get github.com/jessesomerville/ephemeral-iam

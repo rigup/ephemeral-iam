@@ -42,8 +42,11 @@ func QueryTestablePermissionsOnResource(resource string) ([]string, error) {
 			PageSize:         1000,
 		}).Do()
 		if err != nil {
-			util.Logger.Errorf("Failed to get testable permissions for %s", resource)
-			return []string{}, err
+			return []string{}, errorsutil.EiamError{
+				Log: util.Logger.WithError(err),
+				Msg: fmt.Sprintf("Failed to get testable permissions for %s", resource),
+				Err: err,
+			}
 		}
 
 		for _, perm := range ps.Permissions {
@@ -88,8 +91,11 @@ func QueryComputeInstancePermissions(permsToTest []string, project, zone, instan
 		Permissions: permsToTest,
 	}).Do()
 	if err != nil {
-		util.Logger.Errorf("Failed to query permissions on resource projects/%s/zones/%s/instances/%s", project, zone, instance)
-		return []string{}, err
+		return []string{}, errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: fmt.Sprintf("Failed to query permissions on resource projects/%s/zones/%s/instances/%s", project, zone, instance),
+			Err: err,
+		}
 	}
 
 	return resp.Permissions, nil
@@ -174,8 +180,11 @@ func QueryPubSubPermissions(permsToTest []string, project, topic, serviceAccount
 		Permissions: permsToTest,
 	}).Do()
 	if err != nil {
-		util.Logger.Errorf("Failed to query permissions on %s", resource)
-		return []string{}, err
+		return []string{}, errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: fmt.Sprintf("Failed to query permissions on %s", resource),
+			Err: err,
+		}
 	}
 
 	return resp.Permissions, nil
@@ -228,8 +237,11 @@ func QueryStorageBucketPermissions(permsToTest []string, bucket, serviceAccountE
 
 	resp, err := storageService.Buckets.TestIamPermissions(bucket, permsToTest).Do()
 	if err != nil {
-		util.Logger.Errorf("Failed to query permissions on storage bucket %s", bucket)
-		return []string{}, err
+		return []string{}, errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: fmt.Sprintf("Failed to query permissions on storage bucket %s", bucket),
+			Err: err,
+		}
 	}
 	return resp.Permissions, nil
 }

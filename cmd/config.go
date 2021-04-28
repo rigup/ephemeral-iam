@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 
 	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
 )
 
 var (
@@ -87,7 +88,11 @@ func newCmdConfigPrint() *cobra.Command {
 			configFile := viper.ConfigFileUsed()
 			data, err := ioutil.ReadFile(configFile)
 			if err != nil {
-				return err
+				return errorsutil.EiamError{
+					Log: util.Logger.WithError(err),
+					Msg: "Failed to read configuration file",
+					Err: err,
+				}
 			}
 			fmt.Printf("\n%s\n", string(data))
 			return nil
@@ -127,25 +132,50 @@ func newCmdConfigSet() *cobra.Command {
 		Short: "Set the value of a provided config item",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
-				return errors.New("requires both a config key and a new value")
+				err := errors.New("requires both a config key and a new value")
+				return errorsutil.EiamError{
+					Log: util.Logger.WithError(err),
+					Msg: "Invalid command arguments",
+					Err: err,
+				}
 			}
 
 			if !util.Contains(viper.AllKeys(), args[0]) {
-				return fmt.Errorf("invalid config key %s", args[0])
+				err := fmt.Errorf("invalid config key %s", args[0])
+				return errorsutil.EiamError{
+					Log: util.Logger.WithError(err),
+					Msg: "Invalid command arguments",
+					Err: err,
+				}
 			}
 
 			if args[0] == "logging.level" {
 				if !util.Contains(LoggingLevels, args[1]) {
-					return fmt.Errorf("logging level must be one of %v", LoggingLevels)
+					err := fmt.Errorf("logging level must be one of %v", LoggingLevels)
+					return errorsutil.EiamError{
+						Log: util.Logger.WithError(err),
+						Msg: "Invalid command arguments",
+						Err: err,
+					}
 				}
 			} else if args[0] == "logging.format" {
 				if !util.Contains(LoggingFormats, args[1]) {
-					return fmt.Errorf("logging format must be one of %v", LoggingFormats)
+					err := fmt.Errorf("logging format must be one of %v", LoggingFormats)
+					return errorsutil.EiamError{
+						Log: util.Logger.WithError(err),
+						Msg: "Invalid command arguments",
+						Err: err,
+					}
 				}
 			} else if util.Contains(BoolConfigFields, args[0]) {
 				_, err := strconv.ParseBool(args[1])
 				if err != nil {
-					return fmt.Errorf("the %s value must be either true or false", args[0])
+					err := fmt.Errorf("the %s value must be either true or false", args[0])
+					return errorsutil.EiamError{
+						Log: util.Logger.WithError(err),
+						Msg: "Invalid command arguments",
+						Err: err,
+					}
 				}
 			}
 			return nil
@@ -167,7 +197,11 @@ func newCmdConfigSet() *cobra.Command {
 			switch args[0] {
 			case "logging.level":
 				if level, err := logrus.ParseLevel(args[1]); err != nil {
-					return err
+					return errorsutil.EiamError{
+						Log: util.Logger.WithError(err),
+						Msg: "Invalid command arguments",
+						Err: err,
+					}
 				} else {
 					util.Logger.Level = level
 				}
@@ -183,8 +217,11 @@ func newCmdConfigSet() *cobra.Command {
 
 			}
 			if err := viper.WriteConfig(); err != nil {
-				util.Logger.Error("Failed to write updated configuration")
-				return err
+				return errorsutil.EiamError{
+					Log: util.Logger.WithError(err),
+					Msg: "Failed to write updated configuration",
+					Err: err,
+				}
 			}
 			util.Logger.Infof("Updated %s from %v to %s", args[0], oldVal, args[1])
 			return nil

@@ -35,7 +35,7 @@ func init() {
 	util.Logger = util.NewLogger()
 
 	allConfigKeys := viper.AllKeys()
-	if !util.Contains(allConfigKeys, "binarypaths.gcloud") || !util.Contains(allConfigKeys, "binarypaths.kubectl") {
+	if !util.Contains(allConfigKeys, "binarypaths.gcloud") || !util.Contains(allConfigKeys, "binarypaths.kubectl") || !util.Contains(allConfigKeys, "binarypaths.cloudSqlProxy") {
 		errorsutil.CheckError(checkDependencies())
 	}
 
@@ -61,11 +61,19 @@ func checkDependencies() error {
 	if err != nil {
 		return err
 	}
+	cloudSqlProxy, err := CheckCommandExists("cloud_sql_proxy")
+	if err != nil {
+		util.Logger.WithError(err).Debug("Failed to find cloud_sql_proxy")
+	}
 	viper.Set("binarypaths.gcloud", gcloudPath)
 	viper.Set("binarypaths.kubectl", kubectlPath)
+	viper.Set("binarypaths.cloudSqlProxy", cloudSqlProxy)
 	if err := viper.WriteConfig(); err != nil {
-		util.Logger.Error("Failed to write config file")
-		return err
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to write configuration file",
+			Err: err,
+		}
 	}
 	return nil
 }
@@ -95,21 +103,30 @@ func checkValidADCExists() error {
 			cmd.Stdout = os.Stdout
 			cmd.Stdin = os.Stdin
 			if err := cmd.Run(); err != nil {
-				util.Logger.Error("Failed to create application default credentials")
-				return err
+				return errorsutil.EiamError{
+					Log: util.Logger.WithError(err),
+					Msg: "Failed to create application default credentials",
+					Err: err,
+				}
 			}
 			fmt.Println()
 			util.Logger.Info("Application default credentials were successfully created")
 		} else {
-			util.Logger.Error("Failed to check if application default credentials exist")
-			return err
+			return errorsutil.EiamError{
+				Log: util.Logger.WithError(err),
+				Msg: "Failed to check if application default credentials exist",
+				Err: err,
+			}
 		}
 	} else {
 		util.Logger.Debug("Checking validity of application default credentials")
 		tokenInfo, err := oauth2Service.Tokeninfo().Do()
 		if err != nil {
-			util.Logger.Error("Failed to parse OAuth token")
-			return err
+			return errorsutil.EiamError{
+				Log: util.Logger.WithError(err),
+				Msg: "Failed to parse OAuth token",
+				Err: err,
+			}
 		}
 
 		return checkADCIdentity(tokenInfo.Email)
@@ -157,11 +174,18 @@ func createLogDir() error {
 	if _, err := os.Stat(logDir); os.IsNotExist(err) {
 		util.Logger.Debugf("Creating log directory: %s", logDir)
 		if err := os.MkdirAll(viper.GetString("authproxy.logdir"), 0o755); err != nil {
-			return fmt.Errorf("failed to create proxy log directory %s: %v", logDir, err)
+			return errorsutil.EiamError{
+				Log: util.Logger.WithError(err),
+				Msg: fmt.Sprintf("Failed to create proxy log directory %s", logDir),
+				Err: err,
+			}
 		}
 	} else if err != nil {
-		util.Logger.Errorf("failed to find proxy log directory: %s", logDir)
-		return err
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: fmt.Sprintf("Failed to find proxy log directory %s", logDir),
+			Err: err,
+		}
 	}
 	return nil
 }

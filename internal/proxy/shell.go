@@ -21,6 +21,7 @@ import (
 
 	"github.com/jessesomerville/ephemeral-iam/internal/appconfig"
 	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
 )
 
 func startShell(svcAcct, accessToken, expiry string, defaultCluster map[string]string, oldState **term.State) {
@@ -134,10 +135,18 @@ func writeCredsToKubeConfig(tmpKubeConfig *os.File, accessToken, expiry string) 
 	config := clientcmdapi.NewConfig()
 	configBytes, err := ioutil.ReadFile(tmpKubeConfig.Name())
 	if err != nil {
-		return fmt.Errorf("failed to read generated tmp kubeconfig: %v", err)
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to read generated tmp kubeconfig",
+			Err: err,
+		}
 	}
 	if err := runtime.DecodeInto(clientcmdapilatest.Codec, configBytes, config); err != nil {
-		return fmt.Errorf("failed to deserialize generated tmp kubeconfig: %v", err)
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to deserialize generated tmp kubeconfig",
+			Err: err,
+		}
 	}
 
 	// There should only be one, this is an efficient way of getting it
@@ -150,10 +159,18 @@ func writeCredsToKubeConfig(tmpKubeConfig *os.File, accessToken, expiry string) 
 	// Serialize the updated config and write it back to the file
 	newConfigBytes, err := runtime.Encode(clientcmdapilatest.Codec, config)
 	if err != nil {
-		return fmt.Errorf("failed to serialize updated tmp kubeconfig: %v", err)
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to serialize updated tmp kubeconfig",
+			Err: err,
+		}
 	}
 	if _, err := tmpKubeConfig.Write(newConfigBytes); err != nil {
-		return fmt.Errorf("failed to write updated tmp kubeconfig: %v", err)
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to write updated tmp kubeconfig",
+			Err: err,
+		}
 	}
 	return nil
 }

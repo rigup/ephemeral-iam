@@ -8,6 +8,7 @@ import (
 
 	"github.com/jessesomerville/ephemeral-iam/internal/appconfig"
 	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
 )
 
 var PluginDir string
@@ -25,11 +26,18 @@ func createPluginDir() error {
 	if _, err := os.Stat(PluginDir); os.IsNotExist(err) {
 		util.Logger.Debugf("Creating plugin directory: %s", PluginDir)
 		if err := os.MkdirAll(PluginDir, 0o755); err != nil {
-			return fmt.Errorf("failed to create plugin directory %s: %v", PluginDir, err)
+			return errorsutil.EiamError{
+				Log: util.Logger.WithError(err),
+				Msg: fmt.Sprintf("failed to create plugin directory: %s", PluginDir),
+				Err: err,
+			}
 		}
 	} else if err != nil {
-		util.Logger.Errorf("failed to find plugin directory: %s", PluginDir)
-		return err
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: fmt.Sprintf("failed to find plugin directory: %s", PluginDir),
+			Err: err,
+		}
 	}
 	return nil
 }

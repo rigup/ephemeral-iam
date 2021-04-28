@@ -20,7 +20,8 @@ const (
 	RPCStatusRetryInfo           = "type.googleapis.com/google.rpc.RetryInfo"
 )
 
-func checkGoogleRPCError(err error) bool {
+func checkGoogleRPCError(serr *EiamError) *EiamError {
+	err := serr.Err
 	errDetails := map[string]string{}
 
 	if serr, ok := status.FromError(err); ok {
@@ -129,15 +130,22 @@ func checkGoogleRPCError(err error) bool {
 		}
 
 		if len(errDetails) > 0 {
-			util.Logger.Error("[gRPC Status Error]")
+			errMsg := "[gRPC Status Error]\n"
 			for title, details := range errDetails {
-				fmt.Printf("[%s]\n%s\n", title, details)
+				errMsg += fmt.Sprintf("[%s]\n%s\n", title, details)
+			}
+			return &EiamError{
+				Log: util.Logger.WithError(err),
+				Msg: errMsg,
+				Err: err,
 			}
 		} else {
-			util.Logger.Errorf("[gRPC Status Error]: %v", serr.Message())
+			return &EiamError{
+				Log: util.Logger.WithError(err),
+				Msg: fmt.Sprintf("[gRPC Status Error]: %v", serr.Message()),
+				Err: err,
+			}
 		}
-
-		return true
 	}
-	return false
+	return nil
 }

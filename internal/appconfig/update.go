@@ -18,6 +18,7 @@ import (
 
 	archutil "github.com/jessesomerville/ephemeral-iam/internal/appconfig/arch_util"
 	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
 )
 
 var (
@@ -70,8 +71,9 @@ func CheckForNewRelease() {
 
 func installNewVersion(release *github.RepositoryRelease) {
 	var downloadURL string
+	currentRuntime := fmt.Sprintf("%s_%s", archutil.FormattedOS, archutil.FormattedArch)
 	for _, asset := range release.Assets {
-		if strings.Contains(asset.GetName(), archutil.FormattedArch) {
+		if strings.Contains(asset.GetName(), currentRuntime) {
 			downloadURL = asset.GetBrowserDownloadURL()
 			break
 		}
@@ -107,14 +109,22 @@ func downloadAndExtract(url string) error {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		return fmt.Errorf("failed to download release from %s: %v", url, err)
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: fmt.Sprintf("Failed to download release from %s", url),
+			Err: err,
+		}
 	}
 	defer resp.Body.Close()
 
 	util.Logger.Info("Successfully downloaded the archive, now extracting its contents")
 	gzr, err := gzip.NewReader(resp.Body)
 	if err != nil {
-		return err
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to create gzip reader",
+			Err: err,
+		}
 	}
 	defer gzr.Close()
 
@@ -129,7 +139,11 @@ func downloadAndExtract(url string) error {
 			return nil
 		// return any other error
 		case err != nil:
-			return err
+			return errorsutil.EiamError{
+				Log: util.Logger.WithError(err),
+				Msg: "Failed to extract release archive",
+				Err: err,
+			}
 		// if the header is nil, just skip it (not sure how this happens)
 		case header == nil:
 			continue
@@ -143,18 +157,30 @@ func downloadAndExtract(url string) error {
 		case tar.TypeDir:
 			if _, err := os.Stat(target); err != nil {
 				if err := os.MkdirAll(target, 0o755); err != nil {
-					return err
+					return errorsutil.EiamError{
+						Log: util.Logger.WithError(err),
+						Msg: "Failed to create directory while extracting release archive",
+						Err: err,
+					}
 				}
 			}
 		// if it's a file create it
 		case tar.TypeReg:
 			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
-				return err
+				return errorsutil.EiamError{
+					Log: util.Logger.WithError(err),
+					Msg: "Failed to create file while extracting release archive",
+					Err: err,
+				}
 			}
 			// copy over contents
 			if _, err := io.Copy(f, tr); err != nil {
-				return err
+				return errorsutil.EiamError{
+					Log: util.Logger.WithError(err),
+					Msg: "Failed to copy file contents while extracting release archive",
+					Err: err,
+				}
 			}
 			// manually close here after each file operation; defering would cause each file close
 			// to wait until all operations have completed.

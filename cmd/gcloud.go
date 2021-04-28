@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 
 	util "github.com/jessesomerville/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/jessesomerville/ephemeral-iam/internal/errors"
 	"github.com/jessesomerville/ephemeral-iam/internal/gcpclient"
 	"github.com/jessesomerville/ephemeral-iam/pkg/options"
 )
@@ -93,7 +94,11 @@ func runGcloudCommand() error {
 
 	if err := c.Run(); err != nil {
 		fullCmd := fmt.Sprintf("gcloud %s", strings.Join(gcloudCmdArgs, " "))
-		return fmt.Errorf("error running command [%s]: %v", fullCmd, err)
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: fmt.Sprintf("Failed to run command [%s]", fullCmd),
+			Err: err,
+		}
 	}
 	return nil
 }
