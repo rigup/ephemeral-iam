@@ -43,7 +43,7 @@ var (
 
 	wg sync.WaitGroup
 
-	FuncHTTPSHandler = func(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
+	funcHTTPSHandler = func(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
 		return goproxy.MitmConnect, host
 	}
 )
@@ -157,7 +157,7 @@ func createProxy(accessToken, reason string) (*http.Server, error) {
 		return nil, err
 	}
 
-	proxy.OnRequest().HandleConnect(goproxy.FuncHttpsHandler(FuncHTTPSHandler))
+	proxy.OnRequest().HandleConnect(goproxy.FuncHttpsHandler(funcHTTPSHandler))
 
 	proxy.OnRequest().DoFunc(func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 		r.Header.Set("authorization", fmt.Sprintf("Bearer %s", accessToken))

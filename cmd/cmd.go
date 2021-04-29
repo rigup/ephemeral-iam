@@ -22,6 +22,7 @@ import (
 	"github.com/rigup/ephemeral-iam/pkg/options"
 )
 
+// RootCommand is the top level cobra command.
 var RootCommand *eiam.RootCommand
 
 // NewEphemeralIamCommand returns cobra.Command to run eiam command.

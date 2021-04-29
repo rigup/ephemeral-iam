@@ -26,6 +26,7 @@ import (
 	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 )
 
+// GetClusters gets the list of clusters in the current project.
 func GetClusters(project, reason string) ([]map[string]string, error) {
 	gkeClient, err := container.NewClusterManagerClient(context.Background(), option.WithRequestReason(reason))
 	if err != nil {

@@ -53,6 +53,7 @@ func NewLogger() *logrus.Logger {
 	return logger
 }
 
+// NewTextFormatter creates a new TextFormatter logrus instance.
 func NewTextFormatter() *logrus.TextFormatter {
 	return &logrus.TextFormatter{
 		DisableLevelTruncation: viper.GetBool("logging.disableleveltruncation"),
@@ -62,10 +63,12 @@ func NewTextFormatter() *logrus.TextFormatter {
 	}
 }
 
+// NewJSONFormatter creates a new JSONFormatter logrus instance.
 func NewJSONFormatter() *logrus.JSONFormatter {
 	return new(logrus.JSONFormatter)
 }
 
+// NewRuntimeFormatter creates a new logrus formatter that contains extra debugging information.
 func NewRuntimeFormatter() *rt.Formatter {
 	return &rt.Formatter{
 		ChildFormatter: &logrus.TextFormatter{

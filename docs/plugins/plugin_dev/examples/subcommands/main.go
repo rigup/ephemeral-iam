@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	// Plugin does not need to include a RunE field
+	// Plugin does not need to include a RunE field.
 	Plugin = &eiamplugin.EphemeralIamPlugin{
 		Command: &cobra.Command{
 			Use:   "plugin-with-subcommands",
@@ -36,7 +36,7 @@ var (
 
 	logger *logrus.Logger
 
-	Project string
+	project string
 )
 
 func init() {
@@ -51,11 +51,11 @@ func newCmdExampleSubcommand() *cobra.Command {
 		Use:   "example-subcommand",
 		Short: "This is a subcommand of the plugin",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logger.Infof("We can access the current user's project even if the flag isn't provided: %s", Project)
+			logger.Infof("We can access the current user's project even if the flag isn't provided: %s", project)
 			return nil
 		},
 	}
-	options.AddProjectFlag(cmd.Flags(), &Project)
+	options.AddProjectFlag(cmd.Flags(), &project)
 	return cmd
 }
 
@@ -64,7 +64,7 @@ func newCmdAnotherSubcommand() *cobra.Command {
 		Use:   "another-subcommand",
 		Short: "This is another subcommand of the plugin",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logger.Infof("The user's project isn't available to this command because the flag was not explicitly added to it: %s", Project)
+			logger.Infof("The user's project isn't available to this command because the flag was not explicitly added to it: %s", project)
 			return nil
 		},
 	}

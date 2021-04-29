@@ -21,14 +21,21 @@ import (
 	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 )
 
+// EphemeralIamPlugin represents an ephemeral-iam command plugin.
 type EphemeralIamPlugin struct {
 	*cobra.Command
-	Name    string
-	Desc    string
+
+	// Name is the canonical name of the plugin.
+	Name string
+	// Desc is the description of the plugin.
+	Desc string
+	// Version is the version of the plugin.
 	Version string
-	Path    string
+	// Path is the path that the plugin was loaded from.
+	Path string
 }
 
+// Logger allows plugins to fetch an instance of the ephemeral-iam logger.
 func Logger() *logrus.Logger {
 	return util.Logger
 }

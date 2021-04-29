@@ -42,3 +42,24 @@ Continue: y
 INFO    Fetching access token for gke-debug@example-project.iam.gserviceaccount.com
 INFO    Running: [kubectl port-forward deployment/redis-master 7000:6379]
 ```
+
+## Running cloud_sql_proxy
+
+```
+$ eiam cloud_sql_proxy -instances my-project:us-central1:example-instance=tcp:3306 \
+	--service-account-email example@my-project.iam.gserviceaccount.com \
+	--reason "Debugging for (JIRA-1234)"
+
+Command ------------ cloud_sql_proxy -instances my-project:us-central1:example-instance=tcp:3306
+Project ------------ my-project
+Service Account ---- example@my-project.iam.gserviceaccount.com
+Reason ------------- ephemeral-iam 968be336d4b769e2: Debugging for (JIRA-1234)
+
+Continue: y
+INFO    Fetching access token for example@my-project.iam.gserviceaccount.com
+INFO    Running: [cloud_sql_proxy -instances my-project:us-central1:example-instance=tcp:3306]
+
+2021/04/29 03:24:17 current FDs rlimit set to 1048576, wanted limit is 8500. Nothing to do here.
+2021/04/29 03:24:18 Listening on 127.0.0.1:3306 for my-project:us-central1:example-instance
+2021/04/29 03:24:18 Ready for new connections
+```

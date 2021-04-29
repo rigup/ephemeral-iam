@@ -31,9 +31,9 @@ import (
 )
 
 var (
-	LoggingLevels    = []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
-	LoggingFormats   = []string{"text", "json", "debug"}
-	BoolConfigFields = []string{
+	loggingLevels    = []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
+	loggingFormats   = []string{"text", "json", "debug"}
+	boolConfigFields = []string{
 		appconfig.AuthProxyVerbose,
 		appconfig.LoggingLevelTruncation,
 		appconfig.LoggingPadLevelText,
@@ -145,30 +145,7 @@ func newCmdConfigSet() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set",
 		Short: "Set the value of a provided config item",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 2 {
-				return argsError(errors.New("requires both a config key and a new value"))
-			}
-
-			if !util.Contains(viper.AllKeys(), args[0]) {
-				return argsError(fmt.Errorf("invalid config key %s", args[0]))
-			}
-
-			if args[0] == appconfig.LoggingLevel {
-				if !util.Contains(LoggingLevels, args[1]) {
-					return argsError(fmt.Errorf("logging level must be one of %v", LoggingLevels))
-				}
-			} else if args[0] == appconfig.LoggingFormat {
-				if !util.Contains(LoggingFormats, args[1]) {
-					return argsError(fmt.Errorf("logging format must be one of %v", LoggingFormats))
-				}
-			} else if util.Contains(BoolConfigFields, args[0]) {
-				if _, err := strconv.ParseBool(args[1]); err != nil {
-					return argsError(fmt.Errorf("the %s value must be either true or false", args[0]))
-				}
-			}
-			return nil
-		},
+		Args:  checkSetArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			oldVal := viper.Get(args[0])
 
@@ -176,7 +153,7 @@ func newCmdConfigSet() *cobra.Command {
 				util.Logger.Warn("New value is the same as the current one")
 				return nil
 			}
-			if util.Contains(BoolConfigFields, args[0]) {
+			if util.Contains(boolConfigFields, args[0]) {
 				newValue, err := strconv.ParseBool(args[1])
 				if err != nil {
 					return argsError(fmt.Errorf("the %s value must be either true or false", args[0]))
@@ -216,6 +193,31 @@ func newCmdConfigSet() *cobra.Command {
 		},
 	}
 	return cmd
+}
+
+func checkSetArgs(cmd *cobra.Command, args []string) error {
+	if len(args) != 2 {
+		return argsError(errors.New("requires both a config key and a new value"))
+	}
+
+	if !util.Contains(viper.AllKeys(), args[0]) {
+		return argsError(fmt.Errorf("invalid config key %s", args[0]))
+	}
+
+	if args[0] == appconfig.LoggingLevel {
+		if !util.Contains(loggingLevels, args[1]) {
+			return argsError(fmt.Errorf("logging level must be one of %v", loggingLevels))
+		}
+	} else if args[0] == appconfig.LoggingFormat {
+		if !util.Contains(loggingFormats, args[1]) {
+			return argsError(fmt.Errorf("logging format must be one of %v", loggingFormats))
+		}
+	} else if util.Contains(boolConfigFields, args[0]) {
+		if _, err := strconv.ParseBool(args[1]); err != nil {
+			return argsError(fmt.Errorf("the %s value must be either true or false", args[0]))
+		}
+	}
+	return nil
 }
 
 func argsError(err error) error {

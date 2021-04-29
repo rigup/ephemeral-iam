@@ -30,6 +30,7 @@ import (
 	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 )
 
+// The configuration key names.
 const (
 	AuthProxyAddress       = "authproxy.proxyaddress"
 	AuthProxyPort          = "authproxy.proxyport"
@@ -57,6 +58,7 @@ var (
 	}
 )
 
+// InitConfig performs the initiatization of the users configuration file.
 func InitConfig() error {
 	viper.SetConfigName("config")
 	viper.AddConfigPath(GetConfigDir())
