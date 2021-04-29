@@ -1,3 +1,17 @@
+// Copyright 2021 Workrise Technologies Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package gcpclient
 
 import (
@@ -178,7 +192,7 @@ func getGcloudConfig() (configErr error) {
 	return configErr
 }
 
-// ConfigureGcloudProxy configures the current gcloud configuration to use the auth proxy
+// ConfigureGcloudProxy configures the current gcloud configuration to use the auth proxy.
 func ConfigureGcloudProxy(project string) error {
 	if err := getGcloudConfig(); err != nil {
 		return err
@@ -188,7 +202,7 @@ func ConfigureGcloudProxy(project string) error {
 	gcloudConfig.Section("proxy").Key("port").SetValue(viper.GetString("authproxy.proxyport"))
 	gcloudConfig.Section("proxy").Key("type").SetValue("http")
 	gcloudConfig.Section("core").Key("custom_ca_certs_file").SetValue(viper.GetString("authproxy.certfile"))
-	// If the user specified a project flag, set it in the gcloud config
+	// If the user specified a project flag, set it in the gcloud config.
 	if project != "" {
 		gcloudConfig.Section("core").Key("project").SetValue(project)
 	}
@@ -202,7 +216,7 @@ func ConfigureGcloudProxy(project string) error {
 	return nil
 }
 
-// UnsetGcloudProxy restores the auth proxy changes made to the gcloud config
+// UnsetGcloudProxy restores the auth proxy changes made to the gcloud config.
 func UnsetGcloudProxy() error {
 	if err := getGcloudConfig(); err != nil {
 		return err
@@ -224,12 +238,13 @@ func UnsetGcloudProxy() error {
 }
 
 // CheckActiveAccountSet ensures that the current gcloud config has an active account value
-// and if an account is set, it returns the value
+// and if an account is set, it returns the value.
 func CheckActiveAccountSet() (string, error) {
 	if err := getGcloudConfig(); err != nil {
 		return "", err
 	}
-	if acct := gcloudConfig.Section("core").Key("account").String(); acct == "" {
+	acct := gcloudConfig.Section("core").Key("account").String()
+	if acct == "" {
 		err := fmt.Errorf(dedent.Dedent(`no active account set for gcloud. please run:
 		
 		$ gcloud auth login
@@ -244,12 +259,11 @@ func CheckActiveAccountSet() (string, error) {
 			Msg: "Failed to save gcloud config to file",
 			Err: err,
 		}
-	} else {
-		return acct, nil
 	}
+	return acct, nil
 }
 
-// GetCurrentProject get the active project from the gcloud config
+// GetCurrentProject get the active project from the gcloud config.
 func GetCurrentProject() (string, error) {
 	if err := getGcloudConfig(); err != nil {
 		return "", err
@@ -257,7 +271,7 @@ func GetCurrentProject() (string, error) {
 	return gcloudConfig.Section("core").Key("project").String(), nil
 }
 
-// GetCurrentRegion get the active region from the gcloud config
+// GetCurrentRegion get the active region from the gcloud config.
 func GetCurrentRegion() (string, error) {
 	if err := getGcloudConfig(); err != nil {
 		return "", err
@@ -265,7 +279,7 @@ func GetCurrentRegion() (string, error) {
 	return gcloudConfig.Section("compute").Key("region").String(), nil
 }
 
-// GetCurrentZone get the active zone from the gcloud config
+// GetCurrentZone get the active zone from the gcloud config.
 func GetCurrentZone() (string, error) {
 	if err := getGcloudConfig(); err != nil {
 		return "", err

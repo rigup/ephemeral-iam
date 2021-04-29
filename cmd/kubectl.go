@@ -1,3 +1,17 @@
+// Copyright 2021 Workrise Technologies Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cmd
 
 import (
@@ -81,14 +95,18 @@ func runKubectlCommand() error {
 	}
 
 	util.Logger.Infof("Fetching access token for %s", kubectlCmdConfig.ServiceAccountEmail)
-	accessToken, err := gcpclient.GenerateTemporaryAccessToken(kubectlCmdConfig.ServiceAccountEmail, kubectlCmdConfig.Reason)
+	accessToken, err := gcpclient.GenerateTemporaryAccessToken(
+		kubectlCmdConfig.ServiceAccountEmail,
+		kubectlCmdConfig.Reason,
+	)
 	if err != nil {
 		return err
 	}
 
 	util.Logger.Infof("Running: [kubectl %s]\n\n", strings.Join(kubectlCmdArgs, " "))
 	kubectlAuth := append(kubectlCmdArgs, "--token", accessToken.GetAccessToken())
-	c := exec.Command(viper.GetString("binarypaths.kubectl"), kubectlAuth...)
+	kubectl := viper.GetString("binarypaths.kubectl")
+	c := exec.Command(kubectl, kubectlAuth...)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
 

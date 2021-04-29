@@ -1,3 +1,17 @@
+// Copyright 2021 Workrise Technologies Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package appconfig
 
 import (
@@ -6,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/manifoldco/promptui"
@@ -17,80 +32,24 @@ import (
 	"github.com/rigup/ephemeral-iam/internal/gcpclient"
 )
 
-func init() {
-	viper.SetConfigName("config")
-	viper.AddConfigPath(GetConfigDir())
-	viper.AutomaticEnv()
-	viper.SetConfigType("yml")
-
-	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			initConfig()
-		} else {
-			fmt.Fprintf(os.Stderr, "failed to read config file %s/config.yml: %v", GetConfigDir(), err)
-			os.Exit(1)
-		}
-	}
-
-	util.Logger = util.NewLogger()
-
-	allConfigKeys := viper.AllKeys()
-	if !util.Contains(allConfigKeys, "binarypaths.gcloud") || !util.Contains(allConfigKeys, "binarypaths.kubectl") || !util.Contains(allConfigKeys, "binarypaths.cloudSqlProxy") {
-		errorsutil.CheckError(checkDependencies())
-	}
-
+func Setup() error {
 	if err := checkValidADCExists(); err != nil {
-		util.Logger.WithError(err).Fatal("Setup error")
+		return err
 	}
-
 	if err := createLogDir(); err != nil {
-		util.Logger.WithError(err).Fatal("Setup error")
+		return err
 	}
 	if err := createTempKubeConfigDir(); err != nil {
-		util.Logger.WithError(err).Fatal("Setup error")
-	}
-}
-
-// checkDependencies checks if gcloud and kubectl are installed
-func checkDependencies() error {
-	gcloudPath, err := CheckCommandExists("gcloud")
-	if err != nil {
 		return err
 	}
-	kubectlPath, err := CheckCommandExists("kubectl")
-	if err != nil {
+	if err := createPluginDir(); err != nil {
 		return err
-	}
-	cloudSqlProxy, err := CheckCommandExists("cloud_sql_proxy")
-	if err != nil {
-		util.Logger.WithError(err).Debug("Failed to find cloud_sql_proxy")
-	}
-	viper.Set("binarypaths.gcloud", gcloudPath)
-	viper.Set("binarypaths.kubectl", kubectlPath)
-	viper.Set("binarypaths.cloudSqlProxy", cloudSqlProxy)
-	if err := viper.WriteConfig(); err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to write configuration file",
-			Err: err,
-		}
 	}
 	return nil
 }
 
-// CheckCommandExists tries to find the location of a given binary
-func CheckCommandExists(command string) (string, error) {
-	path, err := exec.LookPath(command)
-	if err != nil {
-		util.Logger.Debugf("Error while checking for %s binary", command)
-		return "", err
-	}
-	util.Logger.Debugf("Found binary %s at %s\n", command, path)
-	return path, nil
-}
-
 // checkValidADCExists checks that application default credentials exist, that
-// they are valid, and that they are for the correct user
+// they are valid, and that they are for the correct user.
 func checkValidADCExists() error {
 	ctx := context.Background()
 	oauth2Service, err := oauth2.NewService(ctx)
@@ -98,11 +57,12 @@ func checkValidADCExists() error {
 		if strings.Contains(err.Error(), "could not find default credentials") {
 			util.Logger.Warn("No Application Default Credentials were found, attempting to generate them\n")
 
-			cmd := exec.Command(viper.GetString("binarypaths.gcloud"), "auth", "application-default", "login", "--no-launch-browser")
+			gcloud := viper.GetString("binarypaths.gcloud")
+			cmd := exec.Command(gcloud, "auth", "application-default", "login", "--no-launch-browser")
 			cmd.Stderr = os.Stderr
 			cmd.Stdout = os.Stdout
 			cmd.Stdin = os.Stdin
-			if err := cmd.Run(); err != nil {
+			if err = cmd.Run(); err != nil {
 				return errorsutil.EiamError{
 					Log: util.Logger.WithError(err),
 					Msg: "Failed to create application default credentials",
@@ -135,7 +95,7 @@ func checkValidADCExists() error {
 }
 
 // checkADCIdentity checks the active account set in the users gcloud config
-// against the identity associated with the application default credentials
+// against the identity associated with the application default credentials.
 func checkADCIdentity(tokenEmail string) error {
 	account, err := gcpclient.CheckActiveAccountSet()
 	if err != nil {
@@ -144,7 +104,9 @@ func checkADCIdentity(tokenEmail string) error {
 
 	util.Logger.Debugf("OAuth 2.0 Token Email: %s", tokenEmail)
 	if account != tokenEmail {
-		util.Logger.Warnf("API calls made by eiam will not be authenticated as your default account:\n\tAccount Set:     %s\n\tDefault Account: %s\n\n", tokenEmail, account)
+		util.Logger.Warnf(`API calls made by eiam will not be authenticated as your default account:
+		  Account Set:     %s
+		  Default Account: %s`, tokenEmail, account)
 
 		prompt := promptui.Prompt{
 			Label:     fmt.Sprintf("Authenticate as %s", tokenEmail),
@@ -152,7 +114,7 @@ func checkADCIdentity(tokenEmail string) error {
 		}
 
 		if ans, err := prompt.Run(); err != nil {
-			if strings.ToLower(ans) == "y" {
+			if strings.EqualFold(ans, "y") {
 				fmt.Print("\n\n")
 				util.Logger.Info("Attempting to reconfigure eiam's authenticated account")
 				os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "")
@@ -161,19 +123,17 @@ func checkADCIdentity(tokenEmail string) error {
 				}
 				util.Logger.Infof("Success. You should now be authenticated as %s", account)
 			}
-		} else {
-			util.Logger.Error("prompt to select authenticated user failed")
 		}
 	}
 	return nil
 }
 
-// createLogDir creates the directory to store log files
+// createLogDir creates the directory to store log files.
 func createLogDir() error {
-	logDir := viper.GetString("authproxy.logdir")
+	logDir := viper.GetString(AuthProxyLogDir)
 	if _, err := os.Stat(logDir); os.IsNotExist(err) {
 		util.Logger.Debugf("Creating log directory: %s", logDir)
-		if err := os.MkdirAll(viper.GetString("authproxy.logdir"), 0o755); err != nil {
+		if err = os.MkdirAll(viper.GetString(AuthProxyLogDir), 0o755); err != nil {
 			return errorsutil.EiamError{
 				Log: util.Logger.WithError(err),
 				Msg: fmt.Sprintf("Failed to create proxy log directory %s", logDir),
@@ -191,24 +151,45 @@ func createLogDir() error {
 }
 
 // createTempKubeConfigDir creates the directory to hold the temporary kubeconfigs
-// used in the assume-privileges command
+// used in the assume-privileges command.
 func createTempKubeConfigDir() error {
 	configDir := GetConfigDir()
 	kubeConfigDir := path.Join(configDir, "tmp_kube_config")
 	_, err := os.Stat(kubeConfigDir)
 	if os.IsNotExist(err) {
-		if err := os.MkdirAll(kubeConfigDir, 0o755); err != nil {
+		if err = os.MkdirAll(kubeConfigDir, 0o755); err != nil {
 			return fmt.Errorf("failed to create temp kubeconfig directory: %v", err)
 		}
 	} else if err != nil {
 		return fmt.Errorf("failed to find temp kubeconfig dir %s: %v", kubeConfigDir, err)
 	}
-	// Clear any leftover kubeconfigs from improper shutdowns
+	// Clear any leftover kubeconfigs from improper shutdowns.
 	if err := os.RemoveAll(kubeConfigDir); err != nil {
 		return fmt.Errorf("failed to clear old kubeconfigs: %v", err)
 	}
 	if err := os.MkdirAll(kubeConfigDir, 0o755); err != nil {
 		return fmt.Errorf("failed to recreate temp kubeconfig directory: %v", err)
+	}
+	return nil
+}
+
+func createPluginDir() error {
+	pluginDir := filepath.Join(GetConfigDir(), "plugins")
+	if _, err := os.Stat(pluginDir); os.IsNotExist(err) {
+		util.Logger.Debugf("Creating plugin directory: %s", pluginDir)
+		if err = os.MkdirAll(pluginDir, 0o755); err != nil {
+			return errorsutil.EiamError{
+				Log: util.Logger.WithError(err),
+				Msg: fmt.Sprintf("failed to create plugin directory: %s", pluginDir),
+				Err: err,
+			}
+		}
+	} else if err != nil {
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: fmt.Sprintf("failed to find plugin directory: %s", pluginDir),
+			Err: err,
+		}
 	}
 	return nil
 }

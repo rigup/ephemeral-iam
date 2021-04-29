@@ -1,3 +1,17 @@
+// Copyright 2021 Workrise Technologies Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package gcpclient
 
 import (
@@ -50,7 +64,6 @@ func QueryTestablePermissionsOnResource(resource string) ([]string, error) {
 		}
 
 		for _, perm := range ps.Permissions {
-			// util.Logger.Debugf("Adding testable permission: %s", perm.Name)
 			permsToTest = append(permsToTest, perm.Name)
 		}
 
@@ -64,14 +77,28 @@ func QueryTestablePermissionsOnResource(resource string) ([]string, error) {
 
 // QueryComputeInstancePermissions gets the authenticated members permissions on a compute instance
 // Modified from https://github.com/salrashid123/gcp_iam/blob/main/query/main.go#L351-L371
-func QueryComputeInstancePermissions(permsToTest []string, project, zone, instance, serviceAccountEmail, reason string) ([]string, error) {
+func QueryComputeInstancePermissions(
+	permsToTest []string,
+	project,
+	zone,
+	instance,
+	svcAcct,
+	reason string,
+) ([]string, error) {
 	var computeService *compute.Service
-	if serviceAccountEmail != "" {
-		clientOptions := []option.ClientOption{option.ImpersonateCredentials(serviceAccountEmail), option.WithRequestReason(reason)}
+	if svcAcct != "" {
+		clientOptions := []option.ClientOption{
+			option.ImpersonateCredentials(svcAcct),
+			option.WithRequestReason(reason),
+		}
 		if svc, err := compute.NewService(ctx, clientOptions...); err == nil {
 			computeService = svc
 		} else {
-			return []string{}, &errorsutil.SDKClientCreateError{Err: err, ResourceType: "Compute", ServiceAccount: serviceAccountEmail}
+			return []string{}, &errorsutil.SDKClientCreateError{
+				Err:            err,
+				ResourceType:   "Compute",
+				ServiceAccount: svcAcct,
+			}
 		}
 	} else {
 		if svc, err := compute.NewService(ctx); err == nil {
@@ -93,7 +120,12 @@ func QueryComputeInstancePermissions(permsToTest []string, project, zone, instan
 	if err != nil {
 		return []string{}, errorsutil.EiamError{
 			Log: util.Logger.WithError(err),
-			Msg: fmt.Sprintf("Failed to query permissions on resource projects/%s/zones/%s/instances/%s", project, zone, instance),
+			Msg: fmt.Sprintf(
+				"Failed to query permissions on resource projects/%s/zones/%s/instances/%s",
+				project,
+				zone,
+				instance,
+			),
 			Err: err,
 		}
 	}
@@ -103,14 +135,21 @@ func QueryComputeInstancePermissions(permsToTest []string, project, zone, instan
 
 // QueryProjectPermissions gets the authenticated members permissions on a project
 // Modified from https://github.com/salrashid123/gcp_iam/blob/main/query/main.go#L534-L575
-func QueryProjectPermissions(permsToTest []string, project, serviceAccountEmail, reason string) (perms []string, err error) {
+func QueryProjectPermissions(permsToTest []string, project, svcAcct, reason string) (perms []string, err error) {
 	var crmService *crm.Service
-	if serviceAccountEmail != "" {
-		clientOptions := []option.ClientOption{option.ImpersonateCredentials(serviceAccountEmail), option.WithRequestReason(reason)}
+	if svcAcct != "" {
+		clientOptions := []option.ClientOption{
+			option.ImpersonateCredentials(svcAcct),
+			option.WithRequestReason(reason),
+		}
 		if svc, err := crm.NewService(ctx, clientOptions...); err == nil {
 			crmService = svc
 		} else {
-			return []string{}, &errorsutil.SDKClientCreateError{Err: err, ResourceType: "Cloud Resource Manager", ServiceAccount: serviceAccountEmail}
+			return []string{}, &errorsutil.SDKClientCreateError{
+				Err:            err,
+				ResourceType:   "Cloud Resource Manager",
+				ServiceAccount: svcAcct,
+			}
 		}
 	} else {
 		if svc, err := crm.NewService(ctx); err == nil {
@@ -121,9 +160,9 @@ func QueryProjectPermissions(permsToTest []string, project, serviceAccountEmail,
 	}
 	crmProjService := crm.NewProjectsService(crmService)
 
-	// TestIamPermissions accepts a max of 100 permissions at a time so we split them into chunks
+	// TestIamPermissions accepts a max of 100 permissions at a time so we split them into chunks.
 	var chunked [][]string
-	numOfChunks := int(len(permsToTest) / 100)
+	numOfChunks := len(permsToTest) / 100
 	for i := 0; i < numOfChunks; i++ {
 		start := i * 100
 		end := start + 100
@@ -137,7 +176,6 @@ func QueryProjectPermissions(permsToTest []string, project, serviceAccountEmail,
 	var userPermissions []string
 	for _, permSet := range chunked {
 		go func(permissions []string, granted *[]string) {
-			// util.Logger.Debugf("Testing permissions %v", permissions)
 			resp, err := crmProjService.TestIamPermissions(project, &crm.TestIamPermissionsRequest{
 				Permissions: permissions,
 			}).Do()
@@ -149,21 +187,28 @@ func QueryProjectPermissions(permsToTest []string, project, serviceAccountEmail,
 			wg.Done()
 		}(permSet, &userPermissions)
 	}
-	// Wait until each of the go routines have finished before returning
+	// Wait until each of the go routines have finished before returning.
 	wg.Wait()
 
 	return userPermissions, nil
 }
 
-// QueryPubSubPermissions gets the authenticated members permissions on a PubSub topic
-func QueryPubSubPermissions(permsToTest []string, project, topic, serviceAccountEmail, reason string) ([]string, error) {
+// QueryPubSubPermissions gets the authenticated members permissions on a PubSub topic.
+func QueryPubSubPermissions(permsToTest []string, project, topic, svcAcct, reason string) ([]string, error) {
 	var pubsubService *pubsub.Service
-	if serviceAccountEmail != "" {
-		clientOptions := []option.ClientOption{option.ImpersonateCredentials(serviceAccountEmail), option.WithRequestReason(reason)}
+	if svcAcct != "" {
+		clientOptions := []option.ClientOption{
+			option.ImpersonateCredentials(svcAcct),
+			option.WithRequestReason(reason),
+		}
 		if svc, err := pubsub.NewService(ctx, clientOptions...); err == nil {
 			pubsubService = svc
 		} else {
-			return []string{}, &errorsutil.SDKClientCreateError{Err: err, ResourceType: "PubSub", ServiceAccount: serviceAccountEmail}
+			return []string{}, &errorsutil.SDKClientCreateError{
+				Err:            err,
+				ResourceType:   "PubSub",
+				ServiceAccount: svcAcct,
+			}
 		}
 	} else {
 		if svc, err := pubsub.NewService(ctx); err == nil {
@@ -212,14 +257,21 @@ func QueryServiceAccountPermissions(permsToTest []string, project, email string)
 
 // QueryStorageBucketPermissions gets the authenticated members permissions on a storage bucket
 // Modified from https://github.com/salrashid123/gcp_iam/blob/main/query/main.go#L313-L338
-func QueryStorageBucketPermissions(permsToTest []string, bucket, serviceAccountEmail, reason string) ([]string, error) {
+func QueryStorageBucketPermissions(permsToTest []string, bucket, svcAcct, reason string) ([]string, error) {
 	var storageService *storage.Service
-	if serviceAccountEmail != "" {
-		clientOptions := []option.ClientOption{option.ImpersonateCredentials(serviceAccountEmail), option.WithRequestReason(reason)}
+	if svcAcct != "" {
+		clientOptions := []option.ClientOption{
+			option.ImpersonateCredentials(svcAcct),
+			option.WithRequestReason(reason),
+		}
 		if svc, err := storage.NewService(ctx, clientOptions...); err == nil {
 			storageService = svc
 		} else {
-			return []string{}, &errorsutil.SDKClientCreateError{Err: err, ResourceType: "Cloud Storage", ServiceAccount: serviceAccountEmail}
+			return []string{}, &errorsutil.SDKClientCreateError{
+				Err:            err,
+				ResourceType:   "Cloud Storage",
+				ServiceAccount: svcAcct,
+			}
 		}
 	} else {
 		if svc, err := storage.NewService(ctx); err == nil {

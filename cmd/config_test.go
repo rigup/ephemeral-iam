@@ -1,3 +1,17 @@
+// Copyright 2021 Workrise Technologies Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cmd
 
 import (
@@ -13,7 +27,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/rigup/ephemeral-iam/internal/appconfig"
 	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 )
 
 var (
@@ -25,6 +41,8 @@ var (
 )
 
 func init() {
+	errorsutil.CheckError(appconfig.InitConfig())
+	errorsutil.CheckError(appconfig.Setup())
 	allSettings = make(map[string]interface{}, len(viper.AllKeys()))
 	for _, configKey := range viper.AllKeys() {
 		allSettings[configKey] = viper.Get(configKey)
@@ -134,7 +152,7 @@ func setLoggingLevel(t *testing.T, currLogLevel, newLogLevel string) {
 }
 
 func TestConfigSetCommandSetLoggingLevel(t *testing.T) {
-	initialLogLevel := viper.GetString("logging.level")
+	initialLogLevel := viper.GetString(appconfig.LoggingLevel)
 
 	// Try setting the log level to an invalid value
 	output, err := executeCommand(configSetCommand, "logging.level", "invalid")
@@ -144,43 +162,43 @@ func TestConfigSetCommandSetLoggingLevel(t *testing.T) {
 
 	currLogLevel := initialLogLevel
 	setLoggingLevel(t, currLogLevel, "trace")
-	if logLevel := viper.GetString("logging.level"); logLevel != "trace" {
+	if logLevel := viper.GetString(appconfig.LoggingLevel); logLevel != "trace" {
 		t.Error("Unexpected failure: The `eiam config set logging.level trace` command did not properly update the config")
 	}
 	currLogLevel = "trace"
 
 	setLoggingLevel(t, currLogLevel, "debug")
-	if logLevel := viper.GetString("logging.level"); logLevel != "debug" {
+	if logLevel := viper.GetString(appconfig.LoggingLevel); logLevel != "debug" {
 		t.Error("Unexpected failure: The `eiam config set logging.level debug` command did not properly update the config")
 	}
 	currLogLevel = "debug"
 
 	setLoggingLevel(t, currLogLevel, "info")
-	if logLevel := viper.GetString("logging.level"); logLevel != "info" {
+	if logLevel := viper.GetString(appconfig.LoggingLevel); logLevel != "info" {
 		t.Error("Unexpected failure: The `eiam config set logging.level info` command did not properly update the config")
 	}
 	currLogLevel = "info"
 
 	setLoggingLevel(t, currLogLevel, "warn")
-	if logLevel := viper.GetString("logging.level"); logLevel != "warn" {
+	if logLevel := viper.GetString(appconfig.LoggingLevel); logLevel != "warn" {
 		t.Error("Unexpected failure: The `eiam config set logging.level warn` command did not properly update the config")
 	}
 	currLogLevel = "warn"
 
 	setLoggingLevel(t, currLogLevel, "error")
-	if logLevel := viper.GetString("logging.level"); logLevel != "error" {
+	if logLevel := viper.GetString(appconfig.LoggingLevel); logLevel != "error" {
 		t.Error("Unexpected failure: The `eiam config set logging.level error` command did not properly update the config")
 	}
 	currLogLevel = "error"
 
 	setLoggingLevel(t, currLogLevel, "fatal")
-	if logLevel := viper.GetString("logging.level"); logLevel != "fatal" {
+	if logLevel := viper.GetString(appconfig.LoggingLevel); logLevel != "fatal" {
 		t.Error("Unexpected failure: The `eiam config set logging.level fatal` command did not properly update the config")
 	}
 	currLogLevel = "fatal"
 
 	setLoggingLevel(t, currLogLevel, "panic")
-	if logLevel := viper.GetString("logging.level"); logLevel != "panic" {
+	if logLevel := viper.GetString(appconfig.LoggingLevel); logLevel != "panic" {
 		t.Error("Unexpected failure: The `eiam config set logging.level panic` command did not properly update the config")
 	}
 	currLogLevel = "panic"
@@ -189,7 +207,7 @@ func TestConfigSetCommandSetLoggingLevel(t *testing.T) {
 }
 
 func TestConfigSetCommandSetLoggingFormat(t *testing.T) {
-	initialLogFormat := viper.GetString("logging.format")
+	initialLogFormat := viper.GetString(appconfig.LoggingFormat)
 
 	output, err := executeCommand(configSetCommand, "logging.format", "invalid")
 	if err == nil {
@@ -207,7 +225,7 @@ func TestConfigSetCommandSetLoggingFormat(t *testing.T) {
 	if !strings.Contains(output, expectedOutput) {
 		t.Errorf("unexpected output:\nEXPECTED TO FIND: level=info msg=\"%s\"\nACTUAL: %s", expectedOutput, output)
 	}
-	if logFormat := viper.GetString("logging.format"); logFormat != "text" {
+	if logFormat := viper.GetString(appconfig.LoggingFormat); logFormat != "text" {
 		t.Error("Unexpected failure: The `eiam config set logging.format text` command did not properly update the config")
 	}
 
@@ -219,7 +237,7 @@ func TestConfigSetCommandSetLoggingFormat(t *testing.T) {
 	if !strings.Contains(output, expectedOutput) {
 		t.Errorf("unexpected output:\nEXPECTED TO FIND: level=info msg=\"%s\"\nACTUAL: %s", expectedOutput, output)
 	}
-	if logFormat := viper.GetString("logging.format"); logFormat != "json" {
+	if logFormat := viper.GetString(appconfig.LoggingFormat); logFormat != "json" {
 		t.Error("Unexpected failure: The `eiam config set logging.format json` command did not properly update the config")
 	}
 

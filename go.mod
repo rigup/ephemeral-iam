@@ -12,7 +12,6 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-github/v33 v33.0.0
 	github.com/google/uuid v1.2.0
-	github.com/kirsle/configdir v0.0.0-20170128060238-e45d2f54772f
 	github.com/lithammer/dedent v1.1.0
 	github.com/manifoldco/promptui v0.8.0
 	github.com/mitchellh/go-wordwrap v1.0.1
@@ -26,6 +25,7 @@ require (
 	google.golang.org/api v0.45.0
 	google.golang.org/genproto v0.0.0-20210427215850-f767ed18ee4d
 	google.golang.org/grpc v1.37.0
+	google.golang.org/protobuf v1.26.0
 	gopkg.in/ini.v1 v1.62.0
 	k8s.io/apimachinery v0.21.0
 	k8s.io/client-go v0.21.0

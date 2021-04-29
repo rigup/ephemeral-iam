@@ -12,23 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+// +build !darwin, !linux, !amd64
 
-import (
-	"github.com/rigup/ephemeral-iam/cmd"
-	"github.com/rigup/ephemeral-iam/internal/appconfig"
-	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
+const (
+	FormattedOS = ""
 )
 
-func main() {
-	if appconfig.Version != "v0.0.0" {
-		appconfig.CheckForNewRelease()
-	}
-
-	errorsutil.CheckError(appconfig.InitConfig())
-	errorsutil.CheckError(appconfig.Setup())
-
-	rootCmd, err := cmd.NewEphemeralIamCommand()
-	errorsutil.CheckError(err)
-	errorsutil.CheckError(rootCmd.Execute())
-}
+var configDir = ""

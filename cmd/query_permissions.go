@@ -1,3 +1,17 @@
+// Copyright 2021 Workrise Technologies Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cmd
 
 import (
@@ -20,7 +34,7 @@ import (
 	"github.com/rigup/ephemeral-iam/pkg/options"
 )
 
-// Resource string templates
+// Resource string templates.
 var (
 	computeInstanceRes = "//compute.googleapis.com/projects/%s/zones/%s/instances/%s"
 	projectsRes        = "//cloudresourcemanager.googleapis.com/projects/%s"
@@ -127,7 +141,7 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 			if err != nil {
 				return errorsutil.EiamError{
 					Log: util.Logger.WithError(err),
-					Msg: fmt.Sprintf("gcloud is configured to use %s as the default zone. If this is not correct, please provide the zone using the `--zone` flag", queryPermsCmdConfig.Zone),
+					Msg: fmt.Sprintf("gcloud is configured to use %s as the default zone", queryPermsCmdConfig.Zone),
 					Err: err,
 				}
 			}
@@ -142,15 +156,14 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if svcAcct := queryPermsCmdConfig.ServiceAccountEmail; svcAcct != "" {
-				return printPermissions(util.Uniq(testablePerms), userPerms, svcAcct)
-			} else {
-				userAcct, err := gcpclient.CheckActiveAccountSet()
-				if err != nil {
-					return err
-				}
-				return printPermissions(util.Uniq(testablePerms), userPerms, userAcct)
+			if queryPermsCmdConfig.ServiceAccountEmail != "" {
+				return printPermissions(util.Uniq(testablePerms), userPerms, queryPermsCmdConfig.ServiceAccountEmail)
 			}
+			userAcct, err := gcpclient.CheckActiveAccountSet()
+			if err != nil {
+				return err
+			}
+			return printPermissions(util.Uniq(testablePerms), userPerms, userAcct)
 		},
 	}
 
@@ -187,15 +200,14 @@ func newCmdQueryProjectPermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if svcAcct := queryPermsCmdConfig.ServiceAccountEmail; svcAcct != "" {
-				return printPermissions(util.Uniq(testablePerms), userPerms, svcAcct)
-			} else {
-				userAcct, err := gcpclient.CheckActiveAccountSet()
-				if err != nil {
-					return err
-				}
-				return printPermissions(util.Uniq(testablePerms), userPerms, userAcct)
+			if queryPermsCmdConfig.ServiceAccountEmail != "" {
+				return printPermissions(util.Uniq(testablePerms), userPerms, queryPermsCmdConfig.ServiceAccountEmail)
 			}
+			userAcct, err := gcpclient.CheckActiveAccountSet()
+			if err != nil {
+				return err
+			}
+			return printPermissions(util.Uniq(testablePerms), userPerms, userAcct)
 		},
 	}
 
@@ -237,15 +249,14 @@ func newCmdQueryPubSubPermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if svcAcct := queryPermsCmdConfig.ServiceAccountEmail; svcAcct != "" {
-				return printPermissions(util.Uniq(testablePerms), userPerms, svcAcct)
-			} else {
-				userAcct, err := gcpclient.CheckActiveAccountSet()
-				if err != nil {
-					return err
-				}
-				return printPermissions(util.Uniq(testablePerms), userPerms, userAcct)
+			if queryPermsCmdConfig.ServiceAccountEmail != "" {
+				return printPermissions(util.Uniq(testablePerms), userPerms, queryPermsCmdConfig.ServiceAccountEmail)
 			}
+			userAcct, err := gcpclient.CheckActiveAccountSet()
+			if err != nil {
+				return err
+			}
+			return printPermissions(util.Uniq(testablePerms), userPerms, userAcct)
 		},
 	}
 
@@ -268,7 +279,11 @@ func newCmdQueryServiceAccountPermissions() *cobra.Command {
 		`),
 		PreRun: func(cmd *cobra.Command, args []string) {
 			cmd.Flags().VisitAll(options.CheckRequired)
-			resourceString = fmt.Sprintf(serviceAccountsRes, queryPermsCmdConfig.Project, queryPermsCmdConfig.ServiceAccountEmail)
+			resourceString = fmt.Sprintf(
+				serviceAccountsRes,
+				queryPermsCmdConfig.Project,
+				queryPermsCmdConfig.ServiceAccountEmail,
+			)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			util.Logger.Infof("Querying permissions granted on %s", resourceString)
@@ -284,15 +299,14 @@ func newCmdQueryServiceAccountPermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if svcAcct := queryPermsCmdConfig.ServiceAccountEmail; svcAcct != "" {
-				return printPermissions(util.Uniq(testablePerms), userPerms, svcAcct)
-			} else {
-				userAcct, err := gcpclient.CheckActiveAccountSet()
-				if err != nil {
-					return err
-				}
-				return printPermissions(util.Uniq(testablePerms), userPerms, userAcct)
+			if queryPermsCmdConfig.ServiceAccountEmail != "" {
+				return printPermissions(util.Uniq(testablePerms), userPerms, queryPermsCmdConfig.ServiceAccountEmail)
 			}
+			userAcct, err := gcpclient.CheckActiveAccountSet()
+			if err != nil {
+				return err
+			}
+			return printPermissions(util.Uniq(testablePerms), userPerms, userAcct)
 		},
 	}
 
@@ -332,15 +346,14 @@ func newCmdQueryStorageBucketPermissions() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if svcAcct := queryPermsCmdConfig.ServiceAccountEmail; svcAcct != "" {
-				return printPermissions(util.Uniq(testablePerms), userPerms, svcAcct)
-			} else {
-				userAcct, err := gcpclient.CheckActiveAccountSet()
-				if err != nil {
-					return err
-				}
-				return printPermissions(util.Uniq(testablePerms), userPerms, userAcct)
+			if queryPermsCmdConfig.ServiceAccountEmail != "" {
+				return printPermissions(util.Uniq(testablePerms), userPerms, queryPermsCmdConfig.ServiceAccountEmail)
 			}
+			userAcct, err := gcpclient.CheckActiveAccountSet()
+			if err != nil {
+				return err
+			}
+			return printPermissions(util.Uniq(testablePerms), userPerms, userAcct)
 		},
 	}
 
@@ -354,13 +367,13 @@ func newCmdQueryStorageBucketPermissions() *cobra.Command {
 func printPermissions(fullPerms, userPerms []string, acctEmail string) error {
 	if len(fullPerms) > 100 {
 		// If the list of permissions is really long and the user has the less command
-		// available, pipe the command to less to paginate the output
+		// available, pipe the command to less to paginate the output.
 		lessPath, err := appconfig.CheckCommandExists("less")
 		if err != nil {
 			printPermissionsList(os.Stderr, fullPerms, userPerms, acctEmail, true)
 		}
 
-		// Create command for less with a stdin pipe that we can write to
+		// Create command for less with a stdin pipe that we can write to.
 		cmd := exec.Command(lessPath)
 		cmd.Stdout = os.Stdout
 		stdin, err := cmd.StdinPipe()
@@ -372,7 +385,7 @@ func printPermissions(fullPerms, userPerms []string, acctEmail string) error {
 			}
 		}
 
-		// Write the output in a goroutine so less can be ready to read it
+		// Write the output in a goroutine so less can be ready to read it.
 		go func() {
 			defer stdin.Close()
 			printPermissionsList(stdin, fullPerms, userPerms, acctEmail, false)
@@ -386,9 +399,9 @@ func printPermissions(fullPerms, userPerms []string, acctEmail string) error {
 	return nil
 }
 
-func printPermissionsList(out io.Writer, fullPerms, userPerms []string, acctEmail string, color bool) {
+func printPermissionsList(out io.Writer, fullPerms, userPerms []string, acctEmail string, colorOutput bool) {
 	yes, no := "✔", "✖"
-	if color {
+	if colorOutput {
 		yes, no = green(yes), red(no)
 	}
 

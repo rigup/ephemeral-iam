@@ -1,3 +1,17 @@
+// Copyright 2021 Workrise Technologies Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package proxy
 
 import (
@@ -24,7 +38,7 @@ import (
 	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 )
 
-// GenerateCerts creates the self signed TLS certificate for the HTTPS proxy
+// GenerateCerts creates the self signed TLS certificate for the HTTPS proxy.
 func GenerateCerts() error {
 	priv, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
@@ -75,14 +89,16 @@ func GenerateCerts() error {
 		}
 	}
 
-	if err := writeToFile(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes}, "server.pem", 0o640); err != nil {
+	pemBlock := &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}
+	if err := writeToFile(pemBlock, "server.pem", 0o640); err != nil {
 		return errorsutil.EiamError{
 			Log: util.Logger.WithError(err),
 			Msg: "Failed to write server.pem file",
 			Err: err,
 		}
 	}
-	if err := writeToFile(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}, "server.key", 0o400); err != nil {
+	pemBlock = &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}
+	if err := writeToFile(pemBlock, "server.key", 0o400); err != nil {
 		return errorsutil.EiamError{
 			Log: util.Logger.WithError(err),
 			Msg: "Failed to write server.key file",
@@ -105,14 +121,14 @@ func publicKey(priv interface{}) interface{} {
 }
 
 func writeToFile(data *pem.Block, filename string, perm os.FileMode) error {
-	filepath := filepath.Join(appconfig.GetConfigDir(), filename)
-	fd, err := os.Create(filepath)
+	fp := filepath.Join(appconfig.GetConfigDir(), filename)
+	fd, err := os.Create(fp)
 	if err != nil {
 		if os.IsPermission(err) {
-			if err := os.Remove(filepath); err != nil {
+			if err = os.Remove(fp); err != nil {
 				return errorsutil.EiamError{
 					Log: util.Logger.WithError(err),
-					Msg: fmt.Sprintf("Failed to update %s", filepath),
+					Msg: fmt.Sprintf("Failed to update %s", fp),
 					Err: err,
 				}
 			}
@@ -120,7 +136,7 @@ func writeToFile(data *pem.Block, filename string, perm os.FileMode) error {
 		}
 		return errorsutil.EiamError{
 			Log: util.Logger.WithError(err),
-			Msg: fmt.Sprintf("Failed to write file %s", filepath),
+			Msg: fmt.Sprintf("Failed to write file %s", fp),
 			Err: err,
 		}
 	}
@@ -135,10 +151,10 @@ func writeToFile(data *pem.Block, filename string, perm os.FileMode) error {
 		}
 	}
 
-	if err := os.Chmod(filepath, perm); err != nil {
+	if err := os.Chmod(fp, perm); err != nil {
 		return errorsutil.EiamError{
 			Log: util.Logger.WithError(err),
-			Msg: fmt.Sprintf("Failed to update the file permissions for %s", filepath),
+			Msg: fmt.Sprintf("Failed to update the file permissions for %s", fp),
 			Err: err,
 		}
 	}
@@ -146,18 +162,18 @@ func writeToFile(data *pem.Block, filename string, perm os.FileMode) error {
 }
 
 func checkProxyCertificate() error {
-	certFile := viper.GetString("authproxy.certfile")
-	keyFile := viper.GetString("authproxy.keyfile")
+	certFile := viper.GetString(appconfig.AuthProxyCertFile)
+	keyFile := viper.GetString(appconfig.AuthProxyKeyFile)
 	if certFile == "" || keyFile == "" {
 		if keyFile == "" {
 			util.Logger.Debug("Setting authproxy.keyfile")
-			viper.Set("authproxy.keyfile", filepath.Join(appconfig.GetConfigDir(), "server.key"))
-			keyFile = viper.GetString("authproxy.keyfile")
+			viper.Set(appconfig.AuthProxyKeyFile, filepath.Join(appconfig.GetConfigDir(), "server.key"))
+			keyFile = viper.GetString(appconfig.AuthProxyKeyFile)
 		}
 		if certFile == "" {
 			util.Logger.Debug("Setting authproxy.certfile")
-			viper.Set("authproxy.certfile", filepath.Join(appconfig.GetConfigDir(), "server.pem"))
-			certFile = viper.GetString("authproxy.certfile")
+			viper.Set(appconfig.AuthProxyCertFile, filepath.Join(appconfig.GetConfigDir(), "server.pem"))
+			certFile = viper.GetString(appconfig.AuthProxyCertFile)
 		}
 		if err := viper.WriteConfig(); err != nil {
 			return errorsutil.EiamError{
@@ -173,10 +189,10 @@ func checkProxyCertificate() error {
 	certExists := !os.IsNotExist(certErr)
 	keyExists := !os.IsNotExist(keyErr)
 
-	if certExists != keyExists { // Check if only one of either the key or the cert exist
+	if certExists != keyExists { // Check if only one of either the key or the cert exist.
 		util.Logger.Warn("Either the auth proxy cert or key is missing. Regenerating both")
 		return GenerateCerts()
-	} else if !certExists { // Check if neither files exist
+	} else if !certExists { // Check if neither files exist.
 		util.Logger.Debug("Generating proxy cert and key files")
 		return GenerateCerts()
 	}
@@ -190,9 +206,9 @@ func validateProxyCert(certFile string) (err error) {
 		return err
 	}
 
-	// Check if certificate version matches eiam version
+	// Check if certificate version matches eiam version.
 	certCN := cert.Subject.CommonName
-	commonNamePattern := regexp.MustCompile(`^gcloud proxy CA (v[\d]+\.[\d]+\.[\d]+)$`)
+	commonNamePattern := regexp.MustCompile(`^gcloud proxy CA (v\d+\.\d+\.\d+)$`)
 	if !commonNamePattern.MatchString(certCN) {
 		util.Logger.Warnf("Regenerating certs due to unrecognized CN field: %s", certCN)
 		return GenerateCerts()

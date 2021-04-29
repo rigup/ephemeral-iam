@@ -1,3 +1,17 @@
+// Copyright 2021 Workrise Technologies Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package appconfig
 
 import (
@@ -25,17 +39,12 @@ var (
 	repoOwner = "rigup"
 	repoName  = "ephemeral-iam"
 
-	// Version is the currently installed eiam client version.  This is populated by goreleaser when a new release is built
+	// Version is the currently installed eiam client version.
+	// This is populated by goreleaser when a new release is built.
 	Version = "v0.0.0"
 )
 
-func init() {
-	if Version != "v0.0.0" {
-		CheckForNewRelease()
-	}
-}
-
-// CheckForNewRelease checks to see if there is a new version of eiam available
+// CheckForNewRelease checks to see if there is a new version of eiam available.
 func CheckForNewRelease() {
 	githubClient := github.NewClient(nil)
 	releases, _, err := githubClient.Repositories.ListReleases(context.Background(), repoOwner, repoName, nil)
@@ -107,7 +116,15 @@ func installNewVersion(release *github.RepositoryRelease) {
 func downloadAndExtract(url string) error {
 	util.Logger.Infof("Downloading new version from %s", url)
 
-	resp, err := http.Get(url)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+	if err != nil {
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to create HTTP client",
+			Err: err,
+		}
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return errorsutil.EiamError{
 			Log: util.Logger.WithError(err),
@@ -134,26 +151,26 @@ func downloadAndExtract(url string) error {
 		header, err := tr.Next()
 
 		switch {
-		// if no more files are found return
+		// if no more files are found return.
 		case err == io.EOF:
 			return nil
-		// return any other error
+		// return any other error.
 		case err != nil:
 			return errorsutil.EiamError{
 				Log: util.Logger.WithError(err),
 				Msg: "Failed to extract release archive",
 				Err: err,
 			}
-		// if the header is nil, just skip it (not sure how this happens)
+		// if the header is nil, just skip it (not sure how this happens).
 		case header == nil:
 			continue
 		}
 
-		target := filepath.Join(os.TempDir(), header.Name)
+		target := filepath.Join(os.TempDir(), header.Name) //nolint:gosec  // This will always be the release archive
 
-		// check the file type
+		// check the file type.
 		switch header.Typeflag {
-		// if its a dir and it doesn't exist create it
+		// if its a dir and it doesn't exist create it.
 		case tar.TypeDir:
 			if _, err := os.Stat(target); err != nil {
 				if err := os.MkdirAll(target, 0o755); err != nil {
@@ -164,7 +181,7 @@ func downloadAndExtract(url string) error {
 					}
 				}
 			}
-		// if it's a file create it
+		// if it's a file create it.
 		case tar.TypeReg:
 			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
@@ -174,8 +191,8 @@ func downloadAndExtract(url string) error {
 					Err: err,
 				}
 			}
-			// copy over contents
-			if _, err := io.Copy(f, tr); err != nil {
+			// copy over contents.
+			if _, err := io.Copy(f, tr); err != nil { //nolint:gosec  // This will always be the release archive
 				return errorsutil.EiamError{
 					Log: util.Logger.WithError(err),
 					Msg: "Failed to copy file contents while extracting release archive",
