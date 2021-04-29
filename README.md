@@ -9,11 +9,11 @@
     <a href="https://github.com/rigup/ephemeral-iam/releases" alt="Latest Release">
       <img src="https://img.shields.io/github/v/release/rigup/ephemeral-iam" />
     </a>
-    <a href="go.mod" alt="Go Version">
-        <img src="https://img.shields.io/github/go-mod/go-version/rigup/ephemeral-iam" />
-    </a>
     <a href="https://github.com/rigup/ephemeral-iam/commits/main" alt="Commits since last release">
         <img src="https://img.shields.io/github/commits-since/rigup/ephemeral-iam/latest/main" />
+    </a>
+    <a href="go.mod" alt="Go Version">
+        <img src="https://img.shields.io/github/go-mod/go-version/rigup/ephemeral-iam" />
     </a>
     <a href="https://github.com/rigup/ephemeral-iam/blob/master/LICENSE" alt="License">
         <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" />
