@@ -15,13 +15,14 @@ builds:
     goos:
       - linux
       - darwin
+    goarch:
+      - amd64
     ldflags:
       - -s -w -X 'github.com/rigup/ephemeral-iam/internal/appconfig.Version=v{{.Version}}'
 archives:
   - replacements:
       darwin: Darwin_macOS
       linux: Linux
-      386: i386
       amd64: x86_64
 snapshot:
   name_template: "{{ .Tag }}-next"

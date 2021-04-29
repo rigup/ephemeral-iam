@@ -1,3 +1,17 @@
+// Copyright 2021 Workrise Technologies Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cmd
 
 import (
@@ -18,11 +32,13 @@ import (
 )
 
 var (
-	cloudSqlProxyCmdArgs   []string
-	cloudSqlProxyCmdConfig options.CmdConfig
+	cloudSQLProxyCmdArgs []string
+	cspCmdConfig         options.CmdConfig
+
+	cloudSQLProxyPath string
 )
 
-func newCmdCloudSqlProxy() *cobra.Command {
+func newCmdCloudSQLProxy() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cloud_sql_proxy [GCLOUD_ARGS]",
 		Short: "Run cloud_sql_proxy with the permissions of the specified service account",
@@ -36,7 +52,7 @@ func newCmdCloudSqlProxy() *cobra.Command {
 		Args:               cobra.ArbitraryArgs,
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if viper.GetString("binarypaths.cloudSqlProxy") == "" {
+			if cloudSQLProxyPath = viper.GetString("binarypaths.cloudsqlproxy"); cloudSQLProxyPath == "" {
 				err := errors.New(`"cloud_sql_proxy": executable file not found in $PATH`)
 				return errorsutil.EiamError{
 					Log: util.Logger.WithError(err),
@@ -47,38 +63,38 @@ func newCmdCloudSqlProxy() *cobra.Command {
 
 			cmd.Flags().VisitAll(options.CheckRequired)
 
-			cloudSqlProxyCmdArgs = util.ExtractUnknownArgs(cmd.Flags(), os.Args)
-			if err := util.FormatReason(&cloudSqlProxyCmdConfig.Reason); err != nil {
+			cloudSQLProxyCmdArgs = util.ExtractUnknownArgs(cmd.Flags(), os.Args)
+			if err := util.FormatReason(&cspCmdConfig.Reason); err != nil {
 				return err
 			}
 
 			if !options.YesOption {
 				util.Confirm(map[string]string{
-					"Project":         cloudSqlProxyCmdConfig.Project,
-					"Service Account": cloudSqlProxyCmdConfig.ServiceAccountEmail,
-					"Reason":          cloudSqlProxyCmdConfig.Reason,
-					"Command":         fmt.Sprintf("cloud_sql_proxy %s", strings.Join(cloudSqlProxyCmdArgs, " ")),
+					"Project":         cspCmdConfig.Project,
+					"Service Account": cspCmdConfig.ServiceAccountEmail,
+					"Reason":          cspCmdConfig.Reason,
+					"Command":         fmt.Sprintf("cloud_sql_proxy %s", strings.Join(cloudSQLProxyCmdArgs, " ")),
 				})
 			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runCloudSqlProxyCommand()
+			return runCloudSQLProxyCommand()
 		},
 	}
 
-	options.AddServiceAccountEmailFlag(cmd.Flags(), &cloudSqlProxyCmdConfig.ServiceAccountEmail, true)
-	options.AddReasonFlag(cmd.Flags(), &cloudSqlProxyCmdConfig.Reason, true)
-	options.AddProjectFlag(cmd.Flags(), &cloudSqlProxyCmdConfig.Project)
+	options.AddServiceAccountEmailFlag(cmd.Flags(), &cspCmdConfig.ServiceAccountEmail, true)
+	options.AddReasonFlag(cmd.Flags(), &cspCmdConfig.Reason, true)
+	options.AddProjectFlag(cmd.Flags(), &cspCmdConfig.Project)
 
 	return cmd
 }
 
-func runCloudSqlProxyCommand() error {
+func runCloudSQLProxyCommand() error {
 	hasAccess, err := gcpclient.CanImpersonate(
-		cloudSqlProxyCmdConfig.Project,
-		cloudSqlProxyCmdConfig.ServiceAccountEmail,
-		cloudSqlProxyCmdConfig.Reason,
+		cspCmdConfig.Project,
+		cspCmdConfig.ServiceAccountEmail,
+		cspCmdConfig.Reason,
 	)
 	if err != nil {
 		return err
@@ -86,20 +102,20 @@ func runCloudSqlProxyCommand() error {
 		util.Logger.Fatalln("You do not have access to impersonate this service account")
 	}
 
-	util.Logger.Infof("Fetching access token for %s", cloudSqlProxyCmdConfig.ServiceAccountEmail)
-	accessToken, err := gcpclient.GenerateTemporaryAccessToken(cloudSqlProxyCmdConfig.ServiceAccountEmail, cloudSqlProxyCmdConfig.Reason)
+	util.Logger.Infof("Fetching access token for %s", cspCmdConfig.ServiceAccountEmail)
+	accessToken, err := gcpclient.GenerateTemporaryAccessToken(cspCmdConfig.ServiceAccountEmail, cspCmdConfig.Reason)
 	if err != nil {
 		return err
 	}
 
-	util.Logger.Infof("Running: [cloud_sql_proxy %s]\n\n", strings.Join(cloudSqlProxyCmdArgs, " "))
-	cloudSqlProxyAuth := append(cloudSqlProxyCmdArgs, "-token", accessToken.GetAccessToken())
-	c := exec.Command(viper.GetString("binarypaths.cloudSqlProxy"), cloudSqlProxyAuth...)
+	util.Logger.Infof("Running: [cloud_sql_proxy %s]\n\n", strings.Join(cloudSQLProxyCmdArgs, " "))
+	cloudSQLProxyAuth := append(cloudSQLProxyCmdArgs, "-token", accessToken.GetAccessToken())
+	c := exec.Command(cloudSQLProxyPath, cloudSQLProxyAuth...)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
 
 	if err := c.Run(); err != nil {
-		fullCmd := fmt.Sprintf("cloud_sql_proxy %s", strings.Join(cloudSqlProxyCmdArgs, " "))
+		fullCmd := fmt.Sprintf("cloud_sql_proxy %s", strings.Join(cloudSQLProxyCmdArgs, " "))
 		return errorsutil.EiamError{
 			Log: util.Logger.WithError(err),
 			Msg: fmt.Sprintf("Failed to run command [%s]", fullCmd),

@@ -12,7 +12,7 @@ management tasks that require escalated permissions.
 > role and does not include any controls to prevent users from using these
 > privileges in contexts outside of ephemeral-iam in its current state.
 > For more information on ephemeral-iam's security considerations, refer to the
-> [security considerations document](docs/security_considerations.md).
+> [security considerations document](docs/security/security_considerations.md).
 
 ## FAQ
 #### Why not just use `--impersonate-service-account`?

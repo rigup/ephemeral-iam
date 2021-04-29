@@ -1,3 +1,17 @@
+// Copyright 2021 Workrise Technologies Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package eiamutil
 
 import (
@@ -14,7 +28,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// FormatReason formats the reason field for logging visibility
+// FormatReason formats the reason field for logging visibility.
 func FormatReason(reason *string) error {
 	randomID, err := sessionID()
 	if err != nil {
@@ -26,15 +40,15 @@ func FormatReason(reason *string) error {
 }
 
 func sessionID() (string, error) {
-	bytes := make([]byte, 8)
-	if _, err := rand.Read(bytes); err != nil {
+	idBytes := make([]byte, 8)
+	if _, err := rand.Read(idBytes); err != nil {
 		Logger.Error("Failed to generate session ID for audit logs")
 		return "", err
 	}
-	return hex.EncodeToString(bytes), nil
+	return hex.EncodeToString(idBytes), nil
 }
 
-// Confirm asks the user for confirmation before running a command
+// Confirm asks the user for confirmation before running a command.
 func Confirm(vals map[string]string) {
 	var buf bytes.Buffer
 	w := tabwriter.NewWriter(&buf, 0, 4, 4, '-', 0)
@@ -72,7 +86,7 @@ func Confirm(vals map[string]string) {
 // and https://github.com/spf13/cobra/issues/739
 // and https://github.com/spf13/pflag/pull/199
 func ExtractUnknownArgs(flags *pflag.FlagSet, args []string) []string {
-	// Ensure args were passed to command
+	// Ensure args were passed to command.
 	if len(args) < 3 {
 		return []string{}
 	}
@@ -85,15 +99,15 @@ func ExtractUnknownArgs(flags *pflag.FlagSet, args []string) []string {
 		var currFlag *pflag.Flag
 		if currArg[0] == '-' && len(currArg) > 1 {
 			if currArg[1] == '-' {
-				// Arg starts with two dashes, search for full flag names
+				// Arg starts with two dashes, search for full flag names.
 				currFlag = flags.Lookup(strings.SplitN(currArg[2:], "=", 2)[0])
 			} else {
-				// Arg starts with single dash, look for single char shorthand flags
+				// Arg starts with single dash, look for single char shorthand flags.
 				currFlag = flags.ShorthandLookup(string(currArg[1]))
 			}
 		}
 
-		// If the current flag is known and it accepts an argument, skip the next loop
+		// If the current flag is known and it accepts an argument, skip the next loop.
 		if currFlag != nil {
 			if currFlag.NoOptDefVal == "" {
 				if i+1 < len(trimmed) && currFlag.Value.String() == trimmed[i+1] {

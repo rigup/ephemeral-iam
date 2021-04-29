@@ -1,3 +1,17 @@
+// Copyright 2021 Workrise Technologies Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package proxy
 
 import (
@@ -39,7 +53,7 @@ func setCa(caCertFile, caKeyFile string) error {
 		}
 	}
 
-	goproxyCa, err := tls.X509KeyPair(caCert, caKey)
+	ca, err := tls.X509KeyPair(caCert, caKey)
 	if err != nil {
 		return errorsutil.EiamError{
 			Log: util.Logger.WithError(err),
@@ -48,7 +62,7 @@ func setCa(caCertFile, caKeyFile string) error {
 		}
 	}
 
-	if goproxyCa.Leaf, err = x509.ParseCertificate(goproxyCa.Certificate[0]); err != nil {
+	if ca.Leaf, err = x509.ParseCertificate(ca.Certificate[0]); err != nil {
 		return errorsutil.EiamError{
 			Log: util.Logger.WithError(err),
 			Msg: "Failed to parse x509 certificate",
@@ -56,11 +70,11 @@ func setCa(caCertFile, caKeyFile string) error {
 		}
 	}
 
-	goproxy.GoproxyCa = goproxyCa
-	goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: tlsConfigFromCA(&goproxyCa)}
-	goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: tlsConfigFromCA(&goproxyCa)}
-	goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: tlsConfigFromCA(&goproxyCa)}
-	goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: tlsConfigFromCA(&goproxyCa)}
+	goproxy.GoproxyCa = ca
+	goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: tlsConfigFromCA(&ca)}
+	goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: tlsConfigFromCA(&ca)}
+	goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: tlsConfigFromCA(&ca)}
+	goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: tlsConfigFromCA(&ca)}
 	return nil
 }
 
@@ -79,7 +93,7 @@ func tlsConfigFromCA(ca *tls.Certificate) func(host string, ctx *goproxy.ProxyCt
 
 		cert := getCachedCert(hostname, port)
 		if cert == nil {
-			cert, err = signHost(ca, hostname, port)
+			cert, err = signHost(ca, hostname)
 			if err != nil {
 				return nil, err
 			}
@@ -88,6 +102,7 @@ func tlsConfigFromCA(ca *tls.Certificate) func(host string, ctx *goproxy.ProxyCt
 
 		config := tls.Config{
 			Certificates: []tls.Certificate{*cert},
+			MinVersion:   tls.VersionTLS12,
 		}
 
 		return &config, nil
@@ -95,7 +110,7 @@ func tlsConfigFromCA(ca *tls.Certificate) func(host string, ctx *goproxy.ProxyCt
 }
 
 // See https://github.com/rhaidiz/broxy/blob/master/core/cert.go
-func signHost(ca *tls.Certificate, host string, port int) (cert *tls.Certificate, err error) {
+func signHost(ca *tls.Certificate, host string) (cert *tls.Certificate, err error) {
 	var x509ca *x509.Certificate
 	var template x509.Certificate
 
@@ -104,7 +119,7 @@ func signHost(ca *tls.Certificate, host string, port int) (cert *tls.Certificate
 	}
 
 	notBefore := time.Now()
-	aYear := time.Duration(365) * time.Hour
+	aYear := time.Until(notBefore.AddDate(1, 0, 0)) * time.Hour
 	notAfter := notBefore.Add(aYear)
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
@@ -137,8 +152,8 @@ func signHost(ca *tls.Certificate, host string, port int) (cert *tls.Certificate
 		return
 	}
 
-	var derBytes []byte
-	if derBytes, err = x509.CreateCertificate(rand.Reader, &template, x509ca, &certpriv.PublicKey, ca.PrivateKey); err != nil {
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, x509ca, &certpriv.PublicKey, ca.PrivateKey)
+	if err != nil {
 		return
 	}
 

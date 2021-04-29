@@ -1,3 +1,17 @@
+// Copyright 2021 Workrise Technologies Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cmd
 
 import (
@@ -81,13 +95,18 @@ func runGcloudCommand() error {
 	}
 
 	// gcloud reads the CLOUDSDK_CORE_REQUEST_REASON environment variable
-	// and sets the X-Goog-Request-Reason header in API requests to its value
+	// and sets the X-Goog-Request-Reason header in API requests to its value.
 	reasonHeader := fmt.Sprintf("CLOUDSDK_CORE_REQUEST_REASON=%s", gcloudCmdConfig.Reason)
 
 	// There has to be a better way to do this...
 	util.Logger.Infof("Running: [gcloud %s]\n\n", strings.Join(gcloudCmdArgs, " "))
-	gcloudCmdArgs = append(gcloudCmdArgs, "--impersonate-service-account", gcloudCmdConfig.ServiceAccountEmail, "--verbosity=error")
-	c := exec.Command(viper.GetString("binarypaths.gcloud"), gcloudCmdArgs...)
+	gcloudCmdArgs = append(
+		gcloudCmdArgs,
+		"--impersonate-service-account", gcloudCmdConfig.ServiceAccountEmail,
+		"--verbosity=error",
+	)
+	gcloud := viper.GetString("binarypaths.gcloud")
+	c := exec.Command(gcloud, gcloudCmdArgs...)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
 	c.Env = append(os.Environ(), reasonHeader)

@@ -2,8 +2,11 @@ repos:
   - repo: git://github.com/dnephin/pre-commit-golang
     rev: ac0f6582d2484b3aa90b05d568e70f9f3c1374c7
     hooks:
-      - id: go-fmt
-      - id: go-imports
-        args: [-over=15]
-      - id: golangci-lint
       - id: go-mod-tidy
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.39.0
+    hooks:
+      - id: golangci-lint
+        args: 
+          - "--out-format=tab"
+          - "--issues-exit-code=0"
