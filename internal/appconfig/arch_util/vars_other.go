@@ -14,6 +14,8 @@
 
 // +build !darwin, !linux, !amd64
 
+package archutil
+
 const (
 	FormattedOS = ""
 )

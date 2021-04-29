@@ -17,6 +17,10 @@
 package archutil
 
 const (
+	// FormattedOS is the string representation of the GOOS used in
+	// ephemeral-iam release tarballs.
 	FormattedOS = "Darwin_macOS"
-	ConfigPath  = "/Library/Application Support/ephemeral-iam"
+	// ConfigPath is the path relative to the users home directory to store the
+	// ephemeral-iam config.
+	ConfigPath = "/Library/Application Support/ephemeral-iam"
 )

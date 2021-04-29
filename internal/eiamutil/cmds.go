@@ -121,6 +121,7 @@ func ExtractUnknownArgs(flags *pflag.FlagSet, args []string) []string {
 	return unknownArgs
 }
 
+// Contains checks if val is an item in the values slice.
 func Contains(values []string, val string) bool {
 	for _, i := range values {
 		if i == val {
@@ -130,6 +131,7 @@ func Contains(values []string, val string) bool {
 	return false
 }
 
+// Uniq removes duplicate items from the input slice.
 func Uniq(a []string) []string {
 	mb := make(map[string]struct{}, len(a))
 	for _, x := range a {

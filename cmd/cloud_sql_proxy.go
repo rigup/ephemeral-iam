@@ -46,7 +46,7 @@ func newCmdCloudSQLProxy() *cobra.Command {
 			The "cloud_sql_proxy" command runs the provided cloud_sql_proxy command with the permissions of the specified
 			service account.`),
 		Example: dedent.Dedent(`
-			eiam cloud_sql_proxy -instances "example_db_instance" \
+			eiam cloud_sql_proxy -instances my-project:us-central1:example-instance=tcp:3306 \
 			--service-account-email example@my-project.iam.gserviceaccount.com \
 			--reason "Debugging for (JIRA-1234)"`),
 		Args:               cobra.ArbitraryArgs,

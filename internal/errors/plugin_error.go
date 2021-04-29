@@ -24,6 +24,9 @@ import (
 	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 )
 
+// PkgVersionErr is a regular expression that matches the error string thrown
+// by to golang plugins package when a plugin was build with a different version
+// than the package it was built for.
 var PkgVersionErr = regexp.MustCompile(`^plugin\.Open\("(.*)"\).*different version of package (.*)$`)
 
 // CheckPluginError checks an error generated while loading plugins. If the error

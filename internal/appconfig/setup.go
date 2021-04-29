@@ -32,6 +32,7 @@ import (
 	"github.com/rigup/ephemeral-iam/internal/gcpclient"
 )
 
+// Setup ensures that the prequisites for running ephemeral-iam are met.
 func Setup() error {
 	if err := checkValidADCExists(); err != nil {
 		return err

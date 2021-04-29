@@ -17,5 +17,7 @@
 package archutil
 
 const (
+	// FormattedArch is the string representation of the GOARCH used in
+	// ephemeral-iam release tarballs.
 	FormattedArch = "x86_64"
 )

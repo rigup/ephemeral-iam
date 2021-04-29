@@ -22,6 +22,7 @@ import (
 	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 )
 
+// EiamError represents a generic ephemeral-iam error.
 type EiamError struct {
 	Err error
 	Log *logrus.Entry

@@ -25,6 +25,7 @@ import (
 	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 )
 
+// gRPC error protobuf type names.
 const (
 	RPCStatusBadRequest          = "type.googleapis.com/google.rpc.BadRequest"
 	RPCStatusDebugInfo           = "type.googleapis.com/google.rpc.DebugInfo"

@@ -31,6 +31,7 @@ import (
 	eiamplugin "github.com/rigup/ephemeral-iam/pkg/plugins"
 )
 
+// RootCommand is a struct that holds the loaded plugins and the top level cobra command.
 type RootCommand struct {
 	Plugins []*eiamplugin.EphemeralIamPlugin
 	cobra.Command
@@ -64,6 +65,7 @@ func (rc *RootCommand) loadPlugin(pluginPath string) (*eiamplugin.EphemeralIamPl
 	}
 }
 
+// LoadPlugins searches for files in the plugin directory and attempts to load them.
 func (rc *RootCommand) LoadPlugins() error {
 	configDir := appconfig.GetConfigDir()
 
@@ -99,6 +101,7 @@ func (rc *RootCommand) LoadPlugins() error {
 	return nil
 }
 
+// PrintPlugins formats the list of loaded plugins as a table and prints them.
 func (rc *RootCommand) PrintPlugins() {
 	var buf bytes.Buffer
 	w := tabwriter.NewWriter(&buf, 0, 4, 4, ' ', 0)
