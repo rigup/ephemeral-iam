@@ -90,7 +90,7 @@ linters:
     - gocritic
     - gocyclo
     - godot
-    - godox
+    # - godox
     - gofmt
     - goimports
     - golint
@@ -142,7 +142,7 @@ run:
 ###############################################################################
 output:
   # colored-line-number|line-number|json|tab|checkstyle|code-climate|junit-xml|github-actions
-  format: github-actions
+  format: tab
   sort-results: true
 
 ###############################################################################
