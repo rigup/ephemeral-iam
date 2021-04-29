@@ -1,6 +1,31 @@
-# ephemeral-iam
 
-![ephemeral-iam logo](docs/img/logo.png)
+<p align="center">
+    <a href="https://goreportcard.com/report/rigup/ephemeral-iam" alt="Go Report Card">
+        <img src="https://goreportcard.com/badge/rigup/ephemeral-iam" />
+    </a>
+    <a href="https://github.com/rigup/ephemeral-iam/actions/workflows/release.yml" alt="Release Workflow">
+        <img src="https://img.shields.io/github/workflow/status/rigup/ephemeral-iam/goreleaser" />
+    </a>
+    <a href="https://github.com/rigup/ephemeral-iam/releases" alt="Latest Release">
+      <img src="https://img.shields.io/github/v/release/rigup/ephemeral-iam" />
+    </a>
+    <a href="https://github.com/rigup/ephemeral-iam/commits/main" alt="Commits since last release">
+        <img src="https://img.shields.io/github/commits-since/rigup/ephemeral-iam/latest/main" />
+    </a>
+    <a href="go.mod" alt="Go Version">
+        <img src="https://img.shields.io/github/go-mod/go-version/rigup/ephemeral-iam" />
+    </a>
+    <a href="https://github.com/rigup/ephemeral-iam/blob/master/LICENSE" alt="License">
+        <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" />
+    </a>
+    
+</p>
+
+<p align="center">
+    <img src="docs/img/logo.png" height="160">
+</p>
+
+# ephemeral-iam
 
 A CLI tool that utilizes service account token generation to enable users to
 temporarily authenticate `gcloud` commands as a service account.  The intended
