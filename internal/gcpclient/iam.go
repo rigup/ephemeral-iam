@@ -25,7 +25,6 @@ import (
 
 	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
-	queryiam "github.com/rigup/ephemeral-iam/internal/gcpclient/query_iam"
 )
 
 var (
@@ -67,12 +66,12 @@ func GenerateTemporaryAccessToken(svcAcct, reason string) (*credentialspb.Genera
 // authenticated user.
 func CanImpersonate(project, serviceAccountEmail string) (bool, error) {
 	resource := fmt.Sprintf("//iam.googleapis.com/projects/%s/serviceAccounts/%s", project, serviceAccountEmail)
-	testablePerms, err := queryiam.QueryTestablePermissionsOnResource(resource)
+	testablePerms, err := QueryTestablePermissionsOnResource(resource)
 	if err != nil {
 		return false, err
 	}
 
-	perms, err := queryiam.QueryServiceAccountPermissions(testablePerms, project, serviceAccountEmail)
+	perms, err := QueryServiceAccountPermissions(testablePerms, project, serviceAccountEmail)
 	if err != nil {
 		return false, err
 	}

@@ -15,7 +15,6 @@
 package gcpclient
 
 import (
-	"context"
 	"fmt"
 	"sync"
 
@@ -30,11 +29,7 @@ import (
 	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 )
 
-var (
-	ctx = context.Background()
-
-	wg sync.WaitGroup
-)
+var wg sync.WaitGroup
 
 // QueryTestablePermissionsOnResource gets the testable permissions on a resource
 // Modified from https://github.com/salrashid123/gcp_iam/blob/main/query/main.go#L71-L108

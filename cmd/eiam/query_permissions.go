@@ -30,7 +30,6 @@ import (
 	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 	"github.com/rigup/ephemeral-iam/internal/gcpclient"
-	queryiam "github.com/rigup/ephemeral-iam/internal/gcpclient/query_iam"
 	"github.com/rigup/ephemeral-iam/pkg/options"
 )
 
@@ -137,12 +136,12 @@ func NewCmdQueryComputeInstancePermissions() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			util.Logger.Infof("Querying permissions granted on %s", resourceString)
-			testablePerms, err := queryiam.QueryTestablePermissionsOnResource(resourceString)
+			testablePerms, err := gcpclient.QueryTestablePermissionsOnResource(resourceString)
 			if err != nil {
 				msg := fmt.Sprintf("gcloud is configured to use %s as the default zone", queryPermsCmdConfig.Zone)
 				return errorsutil.New(msg, err)
 			}
-			userPerms, err := queryiam.QueryComputeInstancePermissions(
+			userPerms, err := gcpclient.QueryComputeInstancePermissions(
 				testablePerms,
 				queryPermsCmdConfig.Project,
 				queryPermsCmdConfig.Zone,
@@ -184,11 +183,11 @@ func NewCmdQueryProjectPermissions() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			util.Logger.Infof("Querying permissions granted on %s", resourceString)
-			testablePerms, err := queryiam.QueryTestablePermissionsOnResource(resourceString)
+			testablePerms, err := gcpclient.QueryTestablePermissionsOnResource(resourceString)
 			if err != nil {
 				return err
 			}
-			userPerms, err := queryiam.QueryProjectPermissions(
+			userPerms, err := gcpclient.QueryProjectPermissions(
 				testablePerms,
 				queryPermsCmdConfig.Project,
 				queryPermsCmdConfig.ServiceAccountEmail,
@@ -232,11 +231,11 @@ func NewCmdQueryPubSubPermissions() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			util.Logger.Infof("Querying permissions granted on %s", resourceString)
-			testablePerms, err := queryiam.QueryTestablePermissionsOnResource(resourceString)
+			testablePerms, err := gcpclient.QueryTestablePermissionsOnResource(resourceString)
 			if err != nil {
 				return err
 			}
-			userPerms, err := queryiam.QueryPubSubPermissions(
+			userPerms, err := gcpclient.QueryPubSubPermissions(
 				testablePerms,
 				queryPermsCmdConfig.Project,
 				queryPermsCmdConfig.PubSubTopic,
@@ -284,11 +283,11 @@ func NewCmdQueryServiceAccountPermissions() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			util.Logger.Infof("Querying permissions granted on %s", resourceString)
-			testablePerms, err := queryiam.QueryTestablePermissionsOnResource(resourceString)
+			testablePerms, err := gcpclient.QueryTestablePermissionsOnResource(resourceString)
 			if err != nil {
 				return err
 			}
-			userPerms, err := queryiam.QueryServiceAccountPermissions(
+			userPerms, err := gcpclient.QueryServiceAccountPermissions(
 				testablePerms,
 				queryPermsCmdConfig.Project,
 				queryPermsCmdConfig.ServiceAccountEmail,
@@ -330,11 +329,11 @@ func NewCmdQueryStorageBucketPermissions() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			util.Logger.Infof("Querying permissions granted on %s", resourceString)
-			testablePerms, err := queryiam.QueryTestablePermissionsOnResource(resourceString)
+			testablePerms, err := gcpclient.QueryTestablePermissionsOnResource(resourceString)
 			if err != nil {
 				return err
 			}
-			userPerms, err := queryiam.QueryStorageBucketPermissions(
+			userPerms, err := gcpclient.QueryStorageBucketPermissions(
 				testablePerms,
 				queryPermsCmdConfig.StorageBucket,
 				queryPermsCmdConfig.ServiceAccountEmail,
