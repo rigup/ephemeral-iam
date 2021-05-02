@@ -48,7 +48,7 @@ var (
 
 var queryPermsCmdConfig options.CmdConfig
 
-func newCmdQueryPermissions() *cobra.Command {
+func NewCmdQueryPermissions() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query-permissions",
 		Short: "Query current permissions on a GCP resource",
@@ -104,16 +104,16 @@ func newCmdQueryPermissions() *cobra.Command {
 		`),
 	}
 
-	cmd.AddCommand(newCmdQueryComputeInstancePermissions())
-	cmd.AddCommand(newCmdQueryProjectPermissions())
-	cmd.AddCommand(newCmdQueryPubSubPermissions())
-	cmd.AddCommand(newCmdQueryServiceAccountPermissions())
-	cmd.AddCommand(newCmdQueryStorageBucketPermissions())
+	cmd.AddCommand(NewCmdQueryComputeInstancePermissions())
+	cmd.AddCommand(NewCmdQueryProjectPermissions())
+	cmd.AddCommand(NewCmdQueryPubSubPermissions())
+	cmd.AddCommand(NewCmdQueryServiceAccountPermissions())
+	cmd.AddCommand(NewCmdQueryStorageBucketPermissions())
 
 	return cmd
 }
 
-func newCmdQueryComputeInstancePermissions() *cobra.Command {
+func NewCmdQueryComputeInstancePermissions() *cobra.Command {
 	var resourceString string
 	cmd := &cobra.Command{
 		Use:   "compute-instance",
@@ -173,7 +173,7 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 	return cmd
 }
 
-func newCmdQueryProjectPermissions() *cobra.Command {
+func NewCmdQueryProjectPermissions() *cobra.Command {
 	var resourceString string
 	cmd := &cobra.Command{
 		Use:     "project",
@@ -215,7 +215,7 @@ func newCmdQueryProjectPermissions() *cobra.Command {
 	return cmd
 }
 
-func newCmdQueryPubSubPermissions() *cobra.Command {
+func NewCmdQueryPubSubPermissions() *cobra.Command {
 	var resourceString string
 	cmd := &cobra.Command{
 		Use:   "pubsub",
@@ -265,7 +265,7 @@ func newCmdQueryPubSubPermissions() *cobra.Command {
 	return cmd
 }
 
-func newCmdQueryServiceAccountPermissions() *cobra.Command {
+func NewCmdQueryServiceAccountPermissions() *cobra.Command {
 	var resourceString string
 	cmd := &cobra.Command{
 		Use:   "service-account",
@@ -313,7 +313,7 @@ func newCmdQueryServiceAccountPermissions() *cobra.Command {
 	return cmd
 }
 
-func newCmdQueryStorageBucketPermissions() *cobra.Command {
+func NewCmdQueryStorageBucketPermissions() *cobra.Command {
 	var resourceString string
 	cmd := &cobra.Command{
 		Use:   "storage-bucket",

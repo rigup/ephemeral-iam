@@ -99,7 +99,6 @@ func StartProxyServer(
 
 	wg.Add(1)
 	var oldState *term.State
-	// TODO: Instead of handling errors in the startShell function, handle them here.
 	go startShell(svcAcct, accessToken, expirationDate.Format(time.RFC3339Nano), defaultCluster, &oldState)
 
 	// Shut down the auth proxy when the user exits the sub-shell.

@@ -91,7 +91,11 @@ func runCloudSQLProxyCommand() error {
 	if err != nil {
 		return err
 	} else if !hasAccess {
-		util.Logger.Fatalln("You do not have access to impersonate this service account")
+		return errorsutil.EiamError{
+			Log: util.Logger.WithField("cmd", "cloud_sql_proxy"),
+			Msg: "You do not have access to impersonate this service account",
+			Err: errors.New("failed to impersonate service account"),
+		}
 	}
 
 	util.Logger.Infof("Fetching access token for %s", cspCmdConfig.ServiceAccountEmail)

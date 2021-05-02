@@ -90,7 +90,7 @@ linters:
     - gocritic
     - gocyclo
     - godot
-    # - godox
+    - godox
     - gofmt
     - goimports
     - golint
@@ -164,28 +164,14 @@ issues:
     - path: cmd
       linters:
         - dupl
-
-    # Exclude some staticcheck messages
-    # - linters:
-    #     - staticcheck
-    #   text: "SA9003:"
-
     # Exclude lll issues for long lines with go:generate
     - linters:
         - lll
       source: "^//go:generate "
 
-  # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
   max-issues-per-linter: 0
-
-  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
   max-same-issues: 0
-
-  # Show only new issues: if there are unstaged changes or untracked files,
-  # only those changes are analyzed, else only changes in HEAD~ are analyzed.
   new: false
-
-  # Fix found issues (if it's supported by the linter)
   fix: true
 
 ###############################################################################

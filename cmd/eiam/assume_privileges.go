@@ -27,7 +27,7 @@ import (
 
 var apCmdConfig options.CmdConfig
 
-func newCmdAssumePrivileges() *cobra.Command {
+func NewCmdAssumePrivileges() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "assume-privileges",
 		Aliases: []string{"priv"},

@@ -21,7 +21,7 @@ import (
 	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 )
 
-func newCmdVersion() *cobra.Command {
+func NewCmdVersion() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the installed ephemeral-iam version",

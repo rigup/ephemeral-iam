@@ -15,7 +15,6 @@
 package eiam
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -24,48 +23,19 @@ import (
 	"github.com/andreyvit/diff"
 	"github.com/lithammer/dedent"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/rigup/ephemeral-iam/cmd"
 	"github.com/rigup/ephemeral-iam/internal/appconfig"
 	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
-	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
+	testutil "github.com/rigup/ephemeral-iam/test"
 )
 
 var (
-	configCommand     = newCmdConfig()
-	configViewCommand = newCmdConfigView()
-	configSetCommand  = newCmdConfigSet()
-
-	allSettings map[string]interface{}
+	configCommand     = cmd.NewCmdConfig()
+	configSetCommand  = cmd.NewCmdConfigSet()
+	configViewCommand = cmd.NewCmdConfigView()
 )
-
-func init() {
-	errorsutil.CheckError(appconfig.InitConfig())
-	errorsutil.CheckError(appconfig.Setup())
-	allSettings = make(map[string]interface{}, len(viper.AllKeys()))
-	for _, configKey := range viper.AllKeys() {
-		allSettings[configKey] = viper.Get(configKey)
-	}
-}
-
-// https://chromium.googlesource.com/external/github.com/spf13/cobra/+/refs/heads/master/command_test.go
-func executeCommand(root *cobra.Command, args ...string) (output string, err error) {
-	_, output, err = executeCommandC(root, args...)
-	return output, err
-}
-
-func executeCommandC(root *cobra.Command, args ...string) (c *cobra.Command, output string, err error) {
-	buf := new(bytes.Buffer)
-	util.Logger.Out = buf
-	root.SetOut(buf)
-	root.SetErr(buf)
-	root.SetArgs(args)
-
-	c, err = root.ExecuteC()
-
-	return c, buf.String(), err
-}
 
 func TestConfigNoSubCommand(t *testing.T) {
 	expectedOutput := dedent.Dedent(`
@@ -86,7 +56,7 @@ func TestConfigNoSubCommand(t *testing.T) {
 
         Use "config [command] --help" for more information about a command.`)
 
-	output, err := executeCommand(configCommand)
+	output, err := testutil.ExecuteCommand(configCommand)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -97,7 +67,7 @@ func TestConfigNoSubCommand(t *testing.T) {
 
 func TestConfigViewCommand(t *testing.T) {
 	for configKey, configValue := range allSettings {
-		output, err := executeCommand(configViewCommand, configKey)
+		output, err := testutil.ExecuteCommand(configViewCommand, configKey)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -109,7 +79,7 @@ func TestConfigViewCommand(t *testing.T) {
 }
 
 func TestConfigSetCommandWithoutSufficientArgs(t *testing.T) {
-	output, err := executeCommand(configSetCommand)
+	output, err := testutil.ExecuteCommand(configSetCommand)
 	if err == nil {
 		t.Errorf("expected error caused by passing no input arguments\nOUTPUT:\n%s", output)
 	}
@@ -117,7 +87,7 @@ func TestConfigSetCommandWithoutSufficientArgs(t *testing.T) {
 	if !strings.Contains(output, expectedOutput) {
 		t.Errorf("unexpected output:\nEXPECTED TO FIND: %s\nACTUAL: %v", expectedOutput, output)
 	}
-	output, err = executeCommand(configSetCommand, "logging.level")
+	output, err = testutil.ExecuteCommand(configSetCommand, "logging.level")
 	if err == nil {
 		t.Errorf("expected error caused by passing only one input argument\nOUTPUT:\n%s", output)
 	}
@@ -127,7 +97,7 @@ func TestConfigSetCommandWithoutSufficientArgs(t *testing.T) {
 }
 
 func TestConfigSetCommandInvalidKey(t *testing.T) {
-	output, err := executeCommand(configSetCommand, "notakey.thatexists", "some value")
+	output, err := testutil.ExecuteCommand(configSetCommand, "notakey.thatexists", "some value")
 	if err == nil {
 		t.Errorf("expected error caused by invalid key name 'notakey.thatexists'\nOUTPUT:\n%s", output)
 	}
@@ -138,7 +108,7 @@ func TestConfigSetCommandInvalidKey(t *testing.T) {
 }
 
 func setLoggingLevel(t *testing.T, currLogLevel, newLogLevel string) {
-	output, err := executeCommand(configSetCommand, "logging.level", newLogLevel)
+	output, err := testutil.ExecuteCommand(configSetCommand, "logging.level", newLogLevel)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -155,7 +125,7 @@ func TestConfigSetCommandSetLoggingLevel(t *testing.T) {
 	initialLogLevel := viper.GetString(appconfig.LoggingLevel)
 
 	// Try setting the log level to an invalid value
-	output, err := executeCommand(configSetCommand, "logging.level", "invalid")
+	output, err := testutil.ExecuteCommand(configSetCommand, "logging.level", "invalid")
 	if err == nil {
 		t.Errorf("expected error caused by invalid logging level value `invalid`\nOUTPUT:\n%s", output)
 	}
@@ -209,12 +179,12 @@ func TestConfigSetCommandSetLoggingLevel(t *testing.T) {
 func TestConfigSetCommandSetLoggingFormat(t *testing.T) {
 	initialLogFormat := viper.GetString(appconfig.LoggingFormat)
 
-	output, err := executeCommand(configSetCommand, "logging.format", "invalid")
+	output, err := testutil.ExecuteCommand(configSetCommand, "logging.format", "invalid")
 	if err == nil {
 		t.Errorf("expected error caused by invalid logging format value `invalid`\nOUTPUT:\n%s", output)
 	}
 
-	output, err = executeCommand(configSetCommand, "logging.format", "text")
+	output, err = testutil.ExecuteCommand(configSetCommand, "logging.format", "text")
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -229,7 +199,7 @@ func TestConfigSetCommandSetLoggingFormat(t *testing.T) {
 		t.Error("Unexpected failure: The `eiam config set logging.format text` command did not properly update the config")
 	}
 
-	output, err = executeCommand(configSetCommand, "logging.format", "json")
+	output, err = testutil.ExecuteCommand(configSetCommand, "logging.format", "json")
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -241,7 +211,7 @@ func TestConfigSetCommandSetLoggingFormat(t *testing.T) {
 		t.Error("Unexpected failure: The `eiam config set logging.format json` command did not properly update the config")
 	}
 
-	output, err = executeCommand(configViewCommand, "logging.format")
+	output, err = testutil.ExecuteCommand(configViewCommand, "logging.format")
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -250,7 +220,7 @@ func TestConfigSetCommandSetLoggingFormat(t *testing.T) {
 		t.Errorf("failed to parse JSON logging output: %v\nOUTPUT: %s", err, output)
 	}
 
-	_, err = executeCommand(configSetCommand, "logging.format", initialLogFormat)
+	_, err = testutil.ExecuteCommand(configSetCommand, "logging.format", initialLogFormat)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}

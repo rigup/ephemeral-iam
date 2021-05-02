@@ -59,7 +59,12 @@ func Confirm(vals map[string]string) {
 		fmt.Fprintf(w, "%s \t %s\n", key, val)
 	}
 
-	w.Flush()
+	if err := w.Flush(); err != nil {
+		Logger.Error("Failed to flush tabwriter buffer to print confirmation values")
+		for key, val := range vals {
+			fmt.Printf("%s: %s\n", key, val)
+		}
+	}
 	cmdInfo := strings.Split(buf.String(), "\n")
 
 	for _, line := range cmdInfo {
@@ -128,6 +133,9 @@ func ExtractUnknownArgs(flags *pflag.FlagSet, args []string) []string {
 			if currArg[1] == '-' {
 				// Arg starts with two dashes, search for full flag names.
 				currFlag = flags.Lookup(strings.SplitN(currArg[2:], "=", 2)[0])
+			} else if strings.HasPrefix(currArg, "-test") {
+				// This is a testing flag.
+				continue
 			} else {
 				// Arg starts with single dash, look for single char shorthand flags.
 				currFlag = flags.ShorthandLookup(string(currArg[1]))

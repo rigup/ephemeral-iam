@@ -28,7 +28,7 @@ import (
 	"github.com/rigup/ephemeral-iam/internal/plugins"
 )
 
-func newCmdPlugins() *cobra.Command {
+func NewCmdPlugins() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "plugins",
 		Short: "Manage ephemeral-iam plugins",
@@ -55,7 +55,7 @@ func newCmdPlugins() *cobra.Command {
 	return cmd
 }
 
-func newCmdPluginsList() *cobra.Command {
+func NewCmdPluginsList() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "Show the list of loaded plugins",
@@ -119,7 +119,7 @@ func newCmdPluginsInstall() *cobra.Command {
 	return cmd
 }
 
-func newCmdPluginsRemove() *cobra.Command {
+func NewCmdPluginsRemove() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "remove",
 		Short: "Remove an installed eiam plugin",

@@ -46,7 +46,6 @@ func checkGoogleAPIError(serr *EiamError) *EiamError {
 		}
 		errMsg := gerr.Message
 		if errMsg == "" {
-			// TODO Check if message can be parsed from body.
 			errMsg = gerr.Body
 		}
 		return &EiamError{

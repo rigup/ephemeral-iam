@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-    <img src="docs/img/logo.png" height="160">
+    <img src="docs/img/logo.png" height="200">
 </p>
 
 > **NOTICE:** There is a bug in ephemeral-iam v0.0.16 that results in a failure

@@ -71,6 +71,18 @@ func checkValidADCExists() error {
 		} else {
 			return errorsutil.New("Failed to check if application default credentials exist", err)
 		}
+		util.Logger.Warn("No Application Default Credentials were found, attempting to generate them\n")
+
+		gcloud := viper.GetString("binarypaths.gcloud")
+		cmd := exec.Command(gcloud, "auth", "application-default", "login", "--no-launch-browser")
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
+		cmd.Stdin = os.Stdin
+		if err = cmd.Run(); err != nil {
+			return errorsutil.New("Failed to create application default credentials", err)
+		}
+		fmt.Println()
+		util.Logger.Info("Application default credentials were successfully created")
 	} else {
 		util.Logger.Debug("Checking validity of application default credentials")
 		tokenInfo, err := oauth2Service.Tokeninfo().Do()
@@ -106,7 +118,13 @@ func checkADCIdentity(tokenEmail string) error {
 			if strings.EqualFold(ans, "y") {
 				fmt.Print("\n\n")
 				util.Logger.Info("Attempting to reconfigure eiam's authenticated account")
-				os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "")
+				if err := os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", ""); err != nil {
+					return errorsutil.EiamError{
+						Log: util.Logger.WithError(err),
+						Msg: "Failed to set $GOOGLE_APPLICATION_CREDENTIALS env var",
+						Err: err,
+					}
+				}
 				if err := checkValidADCExists(); err != nil {
 					util.Logger.Fatal(err)
 				}
@@ -138,7 +156,7 @@ func createTempKubeConfigDir() error {
 	kubeConfigDir := path.Join(configDir, "tmp_kube_config")
 	_, err := os.Stat(kubeConfigDir)
 	if os.IsNotExist(err) {
-		if err = os.MkdirAll(kubeConfigDir, 0o755); err != nil {
+		if err = os.MkdirAll(kubeConfigDir, 0o750); err != nil {
 			return fmt.Errorf("failed to create temp kubeconfig directory: %v", err)
 		}
 	} else if err != nil {
@@ -148,7 +166,7 @@ func createTempKubeConfigDir() error {
 	if err := os.RemoveAll(kubeConfigDir); err != nil {
 		return fmt.Errorf("failed to clear old kubeconfigs: %v", err)
 	}
-	if err := os.MkdirAll(kubeConfigDir, 0o755); err != nil {
+	if err := os.MkdirAll(kubeConfigDir, 0o750); err != nil {
 		return fmt.Errorf("failed to recreate temp kubeconfig directory: %v", err)
 	}
 	return nil

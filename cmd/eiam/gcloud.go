@@ -35,50 +35,16 @@ var (
 	gcloudCmdConfig options.CmdConfig
 )
 
-func newCmdGcloud() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "gcloud [GCLOUD_ARGS]",
-		Short: "Run a gcloud command with the permissions of the specified service account",
-		Long: dedent.Dedent(`
-			The "gcloud" command runs the provided gcloud command with the permissions of the specified
-			service account. Output from the gcloud command is able to be piped into other commands.`),
-		Example: dedent.Dedent(`
-			eiam gcloud compute instances list --format=json \
-			--service-account-email example@my-project.iam.gserviceaccount.com \
-			--reason "Debugging for (JIRA-1234)"
-			
-			eiam gcloud compute instances list --format=json \
-			-s example@my-project.iam.gserviceaccount.com -r "example" \
-			| jq`),
-		Args:               cobra.ArbitraryArgs,
-		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			cmd.Flags().VisitAll(options.CheckRequired)
-
-			gcloudCmdArgs = util.ExtractUnknownArgs(cmd.Flags(), os.Args)
-			if err := util.FormatReason(&gcloudCmdConfig.Reason); err != nil {
-				return err
-			}
-
-			if !options.YesOption {
-				util.Confirm(map[string]string{
-					"Project":         gcloudCmdConfig.Project,
-					"Service Account": gcloudCmdConfig.ServiceAccountEmail,
-					"Reason":          gcloudCmdConfig.Reason,
-					"Command":         fmt.Sprintf("gcloud %s", strings.Join(gcloudCmdArgs, " ")),
-				})
-			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return runGcloudCommand()
-		},
-	}
-
-	options.AddServiceAccountEmailFlag(cmd.Flags(), &gcloudCmdConfig.ServiceAccountEmail, true)
-	options.AddReasonFlag(cmd.Flags(), &gcloudCmdConfig.Reason, true)
-	options.AddProjectFlag(cmd.Flags(), &gcloudCmdConfig.Project)
-
+func NewCmdGcloud() *cobra.Command {
+	cmd := WrapperCommand("gcloud", &gcloudCmdArgs, &gcloudCmdConfig, runGcloudCommand)
+	cmd.Example = dedent.Dedent(`
+		eiam gcloud compute instances list --format=json \
+		--service-account-email example@my-project.iam.gserviceaccount.com \
+		--reason "Debugging for (JIRA-1234)"
+		
+		eiam gcloud compute instances list --format=json \
+		-s example@my-project.iam.gserviceaccount.com -r "example" \
+		| jq`)
 	return cmd
 }
 
@@ -87,7 +53,14 @@ func runGcloudCommand() error {
 	if err != nil {
 		return err
 	} else if !hasAccess {
-		util.Logger.Fatalln("You do not have access to impersonate this service account")
+		err = fmt.Errorf("cannot impersonate %s", gcloudCmdConfig.ServiceAccountEmail)
+		sErr := errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "You do not have access to impersonate this service account",
+			Err: err,
+		}
+		fmt.Printf("\n\nRIGHT HERE: %+v\n\n", sErr)
+		return sErr
 	}
 
 	// gcloud reads the CLOUDSDK_CORE_REQUEST_REASON environment variable

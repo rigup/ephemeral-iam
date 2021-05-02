@@ -97,21 +97,21 @@ var configInfo = dedent.Dedent(`
 		└────────────────────────────────┴─────────────────────────────────────────────┘
 `)
 
-func newCmdConfig() *cobra.Command {
+func NewCmdConfig() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
 		Short: "Manage configuration values",
 	}
 
-	cmd.AddCommand(newCmdConfigPrint())
-	cmd.AddCommand(newCmdConfigView())
-	cmd.AddCommand(newCmdConfigSet())
-	cmd.AddCommand(newCmdConfigInfo())
+	cmd.AddCommand(NewCmdConfigPrint())
+	cmd.AddCommand(NewCmdConfigView())
+	cmd.AddCommand(NewCmdConfigSet())
+	cmd.AddCommand(NewCmdConfigInfo())
 
 	return cmd
 }
 
-func newCmdConfigPrint() *cobra.Command {
+func NewCmdConfigPrint() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "print",
 		Short: "Print the current configuration",
@@ -147,7 +147,7 @@ func newCmdConfigPrint() *cobra.Command {
 	return cmd
 }
 
-func newCmdConfigInfo() *cobra.Command {
+func NewCmdConfigInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "info",
 		Short: "Print information about config fields",
@@ -158,7 +158,7 @@ func newCmdConfigInfo() *cobra.Command {
 	return cmd
 }
 
-func newCmdConfigView() *cobra.Command {
+func NewCmdConfigView() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:       "view",
 		Short:     "View the value of a provided config item",
@@ -172,7 +172,7 @@ func newCmdConfigView() *cobra.Command {
 	return cmd
 }
 
-func newCmdConfigSet() *cobra.Command {
+func NewCmdConfigSet() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set",
 		Short: "Set the value of a provided config item",

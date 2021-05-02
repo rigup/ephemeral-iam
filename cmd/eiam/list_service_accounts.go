@@ -26,13 +26,14 @@ import (
 	"google.golang.org/api/iam/v1"
 
 	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
+	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 	"github.com/rigup/ephemeral-iam/internal/gcpclient"
 	"github.com/rigup/ephemeral-iam/pkg/options"
 )
 
 var listCmdConfig options.CmdConfig
 
-func newCmdListServiceAccounts() *cobra.Command {
+func NewCmdListServiceAccounts() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:        "list-service-accounts",
 		Aliases:    []string{"list"},
@@ -81,5 +82,12 @@ func printColumns(serviceAccounts []*iam.ServiceAccount) {
 			}
 		}
 	}
-	w.Flush()
+	if err := w.Flush(); err != nil {
+		return errorsutil.EiamError{
+			Log: util.Logger.WithError(err),
+			Msg: "Failed to flush tabwriter buffer",
+			Err: err,
+		}
+	}
+	return nil
 }

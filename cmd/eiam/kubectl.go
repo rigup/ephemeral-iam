@@ -15,6 +15,7 @@
 package eiam
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -35,50 +36,17 @@ var (
 	kubectlCmdConfig options.CmdConfig
 )
 
-func newCmdKubectl() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "kubectl [KUBECTL_ARGS]",
-		Short: "Run a kubectl command with the permissions of the specified service account",
-		Long: dedent.Dedent(`
-			The "kubectl" command runs the provided kubectl command with the permissions of the specified
-			service account. Output from the kubectl command is able to be piped into other commands.`),
-		Example: dedent.Dedent(`
-			eiam kubectl pods -o json \
-			  --service-account-email example@my-project.iam.gserviceaccount.com \
-			  --reason "Debugging for (JIRA-1234)"
-				
-			eiam kubectl pods -o json \
-			  -s example@my-project.iam.gserviceaccount.com -r "example" \
-			  | jq`),
-		Args:               cobra.ArbitraryArgs,
-		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			cmd.Flags().VisitAll(options.CheckRequired)
+func NewCmdKubectl() *cobra.Command {
+	cmd := WrapperCommand("kubectl", &kubectlCmdArgs, &kubectlCmdConfig, runKubectlCommand)
 
-			kubectlCmdArgs = util.ExtractUnknownArgs(cmd.Flags(), os.Args)
-			if err := util.FormatReason(&kubectlCmdConfig.Reason); err != nil {
-				return err
-			}
-
-			if !options.YesOption {
-				util.Confirm(map[string]string{
-					"Project":         kubectlCmdConfig.Project,
-					"Service Account": kubectlCmdConfig.ServiceAccountEmail,
-					"Reason":          kubectlCmdConfig.Reason,
-					"Command":         fmt.Sprintf("kubectl %s", strings.Join(kubectlCmdArgs, " ")),
-				})
-			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return runKubectlCommand()
-		},
-	}
-
-	options.AddServiceAccountEmailFlag(cmd.Flags(), &kubectlCmdConfig.ServiceAccountEmail, true)
-	options.AddReasonFlag(cmd.Flags(), &kubectlCmdConfig.Reason, true)
-	options.AddProjectFlag(cmd.Flags(), &kubectlCmdConfig.Project)
-
+	cmd.Example = dedent.Dedent(`
+		eiam kubectl pods -o json \
+		--service-account-email example@my-project.iam.gserviceaccount.com \
+		--reason "Debugging for (JIRA-1234)"
+			
+		eiam kubectl pods -o json \
+		-s example@my-project.iam.gserviceaccount.com -r "example" \
+		| jq`)
 	return cmd
 }
 
@@ -87,7 +55,11 @@ func runKubectlCommand() error {
 	if err != nil {
 		return err
 	} else if !hasAccess {
-		util.Logger.Fatalln("You do not have access to impersonate this service account")
+		return errorsutil.EiamError{
+			Log: util.Logger.WithField("cmd", "kubectl"),
+			Msg: "You do not have access to impersonate this service account",
+			Err: errors.New("failed to impersonate service account"),
+		}
 	}
 
 	util.Logger.Infof("Fetching access token for %s", kubectlCmdConfig.ServiceAccountEmail)

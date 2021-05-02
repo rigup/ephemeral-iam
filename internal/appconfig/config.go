@@ -19,6 +19,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"sync"
 
@@ -150,11 +151,11 @@ func GetConfigDir() string {
 }
 
 func getConfigDir() (string, error) {
-	userHomeDir, err := os.UserHomeDir()
+	usr, err := user.Current()
 	if err != nil {
 		return "", errorsutil.New("Failed to get user's home directory", err)
 	}
-	confPath := filepath.Join(userHomeDir, archutil.ConfigPath)
+	confPath := filepath.Join(usr.HomeDir, archutil.ConfigPath)
 	if err = os.MkdirAll(confPath, 0o755); err != nil {
 		return "", errorsutil.New(fmt.Sprintf("Failed to create config directory: %s", confPath), err)
 	}
