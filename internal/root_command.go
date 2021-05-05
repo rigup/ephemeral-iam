@@ -78,7 +78,7 @@ func loadPlugin(pf, pluginsDir string) (plugins.EIAMPlugin, error) {
 		Plugins: map[string]hcplugin.Plugin{
 			"run-command": &eiamplugin.Command{},
 		},
-		Cmd:              exec.Command(path.Join(pluginsDir, pf)),
+		Cmd:              exec.Command(path.Join(pluginsDir, pf)), //nolint:gosec // Single string with no args
 		AllowedProtocols: []hcplugin.Protocol{hcplugin.ProtocolGRPC},
 		SyncStderr:       os.Stderr,
 		SyncStdout:       os.Stdout,
