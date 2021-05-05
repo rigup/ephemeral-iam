@@ -12,19 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package eiam
 
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/lithammer/dedent"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
+	"github.com/rigup/ephemeral-iam/internal/appconfig"
 	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
-	eiamplugin "github.com/rigup/ephemeral-iam/pkg/plugins"
+	"github.com/rigup/ephemeral-iam/internal/plugins"
 )
 
 func newCmdPlugins() *cobra.Command {
@@ -98,10 +100,12 @@ func newCmdPluginsRemove() *cobra.Command {
 				return err
 			}
 
-			if err := os.Remove(plugin.Path); err != nil {
+			configDir := appconfig.GetConfigDir()
+			pluginPath := path.Join(configDir, "plugins", plugin.Name)
+			if err := os.Remove(pluginPath); err != nil {
 				return errorsutil.EiamError{
 					Log: util.Logger.WithError(err),
-					Msg: fmt.Sprintf("Failed to remove plugin file %s", plugin.Path),
+					Msg: fmt.Sprintf("Failed to remove plugin file %s", pluginPath),
 					Err: err,
 				}
 			}
@@ -112,7 +116,7 @@ func newCmdPluginsRemove() *cobra.Command {
 	return cmd
 }
 
-func selectPlugin() (*eiamplugin.EphemeralIamPlugin, error) {
+func selectPlugin() (*plugins.EphemeralIamPlugin, error) {
 	templates := &promptui.SelectTemplates{
 		Label:    "{{ . }}?",
 		Active:   " ►  {{ .Name | red }}",

@@ -15,7 +15,7 @@
 package main
 
 import (
-	"github.com/rigup/ephemeral-iam/cmd"
+	"github.com/rigup/ephemeral-iam/cmd/eiam"
 	"github.com/rigup/ephemeral-iam/internal/appconfig"
 	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 )
@@ -28,7 +28,7 @@ func main() {
 	errorsutil.CheckError(appconfig.InitConfig())
 	errorsutil.CheckError(appconfig.Setup())
 
-	rootCmd, err := cmd.NewEphemeralIamCommand()
+	rootCmd, err := eiam.NewEphemeralIamCommand()
 	errorsutil.CheckError(err)
 	errorsutil.CheckError(rootCmd.Execute())
 }

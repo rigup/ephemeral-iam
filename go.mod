@@ -12,6 +12,8 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-github/v33 v33.0.0
 	github.com/google/uuid v1.2.0
+	github.com/hashicorp/go-hclog v0.14.1
+	github.com/hashicorp/go-plugin v1.4.1
 	github.com/lithammer/dedent v1.1.0
 	github.com/manifoldco/promptui v0.8.0
 	github.com/mitchellh/go-wordwrap v1.0.1
