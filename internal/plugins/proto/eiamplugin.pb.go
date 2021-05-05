@@ -7,10 +7,11 @@
 package __
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -203,12 +204,15 @@ func file_internal_plugins_proto_eiamplugin_proto_rawDescGZIP() []byte {
 	return file_internal_plugins_proto_eiamplugin_proto_rawDescData
 }
 
-var file_internal_plugins_proto_eiamplugin_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_internal_plugins_proto_eiamplugin_proto_goTypes = []interface{}{
-	(*Empty)(nil),      // 0: proto.Empty
-	(*PluginInfo)(nil), // 1: proto.PluginInfo
-	(*Args)(nil),       // 2: proto.Args
-}
+var (
+	file_internal_plugins_proto_eiamplugin_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+	file_internal_plugins_proto_eiamplugin_proto_goTypes  = []interface{}{
+		(*Empty)(nil),      // 0: proto.Empty
+		(*PluginInfo)(nil), // 1: proto.PluginInfo
+		(*Args)(nil),       // 2: proto.Args
+	}
+)
+
 var file_internal_plugins_proto_eiamplugin_proto_depIdxs = []int32{
 	0, // 0: proto.EIAMPlugin.GetInfo:input_type -> proto.Empty
 	2, // 1: proto.EIAMPlugin.Run:input_type -> proto.Args
