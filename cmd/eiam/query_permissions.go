@@ -362,12 +362,13 @@ func newCmdQueryStorageBucketPermissions() *cobra.Command {
 }
 
 func printPermissions(fullPerms, userPerms []string, acctEmail string) error {
+	userPermsMap := makePermsMap(userPerms)
 	if len(fullPerms) > 100 {
 		// If the list of permissions is really long and the user has the less command
 		// available, pipe the command to less to paginate the output.
 		lessPath, err := appconfig.CheckCommandExists("less")
 		if err != nil {
-			printPermissionsList(os.Stderr, fullPerms, userPerms, acctEmail, true)
+			printPermissionsList(os.Stderr, fullPerms, userPermsMap, acctEmail, true)
 		}
 
 		// Create command for less with a stdin pipe that we can write to.
@@ -381,18 +382,18 @@ func printPermissions(fullPerms, userPerms []string, acctEmail string) error {
 		// Write the output in a goroutine so less can be ready to read it.
 		go func() {
 			defer stdin.Close()
-			printPermissionsList(stdin, fullPerms, userPerms, acctEmail, false)
+			printPermissionsList(stdin, fullPerms, userPermsMap, acctEmail, false)
 		}()
 		if err := cmd.Run(); err != nil {
-			printPermissionsList(os.Stderr, fullPerms, userPerms, acctEmail, true)
+			printPermissionsList(os.Stderr, fullPerms, userPermsMap, acctEmail, true)
 		}
 	} else {
-		printPermissionsList(os.Stderr, fullPerms, userPerms, acctEmail, true)
+		printPermissionsList(os.Stderr, fullPerms, userPermsMap, acctEmail, true)
 	}
 	return nil
 }
 
-func printPermissionsList(out io.Writer, fullPerms, userPerms []string, acctEmail string, colorOutput bool) {
+func printPermissionsList(out io.Writer, fullPerms []string, userPerms map[string]bool, acct string, colorOutput bool) {
 	yes, no := "✔", "✖"
 	if colorOutput {
 		yes, no = green(yes), red(no)
@@ -404,7 +405,7 @@ func printPermissionsList(out io.Writer, fullPerms, userPerms []string, acctEmai
 	fmt.Fprintln(w, "AVAILABLE\tGRANTED")
 
 	for _, perm := range fullPerms {
-		if util.Contains(userPerms, perm) {
+		if _, ok := userPerms[perm]; ok {
 			fmt.Fprintf(w, "%s\t%s\n", perm, yes)
 		} else {
 			fmt.Fprintf(w, "%s\t%s\n", perm, no)
@@ -415,8 +416,16 @@ func printPermissionsList(out io.Writer, fullPerms, userPerms []string, acctEmai
 	fmt.Println()
 
 	if len(userPerms) == 0 {
-		util.Logger.Warnf("%s does not have any access to this resource", acctEmail)
+		util.Logger.Warnf("%s does not have any access to this resource", acct)
 	} else if len(userPerms) == len(fullPerms) {
-		util.Logger.Infof("%s has full access to this resource", acctEmail)
+		util.Logger.Infof("%s has full access to this resource", acct)
 	}
+}
+
+func makePermsMap(perms []string) map[string]bool {
+	m := make(map[string]bool, len(perms))
+	for _, perm := range perms {
+		m[perm] = true
+	}
+	return m
 }
