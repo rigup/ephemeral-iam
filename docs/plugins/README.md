@@ -1,7 +1,7 @@
-> *This documentation is outdated as of 05/05/2021. Updated documentation is*
-> *coming soon*
-
 # ephemeral-iam Plugins
+Custom functionality can be added to `ephemeral-iam` by the way of plugins.
+Plugins are [cobra](https://github.com/spf13/cobra) Commands that communicate
+with `ephemeral-iam` over gRPC using Hashicorp's `go-plugin` package.
 
 ## Installing a plugin
 

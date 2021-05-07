@@ -145,45 +145,33 @@ func downloadAndExtract(url string) error {
 	}
 	defer gzr.Close()
 
-	tr := tar.NewReader(gzr)
+	tmpDir := os.TempDir()
 
+	tarReader := tar.NewReader(gzr)
 	for {
-		header, err := tr.Next()
+		header, err := tarReader.Next()
 
+		target := filepath.Join(tmpDir, filepath.Clean(header.Name))
 		switch {
-		// if no more files are found return.
 		case err == io.EOF:
 			return nil
-		// return any other error.
 		case err != nil:
 			return errorsutil.EiamError{
 				Log: util.Logger.WithError(err),
 				Msg: "Failed to extract release archive",
 				Err: err,
 			}
-		// if the header is nil, just skip it (not sure how this happens).
-		case header == nil:
-			continue
-		}
-
-		target := filepath.Join(os.TempDir(), header.Name) //nolint:gosec  // This will always be the release archive
-
-		// check the file type.
-		switch header.Typeflag {
-		// if its a dir and it doesn't exist create it.
-		case tar.TypeDir:
-			if _, err := os.Stat(target); err != nil {
-				if err := os.MkdirAll(target, 0o755); err != nil {
-					return errorsutil.EiamError{
-						Log: util.Logger.WithError(err),
-						Msg: "Failed to create directory while extracting release archive",
-						Err: err,
-					}
+		case header.Typeflag == tar.TypeDir:
+			if err = os.MkdirAll(target, 0o755); err != nil {
+				return errorsutil.EiamError{
+					Log: util.Logger.WithError(err),
+					Msg: "Failed to create directory while extracting release archive",
+					Err: err,
 				}
 			}
-		// if it's a file create it.
-		case tar.TypeReg:
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+		case header.Typeflag == tar.TypeReg:
+			var f *os.File
+			f, err = os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
 				return errorsutil.EiamError{
 					Log: util.Logger.WithError(err),
@@ -191,17 +179,26 @@ func downloadAndExtract(url string) error {
 					Err: err,
 				}
 			}
-			// copy over contents.
-			if _, err := io.Copy(f, tr); err != nil { //nolint:gosec  // This will always be the release archive
+			// Limit readable amount to 2GB to prevent decompression bomb.
+			maxSize := 2 << (10 * 3)
+			limiter := io.LimitReader(tarReader, int64(maxSize))
+			if _, err = io.Copy(f, limiter); err != nil {
 				return errorsutil.EiamError{
 					Log: util.Logger.WithError(err),
 					Msg: "Failed to copy file contents while extracting release archive",
 					Err: err,
 				}
 			}
-			// manually close here after each file operation; defering would cause each file close
+			// Manually close here after each file operation; defering would cause each file close
 			// to wait until all operations have completed.
 			f.Close()
+		default:
+			err = fmt.Errorf("unknown type %v in %s", header.Typeflag, header.Name)
+			return errorsutil.EiamError{
+				Log: util.Logger.WithError(err),
+				Msg: "Encountered unknown type while extracting update",
+				Err: err,
+			}
 		}
 	}
 }

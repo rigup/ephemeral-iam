@@ -53,7 +53,7 @@ func (rc *RootCommand) LoadPlugins() error {
 	}
 
 	for _, f := range files {
-		pl, err := loadPlugin(f.Name(), pluginsDir)
+		pl, plClient, err := loadPlugin(f.Name(), pluginsDir)
 		if err != nil {
 			util.Logger.WithError(err).Errorf("Failed to load plugin: %s", f.Name())
 			continue
@@ -67,12 +67,14 @@ func (rc *RootCommand) LoadPlugins() error {
 			Name:        name,
 			Description: desc,
 			Version:     version,
+			Client:      plClient,
+			Path:        path.Join(pluginsDir, f.Name()),
 		})
 	}
 	return nil
 }
 
-func loadPlugin(pf, pluginsDir string) (plugins.EIAMPlugin, error) {
+func loadPlugin(pf, pluginsDir string) (plugins.EIAMPlugin, *hcplugin.Client, error) {
 	client := hcplugin.NewClient(&hcplugin.ClientConfig{
 		HandshakeConfig: eiamplugin.Handshake,
 		Plugins: map[string]hcplugin.Plugin{
@@ -83,18 +85,19 @@ func loadPlugin(pf, pluginsDir string) (plugins.EIAMPlugin, error) {
 		SyncStderr:       os.Stderr,
 		SyncStdout:       os.Stdout,
 		Logger:           plugins.NewHCLogAdapter(util.Logger, ""),
+		// AutoMTLS:         true,  // For some reason, enabling this breaks the plugin commands.
 	})
 
 	rpcClient, err := client.Client()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	raw, err := rpcClient.Dispense("run-command")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return raw.(plugins.EIAMPlugin), nil
+	return raw.(plugins.EIAMPlugin), client, nil
 }
 
 func addPluginCmd(p plugins.EIAMPlugin) (cmd *cobra.Command, name, desc, version string, err error) {

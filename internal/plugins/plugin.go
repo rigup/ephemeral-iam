@@ -14,8 +14,12 @@
 
 package plugins
 
+import hcplugin "github.com/hashicorp/go-plugin"
+
 type EphemeralIamPlugin struct {
 	Name        string
 	Description string
 	Version     string
+	Client      *hcplugin.Client
+	Path        string
 }

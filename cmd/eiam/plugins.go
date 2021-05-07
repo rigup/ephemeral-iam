@@ -17,13 +17,11 @@ package eiam
 import (
 	"fmt"
 	"os"
-	"path"
 
 	"github.com/lithammer/dedent"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
-	"github.com/rigup/ephemeral-iam/internal/appconfig"
 	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 	"github.com/rigup/ephemeral-iam/internal/plugins"
@@ -100,12 +98,10 @@ func newCmdPluginsRemove() *cobra.Command {
 				return err
 			}
 
-			configDir := appconfig.GetConfigDir()
-			pluginPath := path.Join(configDir, "plugins", plugin.Name)
-			if err := os.Remove(pluginPath); err != nil {
+			if err := os.Remove(plugin.Path); err != nil {
 				return errorsutil.EiamError{
 					Log: util.Logger.WithError(err),
-					Msg: fmt.Sprintf("Failed to remove plugin file %s", pluginPath),
+					Msg: fmt.Sprintf("Failed to remove plugin file %s", plugin.Path),
 					Err: err,
 				}
 			}
@@ -125,7 +121,7 @@ func selectPlugin() (*plugins.EphemeralIamPlugin, error) {
 		Details: `
 --------- Plugin ----------
 {{ "Name:" | faint }}	{{ .Name }}
-{{ "Description:" | faint }}	{{ .Desc }}`,
+{{ "Description:" | faint }}	{{ .Description }}`,
 	}
 
 	prompt := promptui.Select{
