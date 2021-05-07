@@ -17,6 +17,7 @@ package eiam
 import (
 	"fmt"
 	"os"
+	"regexp"
 
 	"github.com/lithammer/dedent"
 	"github.com/manifoldco/promptui"
@@ -67,13 +68,41 @@ func newCmdPluginsList() *cobra.Command {
 }
 
 func newCmdPluginsInstall() *cobra.Command {
+	var (
+		url       string
+		repoOwner string
+		repoName  string
+	)
 	cmd := &cobra.Command{
 		Use:   "install",
-		Short: "NOT IMPLEMENTED Install a new eiam plugin",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			util.Logger.Error("This command is not yet implemented")
+		Short: "Install a new eiam plugin",
+		Args: func(cmd *cobra.Command, args []string) error {
+			urlRegex := regexp.MustCompile(`github\.com/(?P<user>[[:alnum:]\-]+)/(?P<repo>[[:alnum:]\.\-_]+)`)
+			match := urlRegex.FindStringSubmatch(url)
+			if match == nil {
+				err := fmt.Errorf("%s is not a valid Github repo URL", url)
+				return errorsutil.EiamError{
+					Log: util.Logger.WithError(err),
+					Msg: "Invalid input parameter",
+					Err: err,
+				}
+			}
+			for i, grpName := range urlRegex.SubexpNames() {
+				if grpName == "user" {
+					repoOwner = match[i]
+				} else if grpName == "repo" {
+					repoName = match[i]
+				}
+			}
 			return nil
 		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return plugins.InstallPlugin(repoOwner, repoName)
+		},
+	}
+	cmd.Flags().StringVarP(&url, "url", "u", "", "The URL of the plugin's Github repo")
+	if err := cmd.MarkFlagRequired("url"); err != nil {
+		util.Logger.Fatal(err.Error())
 	}
 	return cmd
 }
