@@ -41,7 +41,7 @@ var (
 func QueryTestablePermissionsOnResource(resource string) ([]string, error) {
 	iamService, err := iam.NewService(ctx)
 	if err != nil {
-		return []string{}, &errorsutil.SDKClientCreateError{Err: err, ResourceType: "Cloud IAM"}
+		return []string{}, errorsutil.NewSDKError("Cloud IAM", "", err)
 	}
 	permissionsService := iam.NewPermissionsService(iamService)
 
@@ -56,11 +56,7 @@ func QueryTestablePermissionsOnResource(resource string) ([]string, error) {
 			PageSize:         1000,
 		}).Do()
 		if err != nil {
-			return []string{}, errorsutil.EiamError{
-				Log: util.Logger.WithError(err),
-				Msg: fmt.Sprintf("Failed to get testable permissions for %s", resource),
-				Err: err,
-			}
+			return []string{}, errorsutil.New(fmt.Sprintf("Failed to get testable permissions for %s", resource), err)
 		}
 
 		for _, perm := range ps.Permissions {
@@ -94,17 +90,13 @@ func QueryComputeInstancePermissions(
 		if svc, err := compute.NewService(ctx, clientOptions...); err == nil {
 			computeService = svc
 		} else {
-			return []string{}, &errorsutil.SDKClientCreateError{
-				Err:            err,
-				ResourceType:   "Compute",
-				ServiceAccount: svcAcct,
-			}
+			return []string{}, errorsutil.NewSDKError("Compute", svcAcct, err)
 		}
 	} else {
 		if svc, err := compute.NewService(ctx); err == nil {
 			computeService = svc
 		} else {
-			return []string{}, &errorsutil.SDKClientCreateError{Err: err, ResourceType: "Compute"}
+			return []string{}, errorsutil.NewSDKError("Compute", "", err)
 		}
 	}
 
@@ -145,17 +137,13 @@ func QueryProjectPermissions(permsToTest []string, project, svcAcct, reason stri
 		if svc, err := crm.NewService(ctx, clientOptions...); err == nil {
 			crmService = svc
 		} else {
-			return []string{}, &errorsutil.SDKClientCreateError{
-				Err:            err,
-				ResourceType:   "Cloud Resource Manager",
-				ServiceAccount: svcAcct,
-			}
+			return []string{}, errorsutil.NewSDKError("Cloud Resource Manager", svcAcct, err)
 		}
 	} else {
 		if svc, err := crm.NewService(ctx); err == nil {
 			crmService = svc
 		} else {
-			return []string{}, &errorsutil.SDKClientCreateError{Err: err, ResourceType: "Cloud Resource Manager"}
+			return []string{}, errorsutil.NewSDKError("Cloud Resource Manager", "", err)
 		}
 	}
 	crmProjService := crm.NewProjectsService(crmService)
@@ -204,17 +192,13 @@ func QueryPubSubPermissions(permsToTest []string, project, topic, svcAcct, reaso
 		if svc, err := pubsub.NewService(ctx, clientOptions...); err == nil {
 			pubsubService = svc
 		} else {
-			return []string{}, &errorsutil.SDKClientCreateError{
-				Err:            err,
-				ResourceType:   "PubSub",
-				ServiceAccount: svcAcct,
-			}
+			return []string{}, errorsutil.NewSDKError("PubSub", svcAcct, err)
 		}
 	} else {
 		if svc, err := pubsub.NewService(ctx); err == nil {
 			pubsubService = svc
 		} else {
-			return []string{}, &errorsutil.SDKClientCreateError{Err: err, ResourceType: "PubSub"}
+			return []string{}, errorsutil.NewSDKError("PubSub", "", err)
 		}
 	}
 
@@ -225,11 +209,7 @@ func QueryPubSubPermissions(permsToTest []string, project, topic, svcAcct, reaso
 		Permissions: permsToTest,
 	}).Do()
 	if err != nil {
-		return []string{}, errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: fmt.Sprintf("Failed to query permissions on %s", resource),
-			Err: err,
-		}
+		return []string{}, errorsutil.New(fmt.Sprintf("Failed to query permissions on %s", resource), err)
 	}
 
 	return resp.Permissions, nil
@@ -240,7 +220,7 @@ func QueryPubSubPermissions(permsToTest []string, project, topic, svcAcct, reaso
 func QueryServiceAccountPermissions(permsToTest []string, project, email string) ([]string, error) {
 	iamService, err := iam.NewService(ctx)
 	if err != nil {
-		return []string{}, &errorsutil.SDKClientCreateError{Err: err, ResourceType: "Cloud IAM"}
+		return []string{}, errorsutil.NewSDKError("Cloud IAM", "", err)
 	}
 	saIamService := iam.NewProjectsServiceAccountsService(iamService)
 
@@ -267,17 +247,13 @@ func QueryStorageBucketPermissions(permsToTest []string, bucket, svcAcct, reason
 		if svc, err := storage.NewService(ctx, clientOptions...); err == nil {
 			storageService = svc
 		} else {
-			return []string{}, &errorsutil.SDKClientCreateError{
-				Err:            err,
-				ResourceType:   "Cloud Storage",
-				ServiceAccount: svcAcct,
-			}
+			return []string{}, errorsutil.NewSDKError("Cloud Storage", svcAcct, err)
 		}
 	} else {
 		if svc, err := storage.NewService(ctx); err == nil {
 			storageService = svc
 		} else {
-			return []string{}, &errorsutil.SDKClientCreateError{Err: err, ResourceType: "Cloud Storage"}
+			return []string{}, errorsutil.NewSDKError("Cloud Storage", "", err)
 		}
 	}
 
@@ -289,11 +265,7 @@ func QueryStorageBucketPermissions(permsToTest []string, bucket, svcAcct, reason
 
 	resp, err := storageService.Buckets.TestIamPermissions(bucket, permsToTest).Do()
 	if err != nil {
-		return []string{}, errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: fmt.Sprintf("Failed to query permissions on storage bucket %s", bucket),
-			Err: err,
-		}
+		return []string{}, errorsutil.New(fmt.Sprintf("Failed to query permissions on storage bucket %s", bucket), err)
 	}
 	return resp.Permissions, nil
 }

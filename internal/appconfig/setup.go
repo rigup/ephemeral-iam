@@ -64,30 +64,18 @@ func checkValidADCExists() error {
 			cmd.Stdout = os.Stdout
 			cmd.Stdin = os.Stdin
 			if err = cmd.Run(); err != nil {
-				return errorsutil.EiamError{
-					Log: util.Logger.WithError(err),
-					Msg: "Failed to create application default credentials",
-					Err: err,
-				}
+				return errorsutil.New("Failed to create application default credentials", err)
 			}
 			fmt.Println()
 			util.Logger.Info("Application default credentials were successfully created")
 		} else {
-			return errorsutil.EiamError{
-				Log: util.Logger.WithError(err),
-				Msg: "Failed to check if application default credentials exist",
-				Err: err,
-			}
+			return errorsutil.New("Failed to check if application default credentials exist", err)
 		}
 	} else {
 		util.Logger.Debug("Checking validity of application default credentials")
 		tokenInfo, err := oauth2Service.Tokeninfo().Do()
 		if err != nil {
-			return errorsutil.EiamError{
-				Log: util.Logger.WithError(err),
-				Msg: "Failed to parse OAuth token",
-				Err: err,
-			}
+			return errorsutil.New("Failed to parse OAuth token", err)
 		}
 
 		return checkADCIdentity(tokenInfo.Email)
@@ -135,18 +123,10 @@ func createLogDir() error {
 	if _, err := os.Stat(logDir); os.IsNotExist(err) {
 		util.Logger.Debugf("Creating log directory: %s", logDir)
 		if err = os.MkdirAll(viper.GetString(AuthProxyLogDir), 0o755); err != nil {
-			return errorsutil.EiamError{
-				Log: util.Logger.WithError(err),
-				Msg: fmt.Sprintf("Failed to create proxy log directory %s", logDir),
-				Err: err,
-			}
+			return errorsutil.New(fmt.Sprintf("Failed to create proxy log directory %s", logDir), err)
 		}
 	} else if err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: fmt.Sprintf("Failed to find proxy log directory %s", logDir),
-			Err: err,
-		}
+		return errorsutil.New(fmt.Sprintf("Failed to find proxy log directory %s", logDir), err)
 	}
 	return nil
 }
@@ -179,18 +159,10 @@ func createPluginDir() error {
 	if _, err := os.Stat(pluginDir); os.IsNotExist(err) {
 		util.Logger.Debugf("Creating plugin directory: %s", pluginDir)
 		if err = os.MkdirAll(pluginDir, 0o755); err != nil {
-			return errorsutil.EiamError{
-				Log: util.Logger.WithError(err),
-				Msg: fmt.Sprintf("failed to create plugin directory: %s", pluginDir),
-				Err: err,
-			}
+			return errorsutil.New(fmt.Sprintf("failed to create plugin directory: %s", pluginDir), err)
 		}
 	} else if err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: fmt.Sprintf("failed to find plugin directory: %s", pluginDir),
-			Err: err,
-		}
+		return errorsutil.New(fmt.Sprintf("failed to find plugin directory: %s", pluginDir), err)
 	}
 	return nil
 }

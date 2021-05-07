@@ -45,11 +45,7 @@ func (rc *RootCommand) LoadPlugins() error {
 
 	files, err := os.ReadDir(pluginsDir)
 	if err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to read plugins directory",
-			Err: err,
-		}
+		return errorsutil.New("Failed to read plugins directory", err)
 	}
 
 	for _, f := range files {
@@ -103,11 +99,7 @@ func loadPlugin(pf, pluginsDir string) (plugins.EIAMPlugin, *hcplugin.Client, er
 func addPluginCmd(p plugins.EIAMPlugin) (cmd *cobra.Command, name, desc, version string, err error) {
 	name, desc, version, err = p.GetInfo()
 	if err != nil {
-		return nil, "", "", "", errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to fetch plugin information",
-			Err: err,
-		}
+		return nil, "", "", "", errorsutil.New("Failed to fetch plugin information", err)
 	}
 
 	cmd = &cobra.Command{

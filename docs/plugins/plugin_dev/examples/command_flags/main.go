@@ -15,53 +15,52 @@
 package main // All plugins must have a main package.
 
 import (
-	"errors"
-
-	"github.com/sirupsen/logrus"
+	"github.com/hashicorp/go-hclog"
 	"github.com/spf13/cobra"
 
 	"github.com/rigup/ephemeral-iam/pkg/options"
-	eiamplugin "github.com/rigup/ephemeral-iam/pkg/plugins"
+)
+
+const (
+	name    = "plugin-using-eiam-flags"
+	desc    = "An example of an eiam plugin command that uses flags provided by eiam"
+	version = "v0.0.1"
 )
 
 var (
-	// logger will hold the logger configured by ephemeral-iam.
-	logger *logrus.Logger
-
-	// Plugin is the top-level definition of the plugin.  It must be named 'Plugin'
-	// and be exported by the main package.
-	Plugin = &eiamplugin.EphemeralIamPlugin{
-		// Command defines the top-level command that will be added to eiam.
-		// It is an instance of cobra.Command (https://pkg.go.dev/github.com/spf13/cobra#Command)
-		Command: pluginFuncWithEiamFlags(),
-		Name:    "Plugin with command flags",
-		Desc:    "This is an example plugin with command flags",
-		Version: "v0.0.1",
-	}
-
 	project string
 	verbose bool
 )
 
-func init() {
-	// This will instantiate logger as the same logging instance that is used
-	// by eiam.
-	logger = eiamplugin.Logger()
+// BasicPlugin is the implementation of the ephemeral-iam plugin interface.
+type BasicPlugin struct {
+	// Logger is the logger for the plugin to use to send log entries to eiam
+	// to be formatted and output to the user.
+	Logger hclog.Logger
 }
 
-func pluginFuncWithEiamFlags() *cobra.Command {
+// GetInfo is the function that eiam invokes to get metadata about the plugin.
+func (p *BasicPlugin) GetInfo() (n, d, v string, err error) {
+	return name, desc, version, nil
+}
+
+// Run is the function that eiam uses to invoke the plugin command.
+func (p *BasicPlugin) Run(args []string) error {
+	rootCmd := newRootCmd(p)
+	rootCmd.SetArgs(args) // THIS IS REQUIRED.
+	return rootCmd.Execute()
+}
+
+func newRootCmd(p *BasicPlugin) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "eiam-flags-plugin",
-		Short: "Example plugin that utilizes eiam flags",
+		Use:   name,
+		Short: desc,
 		// Plugins should use the RunE/PreRunE fields and return their errors
 		// to be handled by eiam.
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if project == "" {
-				return errors.New("you must provide the `--project` flag")
-			}
-			logger.Infof("Project: %s", project)
+			p.Logger.Info("The project field defaults to the value in the user's gcloud config", "project", project)
 			if verbose {
-				logger.Info("Verbose logging is enabled")
+				p.Logger.Info("Verbose logging is enabled")
 			}
 			return nil
 		},

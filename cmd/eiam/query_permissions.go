@@ -139,11 +139,8 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 			util.Logger.Infof("Querying permissions granted on %s", resourceString)
 			testablePerms, err := queryiam.QueryTestablePermissionsOnResource(resourceString)
 			if err != nil {
-				return errorsutil.EiamError{
-					Log: util.Logger.WithError(err),
-					Msg: fmt.Sprintf("gcloud is configured to use %s as the default zone", queryPermsCmdConfig.Zone),
-					Err: err,
-				}
+				msg := fmt.Sprintf("gcloud is configured to use %s as the default zone", queryPermsCmdConfig.Zone)
+				return errorsutil.New(msg, err)
 			}
 			userPerms, err := queryiam.QueryComputeInstancePermissions(
 				testablePerms,
@@ -378,11 +375,7 @@ func printPermissions(fullPerms, userPerms []string, acctEmail string) error {
 		cmd.Stdout = os.Stdout
 		stdin, err := cmd.StdinPipe()
 		if err != nil {
-			return errorsutil.EiamError{
-				Log: util.Logger.WithError(err),
-				Msg: "Failed to create stdin pipe for less command",
-				Err: err,
-			}
+			return errorsutil.New("Failed to create stdin pipe for less command", err)
 		}
 
 		// Write the output in a goroutine so less can be ready to read it.

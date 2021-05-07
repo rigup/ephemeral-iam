@@ -24,7 +24,15 @@ type SDKClientCreateError struct {
 	ServiceAccount string
 }
 
-func (e *SDKClientCreateError) Error() string {
+func NewSDKError(resType, svcAcct string, err error) error {
+	return SDKClientCreateError{
+		Err:            err,
+		ResourceType:   resType,
+		ServiceAccount: "",
+	}
+}
+
+func (e SDKClientCreateError) Error() string {
 	if e.ServiceAccount != "" {
 		return fmt.Sprintf(
 			"failed to create %s SDK client with service account %s: %v",

@@ -152,18 +152,10 @@ func writeCredsToKubeConfig(tmpKubeConfig *os.File, accessToken, expiry string) 
 	config := clientcmdapi.NewConfig()
 	configBytes, err := ioutil.ReadFile(tmpKubeConfig.Name())
 	if err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to read generated tmp kubeconfig",
-			Err: err,
-		}
+		return errorsutil.New("Failed to read generated tmp kubeconfig", err)
 	}
 	if err = runtime.DecodeInto(clientcmdapilatest.Codec, configBytes, config); err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to deserialize generated tmp kubeconfig",
-			Err: err,
-		}
+		return errorsutil.New("Failed to deserialize generated tmp kubeconfig", err)
 	}
 
 	// There should only be one, this is an efficient way of getting it.
@@ -176,18 +168,10 @@ func writeCredsToKubeConfig(tmpKubeConfig *os.File, accessToken, expiry string) 
 	// Serialize the updated config and write it back to the file.
 	newConfigBytes, err := runtime.Encode(clientcmdapilatest.Codec, config)
 	if err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to serialize updated tmp kubeconfig",
-			Err: err,
-		}
+		return errorsutil.New("Failed to serialize updated tmp kubeconfig", err)
 	}
 	if _, err := tmpKubeConfig.Write(newConfigBytes); err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to write updated tmp kubeconfig",
-			Err: err,
-		}
+		return errorsutil.New("Failed to write updated tmp kubeconfig", err)
 	}
 	return nil
 }

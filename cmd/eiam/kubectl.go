@@ -112,11 +112,7 @@ func runKubectlCommand() error {
 
 	if err := c.Run(); err != nil {
 		fullCmd := fmt.Sprintf("kubectl %s", strings.Join(kubectlCmdArgs, " "))
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: fmt.Sprintf("Failed to run command [%s]", fullCmd),
-			Err: err,
-		}
+		return errorsutil.New(fmt.Sprintf("Failed to run command [%s]", fullCmd), err)
 	}
 
 	return nil

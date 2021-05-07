@@ -23,19 +23,6 @@ as long as the name/shortform does not conflict with an existing flag.
 
 **Example:**
 ```go
-var (
-	Plugin = &eiamplugin.EphemeralIamPlugin{
-		// Command defines the top-level command that will be added to eiam.
-		// It is an instance of cobra.Command (https://pkg.go.dev/github.com/spf13/cobra#Command)
-		Command: pluginFuncWithEiamFlags(),
-		Name:    "Plugin with command flags",
-		Desc:    "This is an example plugin with command flags",
-		Version: "v0.0.1",
-	}
-
-    Verbose bool
-)
-
 func pluginFuncWithEiamFlags() *cobra.Command {
     cmd := &cobra.Command{
         Use: "example",

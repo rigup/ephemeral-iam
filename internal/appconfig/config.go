@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
 	archutil "github.com/rigup/ephemeral-iam/internal/appconfig/arch_util"
@@ -67,11 +66,7 @@ func InitConfig() error {
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return errorsutil.EiamError{
-				Log: logrus.StandardLogger().WithError(err),
-				Msg: "Failed to initialize configuration",
-				Err: err,
-			}
+			return errorsutil.New("Failed to initialize configuration", err)
 		}
 		initConfig()
 	}
@@ -126,11 +121,7 @@ func getBinPaths() error {
 
 	if updated {
 		if err := viper.WriteConfig(); err != nil {
-			return errorsutil.EiamError{
-				Log: util.Logger.WithError(err),
-				Msg: "Failed to write binary paths to configuration file",
-				Err: err,
-			}
+			return errorsutil.New("Failed to write binary paths to configuration file", err)
 		}
 	}
 	return nil
@@ -160,19 +151,11 @@ func GetConfigDir() string {
 func getConfigDir() (string, error) {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
-		return "", errorsutil.EiamError{
-			Log: logrus.StandardLogger().WithError(err),
-			Msg: "Failed to get user's home directory",
-			Err: err,
-		}
+		return "", errorsutil.New("Failed to get user's home directory", err)
 	}
 	confPath := filepath.Join(userHomeDir, archutil.ConfigPath)
 	if err = os.MkdirAll(confPath, 0o755); err != nil {
-		return "", errorsutil.EiamError{
-			Log: logrus.StandardLogger().WithError(err),
-			Msg: fmt.Sprintf("Failed to create config directory: %s", confPath),
-			Err: err,
-		}
+		return "", errorsutil.New(fmt.Sprintf("Failed to create config directory: %s", confPath), err)
 	}
 	return confPath, nil
 }

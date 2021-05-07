@@ -30,7 +30,7 @@ import (
 func GetClusters(project, reason string) ([]map[string]string, error) {
 	gkeClient, err := container.NewClusterManagerClient(context.Background(), option.WithRequestReason(reason))
 	if err != nil {
-		return []map[string]string{}, &errorsutil.SDKClientCreateError{Err: err, ResourceType: "Container"}
+		return []map[string]string{}, errorsutil.NewSDKError("Container", "", err)
 	}
 
 	listClustersReq := &containerpb.ListClustersRequest{

@@ -103,11 +103,7 @@ func newCmdConfigPrint() *cobra.Command {
 			configFile := viper.ConfigFileUsed()
 			data, err := ioutil.ReadFile(configFile)
 			if err != nil {
-				return errorsutil.EiamError{
-					Log: util.Logger.WithError(err),
-					Msg: "Failed to read configuration file",
-					Err: err,
-				}
+				return errorsutil.New("Failed to read configuration file", err)
 			}
 			fmt.Printf("\n%s\n", string(data))
 			return nil
@@ -182,11 +178,7 @@ func newCmdConfigSet() *cobra.Command {
 				}
 			}
 			if err := viper.WriteConfig(); err != nil {
-				return errorsutil.EiamError{
-					Log: util.Logger.WithError(err),
-					Msg: "Failed to write updated configuration",
-					Err: err,
-				}
+				return errorsutil.New("Failed to write updated configuration", err)
 			}
 			util.Logger.Infof("Updated %s from %v to %s", args[0], oldVal, args[1])
 			return nil
@@ -221,9 +213,5 @@ func checkSetArgs(cmd *cobra.Command, args []string) error {
 }
 
 func argsError(err error) error {
-	return errorsutil.EiamError{
-		Log: util.Logger.WithError(err),
-		Msg: "Invalid command arguments",
-		Err: err,
-	}
+	return errorsutil.New("Invalid command arguments", err)
 }

@@ -111,20 +111,12 @@ func StartProxyServer(
 	time.Sleep(sessionLength)
 
 	if err := term.Restore(int(os.Stdin.Fd()), oldState); err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to restore original shell",
-			Err: err,
-		}
+		return errorsutil.New("Failed to restore original shell", err)
 	}
 
 	util.Logger.Info("Privileged session expired, stopping auth proxy and restoring gcloud config")
 	if err := srv.Shutdown(context.Background()); err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to properly shut down proxy server",
-			Err: err,
-		}
+		return errorsutil.New("Failed to properly shut down proxy server", err)
 	}
 	errorsutil.CheckRevertGcloudConfigError(gcpclient.UnsetGcloudProxy())
 	return nil
@@ -139,11 +131,7 @@ func createProxy(accessToken, reason string) (*http.Server, error) {
 	logFilename := filepath.Join(viper.GetString(appconfig.AuthProxyLogDir), fmt.Sprintf("%s_auth_proxy.log", timestamp))
 	logFile, err := os.OpenFile(logFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
 	if err != nil {
-		return nil, errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to create log file",
-			Err: err,
-		}
+		return nil, errorsutil.New("Failed to create log file", err)
 	}
 	defer logFile.Close()
 

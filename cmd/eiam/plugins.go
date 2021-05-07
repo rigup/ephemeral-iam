@@ -76,16 +76,18 @@ func newCmdPluginsInstall() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "install",
 		Short: "Install a new eiam plugin",
+		Long: dedent.Dedent(`
+			The "plugins install" command installs a plugin from a Github repository.
+
+			The latest release in the provided repository is downloaded, extracted, and
+			the binary files are moved to the "plugins" directory.
+		`),
 		Args: func(cmd *cobra.Command, args []string) error {
 			urlRegex := regexp.MustCompile(`github\.com/(?P<user>[[:alnum:]\-]+)/(?P<repo>[[:alnum:]\.\-_]+)`)
 			match := urlRegex.FindStringSubmatch(url)
 			if match == nil {
 				err := fmt.Errorf("%s is not a valid Github repo URL", url)
-				return errorsutil.EiamError{
-					Log: util.Logger.WithError(err),
-					Msg: "Invalid input parameter",
-					Err: err,
-				}
+				return errorsutil.New("Invalid input parameter", err)
 			}
 			for i, grpName := range urlRegex.SubexpNames() {
 				if grpName == "user" {
@@ -128,11 +130,7 @@ func newCmdPluginsRemove() *cobra.Command {
 			}
 
 			if err := os.Remove(plugin.Path); err != nil {
-				return errorsutil.EiamError{
-					Log: util.Logger.WithError(err),
-					Msg: fmt.Sprintf("Failed to remove plugin file %s", plugin.Path),
-					Err: err,
-				}
+				return errorsutil.New(fmt.Sprintf("Failed to remove plugin file %s", plugin.Path), err)
 			}
 			util.Logger.Infof("Successfully removed %s", plugin.Name)
 			return nil
@@ -161,11 +159,7 @@ func selectPlugin() (*plugins.EphemeralIamPlugin, error) {
 
 	i, _, err := prompt.Run()
 	if err != nil {
-		return nil, errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Select-plugin prompt failed",
-			Err: err,
-		}
+		return nil, errorsutil.New("Select-plugin prompt failed", err)
 	}
 	return RootCommand.Plugins[i], nil
 }

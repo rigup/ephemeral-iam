@@ -28,7 +28,7 @@ func ClientWithReason(reason string) (*credentials.IamCredentialsClient, error) 
 	ctx := context.Background()
 	gcpClientWithReason, err := credentials.NewIamCredentialsClient(ctx, option.WithRequestReason(reason))
 	if err != nil {
-		return nil, &errorsutil.SDKClientCreateError{Err: err, ResourceType: "Credentials"}
+		return nil, errorsutil.NewSDKError("Credentials", "", err)
 	}
 	return gcpClientWithReason, nil
 }

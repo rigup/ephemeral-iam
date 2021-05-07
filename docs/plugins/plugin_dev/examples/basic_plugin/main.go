@@ -12,51 +12,57 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main // All plugins must have a main package
+package main
 
 import (
 	"errors"
 	"math/rand"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/hashicorp/go-hclog"
 	"github.com/spf13/cobra"
-
-	eiamplugin "github.com/rigup/ephemeral-iam/pkg/plugins"
 )
 
-var (
-	// logger will hold the logger configured by ephemeral-iam
-	logger *logrus.Logger
+const (
+	name    = "basic-plugin"
+	desc    = "An example of a basic eiam plugin command"
+	version = "v0.0.1"
+)
 
-	// Plugin is the top-level definition of the plugin.  It must be named 'Plugin'
-	// and be exported by the main package
-	Plugin = &eiamplugin.EphemeralIamPlugin{
-		// Command defines the top-level command that will be added to eiam.
-		// It is an instance of cobra.Command (https://pkg.go.dev/github.com/spf13/cobra#Command)
-		Command: &cobra.Command{
-			Use:   "basic-plugin",
-			Short: "Basic plugin help message",
-			// Plugins should use the RunE/PreRunE fields and return their errors
-			// to be handled by eiam
-			RunE: func(cmd *cobra.Command, args []string) error {
-				logger.Info("This is printed in the same format as other `eiam` INFO logs")
-				logger.Error("This is an error message")
-				rand.Seed(time.Now().UnixNano())
-				if rand.Intn(2) == 1 {
-					return errors.New("this is an example error returned to eiam")
-				}
-				return nil
-			},
+// BasicPlugin is the implementation of the ephemeral-iam plugin interface.
+type BasicPlugin struct {
+	// Logger is the logger for the plugin to use to send log entries to eiam
+	// to be formatted and output to the user.
+	Logger hclog.Logger
+}
+
+// GetInfo is the function that eiam invokes to get metadata about the plugin.
+func (p *BasicPlugin) GetInfo() (n, d, v string, err error) {
+	return name, desc, version, nil
+}
+
+// Run is the function that eiam uses to invoke the plugin command.
+func (p *BasicPlugin) Run(args []string) error {
+	rootCmd := newRootCmd(p)
+	rootCmd.SetArgs(args) // THIS IS REQUIRED.
+	return rootCmd.Execute()
+}
+
+func newRootCmd(p *BasicPlugin) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   name,
+		Short: desc,
+		// Plugins should use the RunE/PreRunE fields and return their errors
+		// to be handled by eiam.
+		RunE: func(cmd *cobra.Command, args []string) error {
+			p.Logger.Info("This is printed in the same format as other `eiam` INFO logs")
+			p.Logger.Error("This is an error message")
+			rand.Seed(time.Now().UnixNano())
+			if rand.Intn(2) == 1 {
+				return errors.New("this is an example error returned to eiam")
+			}
+			return nil
 		},
-		Name:    "Basic Plugin",
-		Desc:    "This is a basic single command plugin",
-		Version: "v0.0.1",
 	}
-)
-
-func init() {
-	// This will instantiate logger as the same logging instance that is used
-	// by eiam
-	logger = eiamplugin.Logger()
+	return cmd
 }
