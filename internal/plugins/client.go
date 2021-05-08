@@ -24,6 +24,7 @@ type GRPCClient struct {
 	Client pb.EIAMPluginClient
 }
 
+// GetInfo is the gRPC method that is called to get metadata about a plugin.
 func (m *GRPCClient) GetInfo() (name, desc, version string, err error) {
 	resp, err := m.Client.GetInfo(context.Background(), &pb.Empty{})
 	if err != nil {
@@ -32,6 +33,7 @@ func (m *GRPCClient) GetInfo() (name, desc, version string, err error) {
 	return resp.Name, resp.Description, resp.Version, nil
 }
 
+// Run is the gRPC method that is called to invoke a plugin's root command.
 func (m *GRPCClient) Run(args []string) error {
 	_, err := m.Client.Run(context.Background(), &pb.Args{
 		Arg: args,

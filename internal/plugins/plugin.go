@@ -16,6 +16,7 @@ package plugins
 
 import hcplugin "github.com/hashicorp/go-plugin"
 
+// EphemeralIamPlugin holds the metadata of an installed plugin.
 type EphemeralIamPlugin struct {
 	Name        string
 	Description string

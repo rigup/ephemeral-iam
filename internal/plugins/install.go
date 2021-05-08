@@ -12,6 +12,7 @@ import (
 	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 )
 
+// InstallPlugin attempts to install an ephemeral-iam plugin from a given Github repo.
 func InstallPlugin(repoOwner, repoName string) error {
 	release, err := util.GetLatestRelease(repoOwner, repoName)
 	if err != nil {

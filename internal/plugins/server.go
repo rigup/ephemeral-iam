@@ -20,11 +20,13 @@ import (
 	pb "github.com/rigup/ephemeral-iam/internal/plugins/proto"
 )
 
+// GRPCServer is the implementation of the go-plugin gRPC server.
 type GRPCServer struct {
-	Impl EIAMPlugin
 	pb.UnimplementedEIAMPluginServer
+	Impl EIAMPlugin
 }
 
+// GetInfo is the gRPC method that is called to get metadata about a plugin.
 func (m *GRPCServer) GetInfo(ctx context.Context, req *pb.Empty) (*pb.PluginInfo, error) {
 	name, desc, version, err := m.Impl.GetInfo()
 	if err != nil {
@@ -38,6 +40,7 @@ func (m *GRPCServer) GetInfo(ctx context.Context, req *pb.Empty) (*pb.PluginInfo
 	return pi, nil
 }
 
+// Run is the gRPC method that is called to invoke a plugin's root command.
 func (m *GRPCServer) Run(ctx context.Context, args *pb.Args) (*pb.Empty, error) {
 	return &pb.Empty{}, m.Impl.Run(args.Arg)
 }

@@ -25,12 +25,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// NewHCLogAdapter takes an instance of a Logrus logger and returns an hclog
+// logger in the form of an HCLogAdapter.
 func NewHCLogAdapter(l *logrus.Logger, name string) hclog.Logger {
 	return &HCLogAdapter{l, name, nil}
 }
 
+// HCLogAdapter implements the hclog interface.  Plugins use hclog to send
+// log entries back to ephemeral-iam and this adapter allows for those logs
+// to be handled by ephemeral-iam's Logrus logger.
 type HCLogAdapter struct {
-	l    *logrus.Logger
+	log  *logrus.Logger
 	name string
 
 	impliedArgs []interface{}
@@ -54,43 +59,43 @@ func (h HCLogAdapter) Log(level hclog.Level, msg string, args ...interface{}) {
 }
 
 func (h HCLogAdapter) Trace(msg string, args ...interface{}) {
-	h.l.WithFields(toMap(args)).Trace(msg)
+	h.log.WithFields(toLogrusFields(args)).Trace(msg)
 }
 
 func (h HCLogAdapter) Debug(msg string, args ...interface{}) {
-	h.l.WithFields(toMap(args)).Debug(msg)
+	h.log.WithFields(toLogrusFields(args)).Debug(msg)
 }
 
 func (h HCLogAdapter) Info(msg string, args ...interface{}) {
-	h.l.WithFields(toMap(args)).Info(msg)
+	h.log.WithFields(toLogrusFields(args)).Info(msg)
 }
 
 func (h HCLogAdapter) Warn(msg string, args ...interface{}) {
-	h.l.WithFields(toMap(args)).Warn(msg)
+	h.log.WithFields(toLogrusFields(args)).Warn(msg)
 }
 
 func (h HCLogAdapter) Error(msg string, args ...interface{}) {
-	h.l.WithFields(toMap(args)).Error(msg)
+	h.log.WithFields(toLogrusFields(args)).Error(msg)
 }
 
 func (h HCLogAdapter) IsTrace() bool {
-	return h.l.GetLevel() >= logrus.TraceLevel
+	return h.log.GetLevel() >= logrus.TraceLevel
 }
 
 func (h HCLogAdapter) IsDebug() bool {
-	return h.l.GetLevel() >= logrus.DebugLevel
+	return h.log.GetLevel() >= logrus.DebugLevel
 }
 
 func (h HCLogAdapter) IsInfo() bool {
-	return h.l.GetLevel() >= logrus.InfoLevel
+	return h.log.GetLevel() >= logrus.InfoLevel
 }
 
 func (h HCLogAdapter) IsWarn() bool {
-	return h.l.GetLevel() >= logrus.WarnLevel
+	return h.log.GetLevel() >= logrus.WarnLevel
 }
 
 func (h HCLogAdapter) IsError() bool {
-	return h.l.GetLevel() >= logrus.ErrorLevel
+	return h.log.GetLevel() >= logrus.ErrorLevel
 }
 
 func (h HCLogAdapter) ImpliedArgs() []interface{} {
@@ -107,7 +112,7 @@ func (h HCLogAdapter) Name() string {
 }
 
 func (h HCLogAdapter) Named(name string) hclog.Logger {
-	return NewHCLogAdapter(h.l, name)
+	return NewHCLogAdapter(h.log, name)
 }
 
 func (h HCLogAdapter) ResetNamed(name string) hclog.Logger {
@@ -115,7 +120,7 @@ func (h HCLogAdapter) ResetNamed(name string) hclog.Logger {
 }
 
 func (h *HCLogAdapter) SetLevel(level hclog.Level) {
-	h.l.SetLevel(convertLevel(level))
+	h.log.SetLevel(convertLevel(level))
 }
 
 func (h HCLogAdapter) StandardLogger(opts *hclog.StandardLoggerOptions) *log.Logger {
@@ -129,9 +134,11 @@ func (h HCLogAdapter) StandardWriter(opts *hclog.StandardLoggerOptions) io.Write
 	return os.Stderr
 }
 
+// convertLevel maps hclog levels to Logrus levels.
 func convertLevel(level hclog.Level) logrus.Level {
 	switch level {
 	case hclog.NoLevel:
+		// Logrus does not have NoLevel, so use Info instead.
 		return logrus.InfoLevel
 	case hclog.Trace:
 		return logrus.TraceLevel
@@ -143,30 +150,35 @@ func convertLevel(level hclog.Level) logrus.Level {
 		return logrus.WarnLevel
 	case hclog.Error:
 		return logrus.ErrorLevel
+	default:
+		return logrus.InfoLevel
 	}
-	return logrus.InfoLevel
 }
 
-func toMap(kvs []interface{}) map[string]interface{} {
+// toLogrusFields takes a list of key/value pairs passed to the hclog logger
+// and converts them to a map to be used as Logrus fields.
+func toLogrusFields(kvPairs []interface{}) map[string]interface{} {
 	m := map[string]interface{}{}
-
-	if len(kvs) == 0 {
+	if len(kvPairs) == 0 {
 		return m
 	}
 
-	if len(kvs)%2 == 1 {
-		kvs = append(kvs, nil)
+	if len(kvPairs)%2 == 1 {
+		// There are an odd number of key/value pairs so append nil as the final value.
+		kvPairs = append(kvPairs, nil)
 	}
 
-	for i := 0; i < len(kvs); i += 2 {
-		if kvs[i] != "timestamp" {
-			merge(m, kvs[i], kvs[i+1])
+	for i := 0; i < len(kvPairs); i += 2 {
+		// hclog automatically adds the timestamp field, ignore it.
+		if kvPairs[i] != "timestamp" {
+			merge(m, kvPairs[i], kvPairs[i+1])
 		}
 	}
-
 	return m
 }
 
+// merge takes a key/value pair and converts them to strings then adds them to
+// the dst map.
 func merge(dst map[string]interface{}, k, v interface{}) {
 	var key string
 
@@ -182,6 +194,9 @@ func merge(dst map[string]interface{}, k, v interface{}) {
 	dst[key] = v
 }
 
+// safeString takes an interface that implements the String() function and calls it
+// to attempt to convert it to a string.  If a panic occurs, and it's caused by a
+// nil pointer, the value will be set to "NULL".
 func safeString(str fmt.Stringer) (s string) {
 	defer func() {
 		if panicVal := recover(); panicVal != nil {
@@ -194,6 +209,5 @@ func safeString(str fmt.Stringer) (s string) {
 	}()
 
 	s = str.String()
-
 	return
 }
