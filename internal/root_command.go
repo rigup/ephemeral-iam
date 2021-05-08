@@ -18,87 +18,98 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"path/filepath"
-	"plugin"
-	"strings"
+	"os/exec"
+	"path"
 	"text/tabwriter"
 
+	hcplugin "github.com/hashicorp/go-plugin"
 	"github.com/spf13/cobra"
 
 	"github.com/rigup/ephemeral-iam/internal/appconfig"
 	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
+	"github.com/rigup/ephemeral-iam/internal/plugins"
 	eiamplugin "github.com/rigup/ephemeral-iam/pkg/plugins"
 )
 
 // RootCommand is a struct that holds the loaded plugins and the top level cobra command.
 type RootCommand struct {
-	Plugins []*eiamplugin.EphemeralIamPlugin
+	Plugins []*plugins.EphemeralIamPlugin
 	cobra.Command
-}
-
-func (rc *RootCommand) loadPlugin(pluginPath string) (*eiamplugin.EphemeralIamPlugin, bool, error) {
-	pluginLib, err := plugin.Open(pluginPath)
-	if err != nil {
-		if serr := errorsutil.CheckPluginError(err); serr != nil {
-			return nil, false, serr
-		}
-		return nil, false, nil
-	}
-
-	newPlugin, err := pluginLib.Lookup("Plugin")
-	if err != nil {
-		return nil, false, errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: fmt.Sprintf("The plugin %s is missing the EphemeralIamPlugin symbol", pluginPath),
-			Err: err,
-		}
-	}
-	if p, ok := newPlugin.(**eiamplugin.EphemeralIamPlugin); ok {
-		return *p, true, nil
-	}
-	err = fmt.Errorf("plugin of type %T should be *eiamplugin.EphemeralIamPlugin", newPlugin)
-	return nil, false, errorsutil.EiamError{
-		Log: util.Logger.WithError(err),
-		Msg: fmt.Sprintf("Failed to load plugin %s", pluginPath),
-		Err: err,
-	}
 }
 
 // LoadPlugins searches for files in the plugin directory and attempts to load them.
 func (rc *RootCommand) LoadPlugins() error {
 	configDir := appconfig.GetConfigDir()
+	pluginsDir := path.Join(configDir, "plugins")
 
-	pluginPaths := []string{}
-	err := filepath.Walk(filepath.Join(configDir, "plugins"), func(path string, info os.FileInfo, err error) error {
-		if strings.HasSuffix(path, ".so") {
-			pluginPaths = append(pluginPaths, path)
-		}
-		return nil
-	})
+	files, err := os.ReadDir(pluginsDir)
 	if err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to list files in plugins directory",
-			Err: err,
-		}
+		return errorsutil.New("Failed to read plugins directory", err)
 	}
 
-	loadedPlugins := []*eiamplugin.EphemeralIamPlugin{}
-	for _, path := range pluginPaths {
-		if p, loaded, err := rc.loadPlugin(path); err != nil {
-			return err
-		} else if loaded {
-			rc.AddCommand(p.Command)
-			p.Path = path
-			loadedPlugins = append(loadedPlugins, p)
+	for _, f := range files {
+		pl, plClient, err := loadPlugin(f.Name(), pluginsDir)
+		if err != nil {
+			util.Logger.WithError(err).Errorf("Failed to load plugin: %s", f.Name())
+			continue
 		}
-	}
-	if len(rc.Plugins) != 0 {
-		util.Logger.Debugf("Successfully loaded %d plugins", len(pluginPaths))
-		rc.Plugins = loadedPlugins
+		pluginCmd, name, desc, version, err := addPluginCmd(pl)
+		if err != nil {
+			return err
+		}
+		rc.AddCommand(pluginCmd)
+		rc.Plugins = append(rc.Plugins, &plugins.EphemeralIamPlugin{
+			Name:        name,
+			Description: desc,
+			Version:     version,
+			Client:      plClient,
+			Path:        path.Join(pluginsDir, f.Name()),
+		})
 	}
 	return nil
+}
+
+func loadPlugin(pf, pluginsDir string) (plugins.EIAMPlugin, *hcplugin.Client, error) {
+	client := hcplugin.NewClient(&hcplugin.ClientConfig{
+		HandshakeConfig: eiamplugin.Handshake,
+		Plugins: map[string]hcplugin.Plugin{
+			"run-command": &eiamplugin.Command{},
+		},
+		Cmd:              exec.Command(path.Join(pluginsDir, pf)), //nolint:gosec // Single string with no args
+		AllowedProtocols: []hcplugin.Protocol{hcplugin.ProtocolGRPC},
+		SyncStderr:       os.Stderr,
+		SyncStdout:       os.Stdout,
+		Logger:           plugins.NewHCLogAdapter(util.Logger, ""),
+		// AutoMTLS:         true,  // For some reason, enabling this breaks the plugin commands.
+	})
+
+	rpcClient, err := client.Client()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	raw, err := rpcClient.Dispense("run-command")
+	if err != nil {
+		return nil, nil, err
+	}
+	return raw.(plugins.EIAMPlugin), client, nil
+}
+
+func addPluginCmd(p plugins.EIAMPlugin) (cmd *cobra.Command, name, desc, version string, err error) {
+	name, desc, version, err = p.GetInfo()
+	if err != nil {
+		return nil, "", "", "", errorsutil.New("Failed to fetch plugin information", err)
+	}
+
+	cmd = &cobra.Command{
+		Use:   name,
+		Short: fmt.Sprintf("%s %s: %s", name, version, desc),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.Run(args)
+		},
+	}
+	return cmd, name, desc, version, nil
 }
 
 // PrintPlugins formats the list of loaded plugins as a table and prints them.
@@ -107,7 +118,7 @@ func (rc *RootCommand) PrintPlugins() {
 	w := tabwriter.NewWriter(&buf, 0, 4, 4, ' ', 0)
 	fmt.Fprintln(w, "\nPLUGIN\tVERSION\tDESCRIPTION")
 	for _, p := range rc.Plugins {
-		fmt.Fprintf(w, "%s\t%s\t%s\n", p.Name, p.Version, p.Desc)
+		fmt.Fprintf(w, "%s\t%s\t%s\n", p.Name, p.Version, p.Description)
 	}
 	fmt.Fprintln(w)
 	w.Flush()

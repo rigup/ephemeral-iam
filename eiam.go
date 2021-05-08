@@ -15,7 +15,7 @@
 package main
 
 import (
-	"github.com/rigup/ephemeral-iam/cmd"
+	"github.com/rigup/ephemeral-iam/cmd/eiam"
 	"github.com/rigup/ephemeral-iam/internal/appconfig"
 	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 )
@@ -28,7 +28,13 @@ func main() {
 	errorsutil.CheckError(appconfig.InitConfig())
 	errorsutil.CheckError(appconfig.Setup())
 
-	rootCmd, err := cmd.NewEphemeralIamCommand()
+	rootCmd, err := eiam.NewEphemeralIamCommand()
+	// Kill the loaded plugin clients. This is happening here to ensure that
+	// Kill is called after the command has finished running, but also accounts
+	// for any errors that occur during execution.
+	for _, plugin := range rootCmd.Plugins {
+		defer plugin.Client.Kill()
+	}
 	errorsutil.CheckError(err)
 	errorsutil.CheckError(rootCmd.Execute())
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package eiam
 
 import (
 	"github.com/lithammer/dedent"
@@ -38,7 +38,7 @@ func NewEphemeralIamCommand() (*eiam.RootCommand, error) {
 			│  A CLI tool for temporarily escalating GCP IAM privileges  │
 			│  to perform high privilege tasks.                          │
 			│                                                            │
-			│      https://github.com/rigup/ephemeral-iam      │
+			│           https://github.com/rigup/ephemeral-iam           │
 			│                                                            │
 			╰────────────────────────────────────────────────────────────╯
 			

@@ -12,23 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gcpclient
+package eiam
 
 import (
-	"context"
+	"github.com/spf13/cobra"
 
-	credentials "cloud.google.com/go/iam/credentials/apiv1"
-	"google.golang.org/api/option"
-
-	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
+	"github.com/rigup/ephemeral-iam/internal/appconfig"
+	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 )
 
-// ClientWithReason creates a client SDK with the provided reason field.
-func ClientWithReason(reason string) (*credentials.IamCredentialsClient, error) {
-	ctx := context.Background()
-	gcpClientWithReason, err := credentials.NewIamCredentialsClient(ctx, option.WithRequestReason(reason))
-	if err != nil {
-		return nil, errorsutil.NewSDKError("Credentials", "", err)
+func newCmdVersion() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "version",
+		Short: "Print the installed ephemeral-iam version",
+		Run: func(cmd *cobra.Command, args []string) {
+			util.Logger.Infof("ephemeral-iam %s\n", appconfig.Version)
+		},
 	}
-	return gcpClientWithReason, nil
+	return cmd
 }

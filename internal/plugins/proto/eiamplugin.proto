@@ -1,0 +1,21 @@
+syntax = "proto3";
+package proto;
+
+option go_package = "./";
+
+message Empty {}
+
+message PluginInfo {
+    string name = 1;
+    string description = 2;
+    string version = 3;
+}
+
+message Args {
+    repeated string arg = 1;
+}
+
+service EIAMPlugin {
+    rpc GetInfo(Empty) returns (PluginInfo);
+    rpc Run(Args) returns (Empty);
+}

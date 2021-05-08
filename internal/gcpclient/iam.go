@@ -109,7 +109,7 @@ func CanImpersonate(project, serviceAccountEmail, reason string) (bool, error) {
 func newServiceAccountClient(reason string) (*iam.ProjectsServiceAccountsService, error) {
 	iamService, err := iam.NewService(context.Background(), option.WithRequestReason(reason))
 	if err != nil {
-		return nil, &errorsutil.SDKClientCreateError{Err: err, ResourceType: "Cloud IAM"}
+		return nil, errorsutil.NewSDKError("Cloud IAM", "", err)
 	}
 
 	return iam.NewProjectsServiceAccountsService(iamService), nil

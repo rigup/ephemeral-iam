@@ -30,7 +30,6 @@ import (
 
 	"github.com/elazarl/goproxy"
 
-	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 )
 
@@ -38,36 +37,20 @@ import (
 func setCa(caCertFile, caKeyFile string) error {
 	caCert, err := ioutil.ReadFile(caCertFile)
 	if err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: fmt.Sprintf("Failed to read CA certificate file %s", caCertFile),
-			Err: err,
-		}
+		return errorsutil.New(fmt.Sprintf("Failed to read CA certificate file %s", caCertFile), err)
 	}
 	caKey, err := ioutil.ReadFile(caKeyFile)
 	if err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: fmt.Sprintf("Failed to read CA certificate key file %s", caCertFile),
-			Err: err,
-		}
+		return errorsutil.New(fmt.Sprintf("Failed to read CA certificate key file %s", caCertFile), err)
 	}
 
 	ca, err := tls.X509KeyPair(caCert, caKey)
 	if err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to parse X509 public/private key pair",
-			Err: err,
-		}
+		return errorsutil.New("Failed to parse X509 public/private key pair", err)
 	}
 
 	if ca.Leaf, err = x509.ParseCertificate(ca.Certificate[0]); err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to parse x509 certificate",
-			Err: err,
-		}
+		return errorsutil.New("Failed to parse x509 certificate", err)
 	}
 
 	goproxy.GoproxyCa = ca

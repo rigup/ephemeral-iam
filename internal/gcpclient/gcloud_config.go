@@ -42,11 +42,7 @@ var (
 func readGcloudConfigFromFile() error {
 	usr, err := user.Current()
 	if err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to get current system user",
-			Err: err,
-		}
+		return errorsutil.New("Failed to get current system user", err)
 	}
 	configDir := path.Join(usr.HomeDir, ".config", "gcloud")
 
@@ -60,11 +56,7 @@ func readGcloudConfigFromFile() error {
 
 	gcloudConfig, err = ini.Load(pathToConfig)
 	if err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to parse gcloud config",
-			Err: err,
-		}
+		return errorsutil.New("Failed to parse gcloud config", err)
 	}
 	initialProjVal = gcloudConfig.Section("core").Key("project").String()
 	return nil
@@ -77,40 +69,24 @@ func getActiveConfig(configDir string) (string, error) {
 		configurationsDir := path.Join(configDir, "configurations")
 		if _, err := os.Stat(configurationsDir); os.IsNotExist(err) {
 			if err := os.Mkdir(configurationsDir, 0o755); err != nil {
-				return "", errorsutil.EiamError{
-					Log: util.Logger.WithError(err),
-					Msg: "Failed to create file while extracting release archive",
-					Err: err,
-				}
+				return "", errorsutil.New("Failed to create file while extracting release archive", err)
 			}
 			defaultConfig := path.Join(configurationsDir, "config_default")
 			if _, err := os.Create(defaultConfig); err != nil {
-				return "", errorsutil.EiamError{
-					Log: util.Logger.WithError(err),
-					Msg: "Failed to create file while extracting release archive",
-					Err: err,
-				}
+				return "", errorsutil.New("Failed to create file while extracting release archive", err)
 			}
 		}
 
 		activeConfig, err := setActiveConfig(configurationsDir, activeConfigFile)
 		if err != nil {
-			return "", errorsutil.EiamError{
-				Log: util.Logger.WithError(err),
-				Msg: "Failed to create file while extracting release archive",
-				Err: err,
-			}
+			return "", errorsutil.New("Failed to create file while extracting release archive", err)
 		}
 		return activeConfig, nil
 	}
 
 	configFromFile, err := ioutil.ReadFile(activeConfigFile)
 	if err != nil {
-		return "", errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to get active gcloud config",
-			Err: err,
-		}
+		return "", errorsutil.New("Failed to get active gcloud config", err)
 	}
 	return string(configFromFile), nil
 }
@@ -118,17 +94,9 @@ func getActiveConfig(configDir string) (string, error) {
 func setActiveConfig(configsDir, activeConfigFile string) (string, error) {
 	var configName string
 	if configs, err := os.ReadDir(configsDir); err != nil {
-		return "", errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to read gcloud config dir",
-			Err: err,
-		}
+		return "", errorsutil.New("Failed to read gcloud config dir", err)
 	} else if len(configs) == 0 {
-		return "", errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "There are no existing gcloud configurations",
-			Err: err,
-		}
+		return "", errorsutil.New("There are no existing gcloud configurations", err)
 	} else if len(configs) == 1 {
 		configName = strings.Split(configs[0].Name(), "_")[1]
 	} else {
@@ -138,32 +106,20 @@ func setActiveConfig(configsDir, activeConfigFile string) (string, error) {
 		}
 		chosenConfig, err := promptForConfigToSet(configNames)
 		if err != nil {
-			return "", errorsutil.EiamError{
-				Log: util.Logger.WithError(err),
-				Msg: "Failed to select active config",
-				Err: err,
-			}
+			return "", errorsutil.New("Failed to select active config", err)
 		}
 		configName = chosenConfig
 	}
 
 	fd, err := os.Create(activeConfigFile)
 	if err != nil {
-		return "", errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to set active gcloud config",
-			Err: err,
-		}
+		return "", errorsutil.New("Failed to set active gcloud config", err)
 	}
 	defer fd.Close()
 
 	util.Logger.Infof("Setting active gcloud config to %s", configName)
 	if _, err := fd.Write([]byte(configName)); err != nil {
-		return "", errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to write gcloud config file",
-			Err: err,
-		}
+		return "", errorsutil.New("Failed to write gcloud config file", err)
 	}
 	return configName, nil
 }
@@ -176,11 +132,7 @@ func promptForConfigToSet(configs []string) (string, error) {
 
 	_, result, err := prompt.Run()
 	if err != nil {
-		return "", errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Select-config prompt failed",
-			Err: err,
-		}
+		return "", errorsutil.New("Select-config prompt failed", err)
 	}
 	return result, nil
 }
@@ -207,11 +159,7 @@ func ConfigureGcloudProxy(project string) error {
 		gcloudConfig.Section("core").Key("project").SetValue(project)
 	}
 	if err := gcloudConfig.SaveTo(pathToConfig); err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to save gcloud config to file",
-			Err: err,
-		}
+		return errorsutil.New("Failed to save gcloud config to file", err)
 	}
 	return nil
 }
@@ -228,11 +176,7 @@ func UnsetGcloudProxy() error {
 	gcloudConfig.Section("core").DeleteKey("custom_ca_certs_file")
 	gcloudConfig.Section("core").Key("project").SetValue(initialProjVal)
 	if err := gcloudConfig.SaveTo(pathToConfig); err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to save gcloud config to file",
-			Err: err,
-		}
+		return errorsutil.New("Failed to save gcloud config to file", err)
 	}
 	return nil
 }
@@ -254,11 +198,7 @@ func CheckActiveAccountSet() (string, error) {
 		$ gcloud config set account ACCOUNT
 		
 	   to select an already authenticated account to use.`))
-		return "", errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to save gcloud config to file",
-			Err: err,
-		}
+		return "", errorsutil.New("Failed to save gcloud config to file", err)
 	}
 	return acct, nil
 }

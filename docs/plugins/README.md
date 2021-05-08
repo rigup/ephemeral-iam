@@ -1,13 +1,21 @@
 # ephemeral-iam Plugins
-Plugins for ephemeral-iam allow you to extend `eiam`'s functionality in the form of commands.
-Plugins are `.so` files (Golang dynamic libraries) and stored in the `plugins` directory
-of your `eiam` configuration folder.
+Custom functionality can be added to `ephemeral-iam` by the way of plugins.
+Plugins are [cobra](https://github.com/spf13/cobra) Commands that communicate
+with `ephemeral-iam` over gRPC using Hashicorp's `go-plugin` package.
 
 ## Installing a plugin
-To install a plugin, take the `.so` file and place it in the `plugins` directory of your
-`eiam` configuration folder.  `eiam` will automatically load any valid plugins in that
-directory and the commands added by those plugins will be listed when you run:
-`eiam --help`.
+Plugins are loaded from the `/path/to/config/ephemeral-iam/plugins` directory.
+To install a plugin, you just place the plugin's binary in that directory and
+`eiam` will automatically discover and load it.
+
+If the plugin you want to install is hosted in a Github repo and the binary is
+published as a release in the repository, you can install the plugin using the
+`eiam plugin install` command:
+
+```
+$ eiam plugin install --url github.com/user/repo-name
+```
 
 ## Developing a new plugin
-For information on how to develop an ephemeral-iam plugin, click [here](plugin_dev).
+Details on how to develop a custom plugin can be found in the [plugin-dev](plugin-dev)
+directory.

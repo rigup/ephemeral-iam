@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package eiam
 
 import (
 	"errors"
@@ -54,11 +54,7 @@ func newCmdCloudSQLProxy() *cobra.Command {
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if cloudSQLProxyPath = viper.GetString("binarypaths.cloudsqlproxy"); cloudSQLProxyPath == "" {
 				err := errors.New(`"cloud_sql_proxy": executable file not found in $PATH`)
-				return errorsutil.EiamError{
-					Log: util.Logger.WithError(err),
-					Msg: "Failed to run cloud_sql_proxy command",
-					Err: err,
-				}
+				return errorsutil.New("Failed to run cloud_sql_proxy command", err)
 			}
 
 			cmd.Flags().VisitAll(options.CheckRequired)
@@ -116,11 +112,7 @@ func runCloudSQLProxyCommand() error {
 
 	if err := c.Run(); err != nil {
 		fullCmd := fmt.Sprintf("cloud_sql_proxy %s", strings.Join(cloudSQLProxyCmdArgs, " "))
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: fmt.Sprintf("Failed to run command [%s]", fullCmd),
-			Err: err,
-		}
+		return errorsutil.New(fmt.Sprintf("Failed to run command [%s]", fullCmd), err)
 	}
 	return nil
 }

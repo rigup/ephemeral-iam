@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package eiam
 
 import (
 	"fmt"
 	"os"
+	"regexp"
 
 	"github.com/lithammer/dedent"
 	"github.com/manifoldco/promptui"
@@ -24,7 +25,7 @@ import (
 
 	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
-	eiamplugin "github.com/rigup/ephemeral-iam/pkg/plugins"
+	"github.com/rigup/ephemeral-iam/internal/plugins"
 )
 
 func newCmdPlugins() *cobra.Command {
@@ -67,13 +68,43 @@ func newCmdPluginsList() *cobra.Command {
 }
 
 func newCmdPluginsInstall() *cobra.Command {
+	var (
+		url       string
+		repoOwner string
+		repoName  string
+	)
 	cmd := &cobra.Command{
 		Use:   "install",
-		Short: "NOT IMPLEMENTED Install a new eiam plugin",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			util.Logger.Error("This command is not yet implemented")
+		Short: "Install a new eiam plugin",
+		Long: dedent.Dedent(`
+			The "plugins install" command installs a plugin from a Github repository.
+
+			The latest release in the provided repository is downloaded, extracted, and
+			the binary files are moved to the "plugins" directory.
+		`),
+		Args: func(cmd *cobra.Command, args []string) error {
+			urlRegex := regexp.MustCompile(`github\.com/(?P<user>[[:alnum:]\-]+)/(?P<repo>[[:alnum:]\.\-_]+)`)
+			match := urlRegex.FindStringSubmatch(url)
+			if match == nil {
+				err := fmt.Errorf("%s is not a valid Github repo URL", url)
+				return errorsutil.New("Invalid input parameter", err)
+			}
+			for i, grpName := range urlRegex.SubexpNames() {
+				if grpName == "user" {
+					repoOwner = match[i]
+				} else if grpName == "repo" {
+					repoName = match[i]
+				}
+			}
 			return nil
 		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return plugins.InstallPlugin(repoOwner, repoName)
+		},
+	}
+	cmd.Flags().StringVarP(&url, "url", "u", "", "The URL of the plugin's Github repo")
+	if err := cmd.MarkFlagRequired("url"); err != nil {
+		util.Logger.Fatal(err.Error())
 	}
 	return cmd
 }
@@ -99,11 +130,7 @@ func newCmdPluginsRemove() *cobra.Command {
 			}
 
 			if err := os.Remove(plugin.Path); err != nil {
-				return errorsutil.EiamError{
-					Log: util.Logger.WithError(err),
-					Msg: fmt.Sprintf("Failed to remove plugin file %s", plugin.Path),
-					Err: err,
-				}
+				return errorsutil.New(fmt.Sprintf("Failed to remove plugin file %s", plugin.Path), err)
 			}
 			util.Logger.Infof("Successfully removed %s", plugin.Name)
 			return nil
@@ -112,7 +139,7 @@ func newCmdPluginsRemove() *cobra.Command {
 	return cmd
 }
 
-func selectPlugin() (*eiamplugin.EphemeralIamPlugin, error) {
+func selectPlugin() (*plugins.EphemeralIamPlugin, error) {
 	templates := &promptui.SelectTemplates{
 		Label:    "{{ . }}?",
 		Active:   " ►  {{ .Name | red }}",
@@ -121,7 +148,7 @@ func selectPlugin() (*eiamplugin.EphemeralIamPlugin, error) {
 		Details: `
 --------- Plugin ----------
 {{ "Name:" | faint }}	{{ .Name }}
-{{ "Description:" | faint }}	{{ .Desc }}`,
+{{ "Description:" | faint }}	{{ .Description }}`,
 	}
 
 	prompt := promptui.Select{
@@ -132,11 +159,7 @@ func selectPlugin() (*eiamplugin.EphemeralIamPlugin, error) {
 
 	i, _, err := prompt.Run()
 	if err != nil {
-		return nil, errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Select-plugin prompt failed",
-			Err: err,
-		}
+		return nil, errorsutil.New("Select-plugin prompt failed", err)
 	}
 	return RootCommand.Plugins[i], nil
 }

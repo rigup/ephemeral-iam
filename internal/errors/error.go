@@ -29,6 +29,14 @@ type EiamError struct {
 	Msg string
 }
 
+func New(msg string, err error) error {
+	return EiamError{
+		Log: util.Logger.WithError(err),
+		Msg: msg,
+		Err: err,
+	}
+}
+
 func (e EiamError) Error() string {
 	errStr, err := e.Log.String()
 	if err != nil {

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package eiam
 
 import (
 	"fmt"
@@ -113,11 +113,7 @@ func runGcloudCommand() error {
 
 	if err := c.Run(); err != nil {
 		fullCmd := fmt.Sprintf("gcloud %s", strings.Join(gcloudCmdArgs, " "))
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: fmt.Sprintf("Failed to run command [%s]", fullCmd),
-			Err: err,
-		}
+		return errorsutil.New(fmt.Sprintf("Failed to run command [%s]", fullCmd), err)
 	}
 	return nil
 }

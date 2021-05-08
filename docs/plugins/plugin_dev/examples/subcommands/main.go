@@ -15,43 +15,55 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
+	"github.com/hashicorp/go-hclog"
 	"github.com/spf13/cobra"
 
 	"github.com/rigup/ephemeral-iam/pkg/options"
-	eiamplugin "github.com/rigup/ephemeral-iam/pkg/plugins"
 )
 
-var (
-	// Plugin does not need to include a RunE field.
-	Plugin = &eiamplugin.EphemeralIamPlugin{
-		Command: &cobra.Command{
-			Use:   "plugin-with-subcommands",
-			Short: "This plugin contains subcommands",
-		},
-		Name:    "Subcommands Example",
-		Desc:    "Plugin demonstrating how to add subcommands to an eiam plugin",
-		Version: "v0.0.1",
-	}
-
-	logger *logrus.Logger
-
-	project string
+const (
+	name    = "basic-plugin"
+	desc    = "An example of a basic eiam plugin command"
+	version = "v0.0.1"
 )
 
-func init() {
-	logger = eiamplugin.Logger()
+var project string
 
-	Plugin.AddCommand(newCmdExampleSubcommand())
-	Plugin.AddCommand(newCmdAnotherSubcommand())
+// BasicPlugin is the implementation of the ephemeral-iam plugin interface.
+type BasicPlugin struct {
+	// Logger is the logger for the plugin to use to send log entries to eiam
+	// to be formatted and output to the user.
+	Logger hclog.Logger
 }
 
-func newCmdExampleSubcommand() *cobra.Command {
+// GetInfo is the function that eiam invokes to get metadata about the plugin.
+func (p *BasicPlugin) GetInfo() (n, d, v string, err error) {
+	return name, desc, version, nil
+}
+
+// Run is the function that eiam uses to invoke the plugin command.
+func (p *BasicPlugin) Run(args []string) error {
+	rootCmd := newRootCmd(p)
+	rootCmd.SetArgs(args) // THIS IS REQUIRED.
+	return rootCmd.Execute()
+}
+
+func newRootCmd(p *BasicPlugin) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   name,
+		Short: desc,
+	}
+	cmd.AddCommand(newCmdExampleSubcommand(p))
+	cmd.AddCommand(newCmdAnotherSubcommand(p))
+	return cmd
+}
+
+func newCmdExampleSubcommand(p *BasicPlugin) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "example-subcommand",
 		Short: "This is a subcommand of the plugin",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logger.Infof("We can access the current user's project even if the flag isn't provided: %s", project)
+			p.Logger.Info("We can access the current user's project even if the flag isn't provided", "project", project)
 			return nil
 		},
 	}
@@ -59,12 +71,12 @@ func newCmdExampleSubcommand() *cobra.Command {
 	return cmd
 }
 
-func newCmdAnotherSubcommand() *cobra.Command {
+func newCmdAnotherSubcommand(p *BasicPlugin) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "another-subcommand",
 		Short: "This is another subcommand of the plugin",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logger.Infof("The user's project isn't available to this command because the flag was not explicitly added to it: %s", project)
+			p.Logger.Info("The user's project is empty because the flag was not explicitly added to it", "project", project)
 			return nil
 		},
 	}

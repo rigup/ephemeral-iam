@@ -15,27 +15,37 @@
 package eiamplugin
 
 import (
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
+	"context"
 
-	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
+	"github.com/hashicorp/go-plugin"
+	"google.golang.org/grpc"
+
+	"github.com/rigup/ephemeral-iam/internal/plugins"
+	pb "github.com/rigup/ephemeral-iam/internal/plugins/proto"
 )
 
-// EphemeralIamPlugin represents an ephemeral-iam command plugin.
-type EphemeralIamPlugin struct {
-	*cobra.Command
-
-	// Name is the canonical name of the plugin.
-	Name string
-	// Desc is the description of the plugin.
-	Desc string
-	// Version is the version of the plugin.
-	Version string
-	// Path is the path that the plugin was loaded from.
-	Path string
+var Handshake = plugin.HandshakeConfig{
+	ProtocolVersion:  1,
+	MagicCookieKey:   "EIAM_PLUGIN",
+	MagicCookieValue: "dab75867-cde1-41fc-8416-818b718e4d62",
 }
 
-// Logger allows plugins to fetch an instance of the ephemeral-iam logger.
-func Logger() *logrus.Logger {
-	return util.Logger
+// Command is the implementation of plugin.GRPCPlugin that allows it to be
+// served and consumed.
+type Command struct {
+	plugin.Plugin
+	Impl plugins.EIAMPlugin
+}
+
+func (p *Command) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
+	pb.RegisterEIAMPluginServer(s, &plugins.GRPCServer{Impl: p.Impl})
+	return nil
+}
+
+func (p *Command) GRPCClient(
+	ctx context.Context,
+	broker *plugin.GRPCBroker,
+	c *grpc.ClientConn,
+) (interface{}, error) {
+	return &plugins.GRPCClient{Client: pb.NewEIAMPluginClient(c)}, nil
 }

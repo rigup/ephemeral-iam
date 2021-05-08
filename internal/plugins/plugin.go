@@ -12,23 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gcpclient
+package plugins
 
-import (
-	"context"
+import hcplugin "github.com/hashicorp/go-plugin"
 
-	credentials "cloud.google.com/go/iam/credentials/apiv1"
-	"google.golang.org/api/option"
-
-	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
-)
-
-// ClientWithReason creates a client SDK with the provided reason field.
-func ClientWithReason(reason string) (*credentials.IamCredentialsClient, error) {
-	ctx := context.Background()
-	gcpClientWithReason, err := credentials.NewIamCredentialsClient(ctx, option.WithRequestReason(reason))
-	if err != nil {
-		return nil, errorsutil.NewSDKError("Credentials", "", err)
-	}
-	return gcpClientWithReason, nil
+// EphemeralIamPlugin holds the metadata of an installed plugin.
+type EphemeralIamPlugin struct {
+	Name        string
+	Description string
+	Version     string
+	Client      *hcplugin.Client
+	Path        string
 }
