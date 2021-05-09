@@ -22,9 +22,14 @@ import (
 
 // Flag names and shorthands.
 var (
+	// ComputeInstanceFlag sets the compute instance to use for a command.
 	ComputeInstanceFlag = flagName{"instance", "i"}
-	PubSubTopicFlag     = flagName{"topic", "t"}
-	StorageBucketFlag   = flagName{"bucket", "b"}
+
+	// PubSubTopicFlag sets the Pub/Sub topic to use for a command.
+	PubSubTopicFlag = flagName{"topic", "t"}
+
+	// StorageBucketFlag sets the GCS bucket to use for a command.
+	StorageBucketFlag = flagName{"bucket", "b"}
 )
 
 // AddComputeInstanceFlag adds the --instance/-i flag to the command.
