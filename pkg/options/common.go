@@ -36,13 +36,26 @@ var (
 
 // Flag names and shorthands.
 var (
-	FormatFlag              = flagName{"format", "f"}
-	ProjectFlag             = flagName{"project", "p"}
-	ReasonFlag              = flagName{"reason", "R"}
-	RegionFlag              = flagName{"region", "r"}
+	// FormatFlag controls the output format for a command.
+	FormatFlag = flagName{"format", "f"}
+
+	// ProjectFlag sets the GCP project to use for a command.
+	ProjectFlag = flagName{"project", "p"}
+
+	// ReasonFlag enforces that a rationale be given for a command.
+	ReasonFlag = flagName{"reason", "R"}
+
+	// RegionFlag sets the GCP region to use for a command.
+	RegionFlag = flagName{"region", "r"}
+
+	// ServiceAccountEmailFlag sets the service account to use for a command.
 	ServiceAccountEmailFlag = flagName{"service-account-email", "s"}
-	YesFlag                 = flagName{"yes", "y"}
-	ZoneFlag                = flagName{"zone", "z"}
+
+	// YesFlag is a boolean that when set to true ignores non-required user prompts.
+	YesFlag = flagName{"yes", "y"}
+
+	// ZoneFlag sets the GCP zone to use for a command.
+	ZoneFlag = flagName{"zone", "z"}
 )
 
 type flagName struct {
