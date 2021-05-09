@@ -109,6 +109,7 @@ func runCloudSQLProxyCommand() error {
 	c := exec.Command(cloudSQLProxyPath, cloudSQLProxyAuth...)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
+	c.Stdin = os.Stdin
 
 	if err := c.Run(); err != nil {
 		fullCmd := fmt.Sprintf("cloud_sql_proxy %s", strings.Join(cloudSQLProxyCmdArgs, " "))

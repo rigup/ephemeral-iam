@@ -100,15 +100,16 @@ func runGcloudCommand() error {
 
 	// There has to be a better way to do this...
 	util.Logger.Infof("Running: [gcloud %s]\n\n", strings.Join(gcloudCmdArgs, " "))
-	gcloudCmdArgs = append(
+	cmdArgs := append(
 		gcloudCmdArgs,
 		"--impersonate-service-account", gcloudCmdConfig.ServiceAccountEmail,
 		"--verbosity=error",
 	)
 	gcloud := viper.GetString("binarypaths.gcloud")
-	c := exec.Command(gcloud, gcloudCmdArgs...)
+	c := exec.Command(gcloud, cmdArgs...)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
+	c.Stdin = os.Stdin
 	c.Env = append(os.Environ(), reasonHeader)
 
 	if err := c.Run(); err != nil {

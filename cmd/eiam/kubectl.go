@@ -109,6 +109,7 @@ func runKubectlCommand() error {
 	c := exec.Command(kubectl, kubectlAuth...)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
+	c.Stdin = os.Stdin
 
 	if err := c.Run(); err != nil {
 		fullCmd := fmt.Sprintf("kubectl %s", strings.Join(kubectlCmdArgs, " "))

@@ -122,7 +122,7 @@ Top-level `--help`
 │  A CLI tool for temporarily escalating GCP IAM privileges  │
 │  to perform high privilege tasks.                          │
 │                                                            │
-│      https://github.com/rigup/ephemeral-iam      │
+│           https://github.com/rigup/ephemeral-iam           │
 │                                                            │
 ╰────────────────────────────────────────────────────────────╯
 
