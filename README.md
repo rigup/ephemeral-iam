@@ -117,7 +117,7 @@ and to explore the accepted arguments and flags.
 
 Top-level `--help`
 ```
- $ eiam --help
+$ eiam --help
 
 ╭────────────────────────────────────────────────────────────╮
 │                                                            │
@@ -149,28 +149,36 @@ Top-level `--help`
 │                                                            │
 ╰────────────────────────────────────────────────────────────╯
 
+Please report any bugs or feature requests by opening a new
+issue at https://github.com/rigup/ephemeral-iam/issues
+
 Usage:
   eiam [command]
 
 Available Commands:
-  assume-privileges     Configure gcloud to make API calls as the provided service account [alias: priv]
-  config                Manage configuration values
-  gcloud                Run a gcloud command with the permissions of the specified service account
-  help                  Help about any command
-  kubectl               Run a kubectl command with the permissions of the specified service account
-  list-service-accounts List service accounts that can be impersonated [alias: list]
-  query-permissions     Query current permissions on a GCP resource
+  assume-privileges        Configure gcloud to make API calls as the provided service account [alias: priv]
+  cloud_sql_proxy          Run cloud_sql_proxy with the permissions of the specified service account
+  config                   Manage configuration values
+  default-service-accounts Configure default service accounts to use in other commands [alias: default-sa]
+  gcloud                   Run a gcloud command with the permissions of the specified service account
+  help                     Help about any command
+  kubectl                  Run a kubectl command with the permissions of the specified service account
+  list-service-accounts    List service accounts that can be impersonated [alias: list]
+  plugins                  Manage ephemeral-iam plugins
+  query-permissions        Query current permissions on a GCP resource
+  version                  Print the installed ephemeral-iam version
 
 Flags:
-  -h, --help   help for eiam
-  -y, --yes    Assume 'yes' to all prompts
+  -f, --format string   Set the output of the current command (default "text")
+  -h, --help            help for eiam
+  -y, --yes             Assume 'yes' to all prompts
 
 Use "eiam [command] --help" for more information about a command.
 ```
 
 Sub-command `--help`
 ```
- $ eiam assume-privileges --help
+ $ eiam priv --help
 
 The "assume-privileges" command fetches short-lived credentials for the provided service Account
 and configures gcloud to proxy its traffic through an auth proxy. This auth proxy sets the
@@ -193,13 +201,14 @@ eiam assume-privileges \
   --reason "Emergency security patch (JIRA-1234)"
 
 Flags:
-  -h, --help                         help for assume-privileges
-  -p, --project string               The GCP project. Inherits from the active gcloud config by default (default "rigup-sandbox")
-  -R, --reason string                A detailed rationale for assuming higher permissions
-  -s, --service-account-email string   The email address for the service account
+  -h, --help                           help for assume-privileges
+  -p, --project string                 The GCP project. Inherits from the active gcloud config by default (default "my-project")
+  -R, --reason string                  A detailed rationale for assuming higher permissions
+  -s, --service-account-email string   The email address for the service account. Defaults to the configured default account for the current project
 
 Global Flags:
-  -y, --yes   Assume 'yes' to all prompts
+  -f, --format string   Set the output of the current command (default "text")
+  -y, --yes             Assume 'yes' to all prompts
 ```
 
 ### Tutorial

@@ -85,9 +85,9 @@ func SelectToken(tokenConfig map[string]string) (string, error) {
 	}
 	templates := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
-		Active:   " ►  {{ . | red }}",
-		Inactive: "  {{ . | red }}",
-		Selected: " ►  {{ . | red | cyan }}",
+		Active:   " ►  {{ . | blue }}",
+		Inactive: "  {{ . | cyan }}",
+		Selected: " ►  {{ . | green  }}",
 	}
 
 	prompt := promptui.Select{

@@ -37,6 +37,7 @@ const (
 	AuthProxyLogDir        = "authproxy.logdir"
 	AuthProxyCertFile      = "authproxy.certfile"
 	AuthProxyKeyFile       = "authproxy.keyfile"
+	DefaultServiceAccounts = "serviceaccounts"
 	CloudSQLProxyPath      = "binarypaths.cloudsqlproxy"
 	GcloudPath             = "binarypaths.gcloud"
 	KubectlPath            = "binarypaths.kubectl"
