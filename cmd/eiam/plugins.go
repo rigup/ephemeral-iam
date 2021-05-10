@@ -37,11 +37,14 @@ func newCmdPlugins() *cobra.Command {
 			Plugins are '.so' files (Golang dynamic libraries) and stored in the 'plugins' directory
 			of your eiam configuration folder.
 			
-			- Installing a plugin -
-			To install a plugin, take the '.so' file and place it in the 'plugins' directory of your
-			eiam configuration folder.  eiam will automatically load any valid plugins in that
-			directory and the commands added by those plugins will be listed when you run:
-			'eiam --help'.
+			-------------------------------     Installing a plugin     -------------------------------
+			Plugins are loaded from the '/path/to/config/ephemeral-iam/plugins' directory. To install a
+			plugin, you just place the plugin's binary in that directory and eiam will automatically
+			discover and load it.
+			
+			If the plugin you want to install is hosted in a Github repo and the binary is published as
+			a release in the repository, you can install the plugin using the 'eiam plugin install'
+			command.
 		`),
 	}
 
@@ -105,6 +108,9 @@ func newCmdPluginsInstall() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVarP(&url, "url", "u", "", "The URL of the plugin's Github repo")
+	if err := cmd.MarkFlagRequired("url"); err != nil {
+		util.Logger.Fatal(err.Error())
+	}
 	cmd.Flags().StringVarP(&tokenName, "name", "n", "", "The name of the Github access token to use for private repos")
 	return cmd
 }
