@@ -36,9 +36,9 @@ var (
 
 // CheckForNewRelease checks to see if there is a new version of eiam available.
 func CheckForNewRelease() {
-	release, err := util.GetLatestRelease(repoOwner, repoName)
+	release, err := util.GetLatestRelease(repoOwner, repoName, "")
 	if err != nil {
-		util.Logger.WithError(err).Error("Skipping update, please try again later")
+		util.Logger.WithError(err).Error("Failed to get latest release, skipping update")
 		return
 	}
 
@@ -63,26 +63,26 @@ func CheckForNewRelease() {
 }
 
 func installNewVersion(release *github.RepositoryRelease) {
-	downloadURL, err := util.GetReleaseDownloadURL(release)
+	downloadURL, err := util.GetReleaseDownloadURL(release, false)
 	if err != nil {
-		util.Logger.WithError(err).Error("Skipping update, please try again later")
+		util.Logger.WithError(err).Error("Failed to get release download URL, skipping update")
 		return
 	}
 	tmpDir := os.TempDir()
-	if err = util.DownloadAndExtract(downloadURL, tmpDir); err != nil {
-		util.Logger.WithError(err).Error("Skipping update, please try again later")
+	if err = util.DownloadAndExtract(downloadURL, tmpDir, ""); err != nil {
+		util.Logger.WithError(err).Error("Failed to process release, skipping update")
 		return
 	}
 
-	installPath, err := CheckCommandExists("eiam")
+	installDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
-		util.Logger.WithError(err).Error("Skipping update, please try again later")
-		return
+		util.Logger.WithError(err).Error("Failed to find eiam binary location, skipping update")
 	}
 
+	installPath := filepath.Join(installDir, "eiam")
 	tmpLoc := filepath.Join(tmpDir, "eiam")
 	if err := os.Rename(tmpLoc, installPath); err != nil {
-		util.Logger.Errorf("failed to move %s to %s", tmpLoc, installPath)
+		util.Logger.WithError(err).Errorf("Failed to move %s to %s", tmpLoc, installPath)
 		return
 	}
 	util.Logger.Info("Update completed successfully")

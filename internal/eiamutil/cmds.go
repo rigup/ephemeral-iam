@@ -77,6 +77,33 @@ func Confirm(vals map[string]string) {
 	}
 }
 
+// SelectToken prompts the user to select an existing Github personal access token.
+func SelectToken(tokenConfig map[string]string) (string, error) {
+	tokenNames := []string{}
+	for name := range tokenConfig {
+		tokenNames = append(tokenNames, name)
+	}
+	templates := &promptui.SelectTemplates{
+		Label:    "{{ . }}",
+		Active:   " ►  {{ . | red }}",
+		Inactive: "  {{ . | red }}",
+		Selected: " ►  {{ . | red | cyan }}",
+	}
+
+	prompt := promptui.Select{
+		Label:        "Select Token",
+		Items:        tokenNames,
+		Templates:    templates,
+		HideSelected: true,
+	}
+
+	i, _, err := prompt.Run()
+	if err != nil {
+		return "", err
+	}
+	return tokenNames[i], nil
+}
+
 // ExtractUnknownArgs fetches unknown args passed to a command.  This is used
 // in the kubectl and gcloud commands to extract only the fields that should
 // be used in the invoked command.

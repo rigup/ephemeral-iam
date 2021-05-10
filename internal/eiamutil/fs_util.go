@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -35,16 +36,24 @@ func MoveFile(src, dst string) error {
 	return nil
 }
 
-func DownloadAndExtract(url, tmpDir string) error {
-	Logger.Infof("Downloading new version from %s", url)
+func DownloadAndExtract(url, tmpDir, token string) error {
+	Logger.Infof("Downloading archive from %s", url)
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
+	req.Header = map[string][]string{
+		"Accept":        {"application/octet-stream"},
+		"Authorization": {fmt.Sprintf("token %s", token)},
+	}
+
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
+	}
+	if resp.StatusCode != 200 {
+		return errors.New(resp.Status)
 	}
 	defer resp.Body.Close()
 
@@ -58,18 +67,20 @@ func DownloadAndExtract(url, tmpDir string) error {
 	tarReader := tar.NewReader(gzr)
 	for {
 		header, err := tarReader.Next()
-
-		switch {
-		case err == io.EOF:
-			return nil
-		case err != nil:
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
 			return err
-		case header.Typeflag == tar.TypeDir:
+		}
+
+		switch header.Typeflag {
+		case tar.TypeDir:
 			target := filepath.Join(tmpDir, filepath.Clean(header.Name))
 			if sErr := os.MkdirAll(target, 0o755); sErr != nil {
 				return sErr
 			}
-		case header.Typeflag == tar.TypeReg:
+		case tar.TypeReg:
 			target := filepath.Join(tmpDir, filepath.Clean(header.Name))
 			var f *os.File
 			f, err = os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
@@ -86,8 +97,7 @@ func DownloadAndExtract(url, tmpDir string) error {
 			// to wait until all operations have completed.
 			f.Close()
 		default:
-			err = fmt.Errorf("unknown type %v in %s", header.Typeflag, header.Name)
-			return err
+			return fmt.Errorf("unknown type %v in %s", header.Typeflag, header.Name)
 		}
 	}
 }

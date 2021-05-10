@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strconv"
+	"strings"
 
 	"github.com/lithammer/dedent"
 	"github.com/sirupsen/logrus"
@@ -35,6 +36,7 @@ var (
 	loggingFormats   = []string{"text", "json", "debug"}
 	boolConfigFields = []string{
 		appconfig.AuthProxyVerbose,
+		appconfig.GithubAuth,
 		appconfig.LoggingLevelTruncation,
 		appconfig.LoggingPadLevelText,
 	}
@@ -60,11 +62,22 @@ var configInfo = dedent.Dedent(`
 		│ authproxy.verbose              │ When set to 'true', verbose output for      │
 		│                                │ proxy logs will be enabled                  │
 		├────────────────────────────────┼─────────────────────────────────────────────┤
+		│ binarypaths.cloudsqlproxy      │ The path to the cloud_sql_proxy binary on   │
+		│                                │ your filesystem                             │
+		├────────────────────────────────┼─────────────────────────────────────────────┤
 		│ binarypaths.gcloud             │ The path to the gcloud binary on your       │
 		│                                │ filesystem                                  │
 		├────────────────────────────────┼─────────────────────────────────────────────┤
 		│ binarypaths.kubectl            │ The path to the kubectl binary on your      │
 		│                                │ filesystem                                  │
+		├────────────────────────────────┼─────────────────────────────────────────────┤
+		│ github.auth                    │ When set to 'true', the "plugins install"   │
+		│                                │ command will use the configured personal    │
+		│                                │ access token to authenticate to the Github  │
+		│                                │ API.                                        │
+		├────────────────────────────────┼─────────────────────────────────────────────┤
+		│ github.tokens                  │ The configured Github personal access       │
+		│                                │ tokens                                      │
 		├────────────────────────────────┼─────────────────────────────────────────────┤
 		│ logging.format                 │ The format for which to write console logs  │
 		│                                │ Can be 'json', 'text', or 'debug'           │
@@ -105,7 +118,26 @@ func newCmdConfigPrint() *cobra.Command {
 			if err != nil {
 				return errorsutil.New("Failed to read configuration file", err)
 			}
-			fmt.Printf("\n%s\n", string(data))
+			lines := strings.Split(string(data), "\n")
+			inTokens := false
+			fmt.Printf("\n")
+			for i := 0; i < len(lines); i++ {
+				if lines[i] == "  tokens:" {
+					inTokens = true
+				} else if inTokens {
+					// Mask Github personal access tokens.
+					tokenConfig := viper.GetStringMapString(appconfig.GithubTokens)
+					for tokenName := range tokenConfig {
+						fmt.Printf("    %s: **********\n", tokenName)
+						i++
+					}
+					i--
+					inTokens = false
+					continue
+				}
+				fmt.Println(lines[i])
+			}
+			fmt.Printf("\n")
 			return nil
 		},
 	}

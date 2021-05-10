@@ -48,6 +48,7 @@ func newCmdPlugins() *cobra.Command {
 	cmd.AddCommand(newCmdPluginsList())
 	cmd.AddCommand(newCmdPluginsInstall())
 	cmd.AddCommand(newCmdPluginsRemove())
+	cmd.AddCommand(newCmdPluginsAuth())
 	return cmd
 }
 
@@ -70,6 +71,7 @@ func newCmdPluginsList() *cobra.Command {
 func newCmdPluginsInstall() *cobra.Command {
 	var (
 		url       string
+		tokenName string
 		repoOwner string
 		repoName  string
 	)
@@ -99,13 +101,11 @@ func newCmdPluginsInstall() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return plugins.InstallPlugin(repoOwner, repoName)
+			return plugins.InstallPlugin(repoOwner, repoName, tokenName)
 		},
 	}
 	cmd.Flags().StringVarP(&url, "url", "u", "", "The URL of the plugin's Github repo")
-	if err := cmd.MarkFlagRequired("url"); err != nil {
-		util.Logger.Fatal(err.Error())
-	}
+	cmd.Flags().StringVarP(&tokenName, "name", "n", "", "The name of the Github access token to use for private repos")
 	return cmd
 }
 
@@ -141,7 +141,7 @@ func newCmdPluginsRemove() *cobra.Command {
 
 func selectPlugin() (*plugins.EphemeralIamPlugin, error) {
 	templates := &promptui.SelectTemplates{
-		Label:    "{{ . }}?",
+		Label:    "{{ . }}",
 		Active:   " ►  {{ .Name | red }}",
 		Inactive: "  {{ .Name | red }}",
 		Selected: " ►  {{ .Name | red | cyan }}",
