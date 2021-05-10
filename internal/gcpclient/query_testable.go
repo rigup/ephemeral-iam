@@ -103,16 +103,10 @@ func QueryComputeInstancePermissions(
 		Permissions: permsToTest,
 	}).Do()
 	if err != nil {
-		return []string{}, errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: fmt.Sprintf(
-				"Failed to query permissions on resource projects/%s/zones/%s/instances/%s",
-				project,
-				zone,
-				instance,
-			),
-			Err: err,
-		}
+		errMsg := fmt.Sprintf(
+			"Failed to query permissions on resource projects/%s/zones/%s/instances/%s",
+			project, zone, instance)
+		return []string{}, errorsutil.New(errMsg, err)
 	}
 
 	return resp.Permissions, nil
