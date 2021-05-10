@@ -83,11 +83,7 @@ func newCmdGcloud() *cobra.Command {
 }
 
 func runGcloudCommand() error {
-	hasAccess, err := gcpclient.CanImpersonate(
-		gcloudCmdConfig.Project,
-		gcloudCmdConfig.ServiceAccountEmail,
-		gcloudCmdConfig.Reason,
-	)
+	hasAccess, err := gcpclient.CanImpersonate(gcloudCmdConfig.Project, gcloudCmdConfig.ServiceAccountEmail)
 	if err != nil {
 		return err
 	} else if !hasAccess {

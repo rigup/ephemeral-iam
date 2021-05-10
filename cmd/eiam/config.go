@@ -72,7 +72,7 @@ var configInfo = dedent.Dedent(`
 		│                                │ filesystem                                  │
 		├────────────────────────────────┼─────────────────────────────────────────────┤
 		│ github.auth                    │ When set to 'true', the "plugins install"   │
-		│                                │ command will use the configured personal    │
+		│                                │ command will use a configured personal      │
 		│                                │ access token to authenticate to the Github  │
 		│                                │ API.                                        │
 		├────────────────────────────────┼─────────────────────────────────────────────┤
@@ -91,6 +91,9 @@ var configInfo = dedent.Dedent(`
 		├────────────────────────────────┼─────────────────────────────────────────────┤
 		│ logging.padleveltext           │ When set to 'true', output logs will align  │
 		│                                │ evenly with their output level indicator    │
+		├────────────────────────────────┼─────────────────────────────────────────────┤
+		│ serviceaccounts                │ The default service accounts set via the    │
+		│                                │ 'default-service-accounts' command          │
 		└────────────────────────────────┴─────────────────────────────────────────────┘
 `)
 
@@ -224,23 +227,34 @@ func checkSetArgs(cmd *cobra.Command, args []string) error {
 		return argsError(errors.New("requires both a config key and a new value"))
 	}
 
+	switch args[0] {
+	case appconfig.LoggingLevel:
+		if !util.Contains(loggingLevels, args[1]) {
+			return argsError(fmt.Errorf("logging level must be one of %v", loggingLevels))
+		}
+		return nil
+	case appconfig.LoggingFormat:
+		if !util.Contains(loggingFormats, args[1]) {
+			return argsError(fmt.Errorf("logging format must be one of %v", loggingFormats))
+		}
+		return nil
+	case appconfig.GithubTokens:
+		return errors.New("please use the 'plugins auth' commands to edit configured Github access tokens")
+	case appconfig.DefaultServiceAccounts:
+		return errors.New("please use the 'default-service-accounts' commands to edit configured default service accounts")
+	}
+
+	if util.Contains(boolConfigFields, args[0]) {
+		if _, err := strconv.ParseBool(args[1]); err != nil {
+			return argsError(fmt.Errorf("the %s value must be either true or false", args[0]))
+		}
+		return nil
+	}
+
 	if !util.Contains(viper.AllKeys(), args[0]) {
 		return argsError(fmt.Errorf("invalid config key %s", args[0]))
 	}
 
-	if args[0] == appconfig.LoggingLevel {
-		if !util.Contains(loggingLevels, args[1]) {
-			return argsError(fmt.Errorf("logging level must be one of %v", loggingLevels))
-		}
-	} else if args[0] == appconfig.LoggingFormat {
-		if !util.Contains(loggingFormats, args[1]) {
-			return argsError(fmt.Errorf("logging format must be one of %v", loggingFormats))
-		}
-	} else if util.Contains(boolConfigFields, args[0]) {
-		if _, err := strconv.ParseBool(args[1]); err != nil {
-			return argsError(fmt.Errorf("the %s value must be either true or false", args[0]))
-		}
-	}
 	return nil
 }
 

@@ -83,11 +83,7 @@ func newCmdKubectl() *cobra.Command {
 }
 
 func runKubectlCommand() error {
-	hasAccess, err := gcpclient.CanImpersonate(
-		kubectlCmdConfig.Project,
-		kubectlCmdConfig.ServiceAccountEmail,
-		kubectlCmdConfig.Reason,
-	)
+	hasAccess, err := gcpclient.CanImpersonate(kubectlCmdConfig.Project, kubectlCmdConfig.ServiceAccountEmail)
 	if err != nil {
 		return err
 	} else if !hasAccess {

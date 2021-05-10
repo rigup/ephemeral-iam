@@ -10,6 +10,8 @@ INFO    ephemeral-iam vX.Y.Z
 ```
 
 - [Basic Commands](./basic_commands/README.md)
+- [Setting Default Service Accounts](./default_service_accounts/README.md)
 - [Inspecting Permissions and Service Accounts](./perms_and_svc_accts/README.md)
 - [Running a Single Command](./running_commands/README.md)
 - [Using a Privileged Session](./privileged_session/README.md)
+- [ephemeral-iam Plugins](../plugins/README.md)

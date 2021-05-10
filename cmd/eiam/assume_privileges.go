@@ -73,11 +73,7 @@ func newCmdAssumePrivileges() *cobra.Command {
 }
 
 func startPrivilegedSession() error {
-	hasAccess, err := gcpclient.CanImpersonate(
-		apCmdConfig.Project,
-		apCmdConfig.ServiceAccountEmail,
-		apCmdConfig.Reason,
-	)
+	hasAccess, err := gcpclient.CanImpersonate(apCmdConfig.Project, apCmdConfig.ServiceAccountEmail)
 	if err != nil {
 		return err
 	} else if !hasAccess {

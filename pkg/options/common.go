@@ -15,6 +15,9 @@
 package options
 
 import (
+	"fmt"
+
+	"github.com/manifoldco/promptui"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
@@ -145,12 +148,20 @@ func AddZoneFlag(fs *pflag.FlagSet, zone *string, required bool) {
 
 // AddServiceAccountEmailFlag adds the --service-account-email/-s flag.
 func AddServiceAccountEmailFlag(fs *pflag.FlagSet, serviceAccountEmail *string, required bool) {
+	defaultVal := ""
+	defaultSAs := viper.GetStringMapString(appconfig.DefaultServiceAccounts)
+	activeProject, err := gcpclient.GetCurrentProject()
+	errorsutil.CheckError(err)
+
+	if val, ok := defaultSAs[activeProject]; ok {
+		defaultVal = val
+	}
 	fs.StringVarP(
 		serviceAccountEmail,
 		ServiceAccountEmailFlag.Name,
 		ServiceAccountEmailFlag.Shorthand,
-		"",
-		"The email address for the service account",
+		defaultVal,
+		"The email address for the service account. Defaults to the configured default account for the current project",
 	)
 	if required {
 		if err := fs.SetAnnotation(ServiceAccountEmailFlag.Name, RequiredAnnotation, []string{"true"}); err != nil {
@@ -178,10 +189,23 @@ func AddReasonFlag(fs *pflag.FlagSet, reason *string, required bool) {
 // CheckRequired ensures that a command's required flags have been set.
 func CheckRequired(flag *pflag.Flag) {
 	for annot, val := range flag.Annotations {
-		if annot == RequiredAnnotation && val[0] == "true" {
-			if flag.Value.String() == "" {
-				util.Logger.Fatalf("Missing required flag: %s", flag.Name)
-			}
+		if annot == RequiredAnnotation && val[0] == "true" && flag.Value.String() == "" {
+			promptForMissingFlag(flag)
 		}
+	}
+}
+
+func promptForMissingFlag(flag *pflag.Flag) {
+	prompt := promptui.Prompt{
+		Label: fmt.Sprintf("Enter a value for %s", flag.Name),
+	}
+
+	val, err := prompt.Run()
+	if err != nil {
+		util.Logger.Fatalf("Missing required flag: %s", flag.Name)
+	}
+
+	if err := flag.Value.Set(val); err != nil {
+		util.Logger.Fatalf("Failed to set value for %s: %v", flag.Name, err)
 	}
 }

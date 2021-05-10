@@ -87,14 +87,25 @@ $ eiam config info
 │ authproxy.verbose              │ When set to 'true', verbose output for      │
 │                                │ proxy logs will be enabled                  │
 ├────────────────────────────────┼─────────────────────────────────────────────┤
+│ binarypaths.cloudsqlproxy      │ The path to the cloud_sql_proxy binary on   │
+│                                │ your filesystem                             │
+├────────────────────────────────┼─────────────────────────────────────────────┤
 │ binarypaths.gcloud             │ The path to the gcloud binary on your       │
 │                                │ filesystem                                  │
 ├────────────────────────────────┼─────────────────────────────────────────────┤
 │ binarypaths.kubectl            │ The path to the kubectl binary on your      │
 │                                │ filesystem                                  │
 ├────────────────────────────────┼─────────────────────────────────────────────┤
+│ github.auth                    │ When set to 'true', the "plugins install"   │
+│                                │ command will use a configured personal      │
+│                                │ access token to authenticate to the Github  │
+│                                │ API.                                        │
+├────────────────────────────────┼─────────────────────────────────────────────┤
+│ github.tokens                  │ The configured Github personal access       │
+│                                │ tokens                                      │
+├────────────────────────────────┼─────────────────────────────────────────────┤
 │ logging.format                 │ The format for which to write console logs  │
-│                                │ Can be either 'json', 'text', or 'debug'    │
+│                                │ Can be 'json', 'text', or 'debug'           │
 ├────────────────────────────────┼─────────────────────────────────────────────┤
 │ logging.level                  │ The logging level to write to the console   │
 │                                │ Can be one of 'trace', 'debug', 'info',     │
@@ -105,6 +116,9 @@ $ eiam config info
 ├────────────────────────────────┼─────────────────────────────────────────────┤
 │ logging.padleveltext           │ When set to 'true', output logs will align  │
 │                                │ evenly with their output level indicator    │
+├────────────────────────────────┼─────────────────────────────────────────────┤
+│ serviceaccounts                │ The default service accounts set via the    │
+│                                │ 'default-service-accounts' command          │
 └────────────────────────────────┴─────────────────────────────────────────────┘
 ```
 
@@ -112,5 +126,5 @@ $ eiam config info
 
 ```
 $ eiam config set logging.level debug
-INFO    Updated logging.level from info to debug
+{"level":"info","msg":"Updated logging.format from debug to json","time":"2021-05-10T05:27:29Z"}
 ```

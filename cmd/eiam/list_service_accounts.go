@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"sync"
 	"text/tabwriter"
 
 	"github.com/lithammer/dedent"
@@ -31,10 +30,7 @@ import (
 	"github.com/rigup/ephemeral-iam/pkg/options"
 )
 
-var (
-	listCmdConfig options.CmdConfig
-	wg            sync.WaitGroup
-)
+var listCmdConfig options.CmdConfig
 
 func newCmdListServiceAccounts() *cobra.Command {
 	cmd := &cobra.Command{
@@ -53,46 +49,21 @@ func newCmdListServiceAccounts() *cobra.Command {
 			cmd.Flags().VisitAll(options.CheckRequired)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return fetchAvailableServiceAccounts()
+			availableSAs, err := gcpclient.FetchAvailableServiceAccounts(listCmdConfig.Project)
+			if err != nil {
+				return err
+			}
+			if len(availableSAs) == 0 {
+				util.Logger.Warning("You do not have access to impersonate any accounts in this project")
+				return nil
+			}
+			printColumns(availableSAs)
+			return nil
 		},
 	}
 	options.AddProjectFlag(cmd.Flags(), &listCmdConfig.Project)
 
 	return cmd
-}
-
-func fetchAvailableServiceAccounts() error {
-	util.Logger.Infof("Using current project: %s", listCmdConfig.Project)
-
-	serviceAccounts, err := gcpclient.GetServiceAccounts(listCmdConfig.Project, listCmdConfig.Reason)
-	if err != nil {
-		return err
-	}
-	util.Logger.Infof("Checking %d service accounts in %s", len(serviceAccounts), listCmdConfig.Project)
-
-	wg.Add(len(serviceAccounts))
-
-	var availableSAs []*iam.ServiceAccount
-	for _, svcAcct := range serviceAccounts {
-		go func(serviceAccount *iam.ServiceAccount) {
-			hasAccess, err := gcpclient.CanImpersonate(listCmdConfig.Project, serviceAccount.Email, listCmdConfig.Reason)
-			if err != nil {
-				util.Logger.Errorf("error checking IAM permissions: %v", err)
-			} else if hasAccess {
-				availableSAs = append(availableSAs, serviceAccount)
-			}
-			wg.Done()
-		}(svcAcct)
-	}
-	wg.Wait()
-
-	if len(availableSAs) == 0 {
-		util.Logger.Warning("You do not have access to impersonate any accounts in this project")
-		return nil
-	}
-
-	printColumns(availableSAs)
-	return nil
 }
 
 func printColumns(serviceAccounts []*iam.ServiceAccount) {

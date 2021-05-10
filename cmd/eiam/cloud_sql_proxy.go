@@ -87,11 +87,7 @@ func newCmdCloudSQLProxy() *cobra.Command {
 }
 
 func runCloudSQLProxyCommand() error {
-	hasAccess, err := gcpclient.CanImpersonate(
-		cspCmdConfig.Project,
-		cspCmdConfig.ServiceAccountEmail,
-		cspCmdConfig.Reason,
-	)
+	hasAccess, err := gcpclient.CanImpersonate(cspCmdConfig.Project, cspCmdConfig.ServiceAccountEmail)
 	if err != nil {
 		return err
 	} else if !hasAccess {
