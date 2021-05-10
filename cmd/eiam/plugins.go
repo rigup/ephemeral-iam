@@ -37,17 +37,21 @@ func newCmdPlugins() *cobra.Command {
 			Plugins are '.so' files (Golang dynamic libraries) and stored in the 'plugins' directory
 			of your eiam configuration folder.
 			
-			- Installing a plugin -
-			To install a plugin, take the '.so' file and place it in the 'plugins' directory of your
-			eiam configuration folder.  eiam will automatically load any valid plugins in that
-			directory and the commands added by those plugins will be listed when you run:
-			'eiam --help'.
+			-------------------------------     Installing a plugin     -------------------------------
+			Plugins are loaded from the '/path/to/config/ephemeral-iam/plugins' directory. To install a
+			plugin, you just place the plugin's binary in that directory and eiam will automatically
+			discover and load it.
+			
+			If the plugin you want to install is hosted in a Github repo and the binary is published as
+			a release in the repository, you can install the plugin using the 'eiam plugin install'
+			command.
 		`),
 	}
 
 	cmd.AddCommand(newCmdPluginsList())
 	cmd.AddCommand(newCmdPluginsInstall())
 	cmd.AddCommand(newCmdPluginsRemove())
+	cmd.AddCommand(newCmdPluginsAuth())
 	return cmd
 }
 
@@ -70,6 +74,7 @@ func newCmdPluginsList() *cobra.Command {
 func newCmdPluginsInstall() *cobra.Command {
 	var (
 		url       string
+		tokenName string
 		repoOwner string
 		repoName  string
 	)
@@ -81,6 +86,10 @@ func newCmdPluginsInstall() *cobra.Command {
 
 			The latest release in the provided repository is downloaded, extracted, and
 			the binary files are moved to the "plugins" directory.
+
+			If the plugin is hosted in a private repository, you need to provide
+			ephemeral-iam with a Github personal access token to authenticate
+			with. See 'eiam plugins auth --help' for more details.
 		`),
 		Args: func(cmd *cobra.Command, args []string) error {
 			urlRegex := regexp.MustCompile(`github\.com/(?P<user>[[:alnum:]\-]+)/(?P<repo>[[:alnum:]\.\-_]+)`)
@@ -99,13 +108,14 @@ func newCmdPluginsInstall() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return plugins.InstallPlugin(repoOwner, repoName)
+			return plugins.InstallPlugin(repoOwner, repoName, tokenName)
 		},
 	}
 	cmd.Flags().StringVarP(&url, "url", "u", "", "The URL of the plugin's Github repo")
 	if err := cmd.MarkFlagRequired("url"); err != nil {
 		util.Logger.Fatal(err.Error())
 	}
+	cmd.Flags().StringVarP(&tokenName, "token", "t", "", "The name of the Github access token to use for private repos")
 	return cmd
 }
 
@@ -141,7 +151,7 @@ func newCmdPluginsRemove() *cobra.Command {
 
 func selectPlugin() (*plugins.EphemeralIamPlugin, error) {
 	templates := &promptui.SelectTemplates{
-		Label:    "{{ . }}?",
+		Label:    "{{ . }}",
 		Active:   " ►  {{ .Name | red }}",
 		Inactive: "  {{ .Name | red }}",
 		Selected: " ►  {{ .Name | red | cyan }}",

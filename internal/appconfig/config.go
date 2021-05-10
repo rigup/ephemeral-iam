@@ -40,6 +40,8 @@ const (
 	CloudSQLProxyPath      = "binarypaths.cloudsqlproxy"
 	GcloudPath             = "binarypaths.gcloud"
 	KubectlPath            = "binarypaths.kubectl"
+	GithubAuth             = "github.auth"
+	GithubTokens           = "github.tokens" //nolint:gosec // Not hardcoded credentials
 	LoggingFormat          = "logging.format"
 	LoggingLevel           = "logging.level"
 	LoggingLevelTruncation = "logging.disableleveltruncation"
@@ -89,6 +91,7 @@ func initConfig() {
 	viper.SetDefault(AuthProxyLogDir, filepath.Join(GetConfigDir(), "log"))
 	viper.SetDefault(AuthProxyCertFile, filepath.Join(GetConfigDir(), "server.pem"))
 	viper.SetDefault(AuthProxyKeyFile, filepath.Join(GetConfigDir(), "server.key"))
+	viper.SetDefault(GithubAuth, false)
 	viper.SetDefault(LoggingFormat, "text")
 	viper.SetDefault(LoggingLevel, "info")
 	viper.SetDefault(LoggingLevelTruncation, true)
@@ -109,8 +112,7 @@ func getBinPaths() error {
 			binPath, err := CheckCommandExists(binName)
 			if err != nil {
 				if configKey != CloudSQLProxyPath {
-					// Exit if kubectl or gcloud aren't installed, but continue if
-					// cloud_sql_proxy isn't.
+					// Exit if kubectl or gcloud aren't installed, but continue if cloud_sql_proxy isn't.
 					return err
 				}
 				util.Logger.Debug("Could not find path to cloud_sql_proxy binary")
@@ -131,10 +133,8 @@ func getBinPaths() error {
 func CheckCommandExists(command string) (string, error) {
 	cmdPath, err := exec.LookPath(command)
 	if err != nil {
-		util.Logger.Debugf("Error while checking for %s binary", command)
 		return "", err
 	}
-	util.Logger.Debugf("Found binary %s at %s\n", command, cmdPath)
 	return cmdPath, nil
 }
 

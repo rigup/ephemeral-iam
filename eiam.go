@@ -21,12 +21,12 @@ import (
 )
 
 func main() {
+	errorsutil.CheckError(appconfig.InitConfig())
+	errorsutil.CheckError(appconfig.Setup())
+
 	if appconfig.Version != "v0.0.0" {
 		appconfig.CheckForNewRelease()
 	}
-
-	errorsutil.CheckError(appconfig.InitConfig())
-	errorsutil.CheckError(appconfig.Setup())
 
 	rootCmd, err := eiam.NewEphemeralIamCommand()
 	// Kill the loaded plugin clients. This is happening here to ensure that
