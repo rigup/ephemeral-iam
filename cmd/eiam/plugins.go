@@ -86,6 +86,10 @@ func newCmdPluginsInstall() *cobra.Command {
 
 			The latest release in the provided repository is downloaded, extracted, and
 			the binary files are moved to the "plugins" directory.
+
+			If the plugin is hosted in a private repository, you need to provide
+			ephemeral-iam with a Github personal access token to authenticate
+			with. See 'eiam plugins auth --help' for more details.
 		`),
 		Args: func(cmd *cobra.Command, args []string) error {
 			urlRegex := regexp.MustCompile(`github\.com/(?P<user>[[:alnum:]\-]+)/(?P<repo>[[:alnum:]\.\-_]+)`)
@@ -111,7 +115,7 @@ func newCmdPluginsInstall() *cobra.Command {
 	if err := cmd.MarkFlagRequired("url"); err != nil {
 		util.Logger.Fatal(err.Error())
 	}
-	cmd.Flags().StringVarP(&tokenName, "name", "n", "", "The name of the Github access token to use for private repos")
+	cmd.Flags().StringVarP(&tokenName, "token", "t", "", "The name of the Github access token to use for private repos")
 	return cmd
 }
 
