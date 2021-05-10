@@ -38,7 +38,7 @@ var (
 	cloudSQLProxyPath string
 )
 
-func newCmdCloudSQLProxy() *cobra.Command {
+func NewCmdCloudSQLProxy() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cloud_sql_proxy [GCLOUD_ARGS]",
 		Short: "Run cloud_sql_proxy with the permissions of the specified service account",

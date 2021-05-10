@@ -53,14 +53,7 @@ func runGcloudCommand() error {
 	if err != nil {
 		return err
 	} else if !hasAccess {
-		err = fmt.Errorf("cannot impersonate %s", gcloudCmdConfig.ServiceAccountEmail)
-		sErr := errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "You do not have access to impersonate this service account",
-			Err: err,
-		}
-		fmt.Printf("\n\nRIGHT HERE: %+v\n\n", sErr)
-		return sErr
+		util.Logger.Fatalln("You do not have access to impersonate this service account")
 	}
 
 	// gcloud reads the CLOUDSDK_CORE_REQUEST_REASON environment variable

@@ -58,8 +58,7 @@ func NewCmdListServiceAccounts() *cobra.Command {
 				util.Logger.Warning("You do not have access to impersonate any accounts in this project")
 				return nil
 			}
-			printColumns(availableSAs)
-			return nil
+			return printColumns(availableSAs)
 		},
 	}
 	options.AddProjectFlag(cmd.Flags(), &listCmdConfig.Project)
@@ -67,7 +66,7 @@ func NewCmdListServiceAccounts() *cobra.Command {
 	return cmd
 }
 
-func printColumns(serviceAccounts []*iam.ServiceAccount) {
+func printColumns(serviceAccounts []*iam.ServiceAccount) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 	fmt.Fprintln(w, "\nEMAIL\tDESCRIPTION")
 	for _, sa := range serviceAccounts {
@@ -83,11 +82,7 @@ func printColumns(serviceAccounts []*iam.ServiceAccount) {
 		}
 	}
 	if err := w.Flush(); err != nil {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: "Failed to flush tabwriter buffer",
-			Err: err,
-		}
+		return errorsutil.New("Failed to flush tabwriter", err)
 	}
 	return nil
 }

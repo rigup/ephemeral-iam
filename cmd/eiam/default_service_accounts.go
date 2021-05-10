@@ -19,18 +19,18 @@ import (
 
 var project string
 
-func newCmdDefaultServiceAccounts() *cobra.Command {
+func NewCmdDefaultServiceAccounts() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "default-service-accounts",
 		Aliases: []string{"default-sa"},
 		Short:   "Configure default service accounts to use in other commands [alias: default-sa]",
 	}
-	cmd.AddCommand(newCmdSetDefaultServiceAccount())
-	cmd.AddCommand(newCmdListDefaultServiceAccounts())
+	cmd.AddCommand(NewCmdSetDefaultServiceAccount())
+	cmd.AddCommand(NewCmdListDefaultServiceAccounts())
 	return cmd
 }
 
-func newCmdSetDefaultServiceAccount() *cobra.Command {
+func NewCmdSetDefaultServiceAccount() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set",
 		Short: "Set a default privileged service account to impersonate for a given GCP project",
@@ -64,7 +64,7 @@ func newCmdSetDefaultServiceAccount() *cobra.Command {
 	return cmd
 }
 
-func newCmdListDefaultServiceAccounts() *cobra.Command {
+func NewCmdListDefaultServiceAccounts() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List configured default service accounts",

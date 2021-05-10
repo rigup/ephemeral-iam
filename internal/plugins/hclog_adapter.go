@@ -45,6 +45,8 @@ func (h HCLogAdapter) Log(level hclog.Level, msg string, args ...interface{}) {
 	switch level {
 	case hclog.NoLevel:
 		return
+	case hclog.Off:
+		return
 	case hclog.Trace:
 		h.Trace(msg, args...)
 	case hclog.Debug:

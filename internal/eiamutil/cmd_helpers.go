@@ -60,7 +60,7 @@ func Confirm(vals map[string]string) {
 	}
 
 	if err := w.Flush(); err != nil {
-		Logger.Error("Failed to flush tabwriter buffer to print confirmation values")
+		Logger.Debug("Failed to flush tabwriter buffer to print confirmation values")
 		for key, val := range vals {
 			fmt.Printf("%s: %s\n", key, val)
 		}

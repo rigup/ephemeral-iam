@@ -29,8 +29,6 @@ import (
 	errorsutil "github.com/rigup/ephemeral-iam/internal/errors"
 )
 
-var wg sync.WaitGroup
-
 // QueryTestablePermissionsOnResource gets the testable permissions on a resource
 // Modified from https://github.com/salrashid123/gcp_iam/blob/main/query/main.go#L71-L108
 func QueryTestablePermissionsOnResource(resource string) ([]string, error) {
@@ -154,6 +152,7 @@ func QueryProjectPermissions(permsToTest []string, project, svcAcct, reason stri
 	rem := len(permsToTest) % 100
 	chunked = append(chunked, permsToTest[len(permsToTest)-rem:])
 
+	var wg sync.WaitGroup
 	wg.Add(len(chunked))
 
 	var userPermissions []string

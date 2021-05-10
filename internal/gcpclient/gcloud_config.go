@@ -15,7 +15,6 @@
 package gcpclient
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -88,11 +87,6 @@ func getActiveConfig(configDir string) (string, error) {
 		if err != nil {
 			return "", errorsutil.New("Failed to create file while extracting release archive", err)
 		}
-
-		activeConfig, err := setActiveConfig(configurationsDir, activeConfigFile)
-		if err != nil {
-			return "", err
-		}
 		return activeConfig, nil
 	}
 
@@ -151,56 +145,6 @@ func promptForConfigToSet(configs []string) (string, error) {
 		return "", errorsutil.New("Select-config prompt failed", err)
 	}
 	return result, nil
-}
-
-// CheckActiveAccountSet ensures that the current gcloud config has an active account value
-// and if an account is set, it returns the value.
-func CheckActiveAccountSet() (string, error) {
-	if err := getGcloudConfig(); err != nil {
-		return "", err
-	}
-	acct := gcloudConfig.Section("core").Key("account").String()
-	if acct == "" {
-		err := errors.New("no active gcloud account is set")
-		return "", errorsutil.EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: dedent.Dedent(`Please run:
-		
-			$ gcloud auth login
-			
-		  to obtain new credentials.  If you have already logged in with a different account:
-		  
-			$ gcloud config set account ACCOUNT
-			
-		   to select an already authenticated account to use.`),
-			Err: err,
-		}
-	}
-	return acct, nil
-}
-
-// GetCurrentProject get the active project from the gcloud config.
-func GetCurrentProject() (string, error) {
-	if err := getGcloudConfig(); err != nil {
-		return "", err
-	}
-	return gcloudConfig.Section("core").Key("project").String(), nil
-}
-
-// GetCurrentRegion get the active region from the gcloud config.
-func GetCurrentRegion() (string, error) {
-	if err := getGcloudConfig(); err != nil {
-		return "", err
-	}
-	return gcloudConfig.Section("compute").Key("region").String(), nil
-}
-
-// GetCurrentZone get the active zone from the gcloud config.
-func GetCurrentZone() (string, error) {
-	if err := getGcloudConfig(); err != nil {
-		return "", err
-	}
-	return gcloudConfig.Section("compute").Key("zone").String(), nil
 }
 
 // ConfigureGcloudProxy configures the current gcloud configuration to use the auth proxy.

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package eiam
+package cmd
 
 import (
 	"encoding/json"
@@ -25,16 +25,16 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
-	"github.com/rigup/ephemeral-iam/cmd"
+	"github.com/rigup/ephemeral-iam/cmd/eiam"
 	"github.com/rigup/ephemeral-iam/internal/appconfig"
 	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 	testutil "github.com/rigup/ephemeral-iam/test"
 )
 
 var (
-	configCommand     = cmd.NewCmdConfig()
-	configSetCommand  = cmd.NewCmdConfigSet()
-	configViewCommand = cmd.NewCmdConfigView()
+	configCommand     = eiam.NewCmdConfig()
+	configSetCommand  = eiam.NewCmdConfigSet()
+	configViewCommand = eiam.NewCmdConfigView()
 )
 
 func TestConfigNoSubCommand(t *testing.T) {

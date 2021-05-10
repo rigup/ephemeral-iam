@@ -48,10 +48,10 @@ func NewCmdPlugins() *cobra.Command {
 		`),
 	}
 
-	cmd.AddCommand(newCmdPluginsList())
-	cmd.AddCommand(newCmdPluginsInstall())
-	cmd.AddCommand(newCmdPluginsRemove())
-	cmd.AddCommand(newCmdPluginsAuth())
+	cmd.AddCommand(NewCmdPluginsList())
+	cmd.AddCommand(NewCmdPluginsInstall())
+	cmd.AddCommand(NewCmdPluginsRemove())
+	cmd.AddCommand(NewCmdPluginsAuth())
 	return cmd
 }
 
@@ -71,7 +71,7 @@ func NewCmdPluginsList() *cobra.Command {
 	return cmd
 }
 
-func newCmdPluginsInstall() *cobra.Command {
+func NewCmdPluginsInstall() *cobra.Command {
 	var (
 		url       string
 		tokenName string

@@ -30,8 +30,6 @@ import (
 var (
 	sessionDuration int64 = 600
 	ctx                   = context.Background()
-
-	wg sync.WaitGroup
 )
 
 // GenerateTemporaryAccessToken generates short-lived credentials for the given service account.
@@ -94,6 +92,7 @@ func FetchAvailableServiceAccounts(project string) ([]*iam.ServiceAccount, error
 	}
 	util.Logger.Infof("Checking %d service accounts in %s", len(serviceAccounts), project)
 
+	var wg sync.WaitGroup
 	wg.Add(len(serviceAccounts))
 
 	var availableSAs []*iam.ServiceAccount

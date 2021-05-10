@@ -15,7 +15,7 @@ import (
 
 var tokenName string
 
-func newCmdPluginsAuth() *cobra.Command {
+func NewCmdPluginsAuth() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "auth",
 		Short: "Manage Github authentication for installing plugins from private repos",
@@ -29,13 +29,13 @@ You can configure multiple tokens at once and designate which token to use by
 referencing the name that it was given when it was added (defaults to "default").
 		`,
 	}
-	cmd.AddCommand(newCmdPluginsAuthAdd())
-	cmd.AddCommand(newCmdPluginsAuthList())
-	cmd.AddCommand(newCmdPluginsAuthDelete())
+	cmd.AddCommand(NewCmdPluginsAuthAdd())
+	cmd.AddCommand(NewCmdPluginsAuthList())
+	cmd.AddCommand(NewCmdPluginsAuthDelete())
 	return cmd
 }
 
-func newCmdPluginsAuthAdd() *cobra.Command {
+func NewCmdPluginsAuthAdd() *cobra.Command {
 	tokenConfig := viper.GetStringMapString(appconfig.GithubTokens)
 	cmd := &cobra.Command{
 		Use:   "add",
@@ -90,7 +90,7 @@ func newCmdPluginsAuthAdd() *cobra.Command {
 	return cmd
 }
 
-func newCmdPluginsAuthList() *cobra.Command {
+func NewCmdPluginsAuthList() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "Print the existing Github personal access tokens",
@@ -110,7 +110,7 @@ func newCmdPluginsAuthList() *cobra.Command {
 	return cmd
 }
 
-func newCmdPluginsAuthDelete() *cobra.Command {
+func NewCmdPluginsAuthDelete() *cobra.Command {
 	tokenConfig := viper.GetStringMapString(appconfig.GithubTokens)
 	cmd := &cobra.Command{
 		Use:   "delete",

@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rigup/ephemeral-iam/cmd"
+	"github.com/rigup/ephemeral-iam/cmd/eiam"
 	"github.com/rigup/ephemeral-iam/pkg/options"
 	testutil "github.com/rigup/ephemeral-iam/test"
 )
@@ -25,7 +25,7 @@ func TestIntegration_All(t *testing.T) {
 	if testutil.ServiceAccountEmail == "" || testutil.Reason == "" {
 		t.Skipf("Both $%s and $%s must be set to run integration tests", testutil.TestServiceAccountEmailEnv, testutil.TestReasonEnv)
 	}
-	gcloudCommand = cmd.NewCmdGcloud()
+	gcloudCommand = eiam.NewCmdGcloud()
 
 	options.AddPersistentFlags(gcloudCommand.PersistentFlags())
 

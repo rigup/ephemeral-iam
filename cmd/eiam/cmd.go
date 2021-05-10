@@ -70,16 +70,16 @@ func NewEphemeralIamCommand() (*eiam.RootCommand, error) {
 
 	cmds.ResetFlags()
 
-	cmds.AddCommand(newCmdAssumePrivileges())
-	cmds.AddCommand(newCmdCloudSQLProxy())
-	cmds.AddCommand(newCmdConfig())
-	cmds.AddCommand(newCmdDefaultServiceAccounts())
-	cmds.AddCommand(newCmdGcloud())
-	cmds.AddCommand(newCmdKubectl())
-	cmds.AddCommand(newCmdListServiceAccounts())
-	cmds.AddCommand(newCmdPlugins())
-	cmds.AddCommand(newCmdQueryPermissions())
-	cmds.AddCommand(newCmdVersion())
+	cmds.AddCommand(NewCmdAssumePrivileges())
+	cmds.AddCommand(NewCmdCloudSQLProxy())
+	cmds.AddCommand(NewCmdConfig())
+	cmds.AddCommand(NewCmdDefaultServiceAccounts())
+	cmds.AddCommand(NewCmdGcloud())
+	cmds.AddCommand(NewCmdKubectl())
+	cmds.AddCommand(NewCmdListServiceAccounts())
+	cmds.AddCommand(NewCmdPlugins())
+	cmds.AddCommand(NewCmdQueryPermissions())
+	cmds.AddCommand(NewCmdVersion())
 	if err := cmds.LoadPlugins(); err != nil {
 		return nil, err
 	}

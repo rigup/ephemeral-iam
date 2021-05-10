@@ -15,7 +15,6 @@
 package eiam
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -55,11 +54,7 @@ func runKubectlCommand() error {
 	if err != nil {
 		return err
 	} else if !hasAccess {
-		return errorsutil.EiamError{
-			Log: util.Logger.WithField("cmd", "kubectl"),
-			Msg: "You do not have access to impersonate this service account",
-			Err: errors.New("failed to impersonate service account"),
-		}
+		util.Logger.Fatalln("You do not have access to impersonate this service account")
 	}
 
 	util.Logger.Infof("Fetching access token for %s", kubectlCmdConfig.ServiceAccountEmail)
