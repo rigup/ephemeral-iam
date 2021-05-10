@@ -25,6 +25,10 @@
     <img src="docs/img/logo.png" height="160">
 </p>
 
+> **NOTICE:** There is a bug in ephemeral-iam v0.0.16 that results in a failure
+> to update to the next version.  If you are on v0.0.16, you will need to manually
+> update to v0.0.17.
+
 # ephemeral-iam
 
 A CLI tool that utilizes service account token generation to enable users to
