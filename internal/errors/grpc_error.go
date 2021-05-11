@@ -15,6 +15,7 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -36,8 +37,10 @@ const (
 	RPCStatusRetryInfo           = "type.googleapis.com/google.rpc.RetryInfo"
 )
 
-func checkGoogleRPCError(serr *EiamError) *EiamError {
-	err := serr.Err
+func checkGoogleRPCError(err error) EiamError {
+	if serr, ok := err.(EiamError); ok {
+		err = serr.Err
+	}
 	errDetails := map[string]string{}
 
 	if serr, ok := status.FromError(err); ok {
@@ -61,25 +64,17 @@ func checkGoogleRPCError(serr *EiamError) *EiamError {
 				util.Logger.Debugf("Unrecognized gRPC status detail type: %s", detail.GetTypeUrl())
 			}
 		}
-
+		errField := errors.New(serr.Message())
 		if len(errDetails) > 0 {
 			errMsg := "[gRPC Status Error]\n"
 			for title, details := range errDetails {
 				errMsg += fmt.Sprintf("[%s]\n%s\n", title, details)
 			}
-			return &EiamError{
-				Log: util.Logger.WithError(err),
-				Msg: errMsg,
-				Err: err,
-			}
+			return New(errMsg, errField).(EiamError)
 		}
-		return &EiamError{
-			Log: util.Logger.WithError(err),
-			Msg: fmt.Sprintf("[gRPC Status Error]: %v", serr.Message()),
-			Err: err,
-		}
+		return New("A gRPC error occurred. For more information, set the logging level to debug", errField).(EiamError)
 	}
-	return nil
+	return EiamError{}
 }
 
 func parseRPCStatusBadRequest(detail *anypb.Any) string {

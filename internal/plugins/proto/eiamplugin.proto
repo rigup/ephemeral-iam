@@ -11,11 +11,7 @@ message PluginInfo {
     string version = 3;
 }
 
-message Args {
-    repeated string arg = 1;
-}
-
 service EIAMPlugin {
     rpc GetInfo(Empty) returns (PluginInfo);
-    rpc Run(Args) returns (Empty);
+    rpc Run(Empty) returns (Empty);
 }

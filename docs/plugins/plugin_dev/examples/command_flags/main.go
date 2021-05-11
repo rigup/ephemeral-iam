@@ -45,9 +45,8 @@ func (p *BasicPlugin) GetInfo() (n, d, v string, err error) {
 }
 
 // Run is the function that eiam uses to invoke the plugin command.
-func (p *BasicPlugin) Run(args []string) error {
+func (p *BasicPlugin) Run() error {
 	rootCmd := newRootCmd(p)
-	rootCmd.SetArgs(args) // THIS IS REQUIRED.
 	return rootCmd.Execute()
 }
 

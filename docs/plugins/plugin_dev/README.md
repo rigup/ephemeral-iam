@@ -21,14 +21,10 @@ func (p *EIAMPlugin) GetInfo() (name, desc, version string, err error) {
 ```
 
 `Run` is the function that `ephemeral-iam` invokes when a user uses the plugin's
-command.  The function takes a slice of strings which represents the arguments
-that the user passed to the command.
-
-> **NOTE:** The arguments passed to `Run` must be manually set as the commands
-> arguments.
+command.  Any errors returned will be propagated back to eiam to handle.
 
 ```go
-func (p *EIAMPlugin) Run(args []string) error {
+func (p *EIAMPlugin) Run() error {
 	cmd := &cobra.Command{
 		Use:   name,
 		Short: desc,
@@ -44,7 +40,6 @@ func (p *EIAMPlugin) Run(args []string) error {
 			return nil
 		},
 	}
-    cmd.SetArgs(args) // THIS IS REQUIRED
     return cmd.Execute()
 }
 ```

@@ -29,12 +29,12 @@ func main() {
 	}
 
 	rootCmd, err := eiam.NewEphemeralIamCommand()
+	errorsutil.CheckError(err)
 	// Kill the loaded plugin clients. This is happening here to ensure that
 	// Kill is called after the command has finished running, but also accounts
 	// for any errors that occur during execution.
 	for _, plugin := range rootCmd.Plugins {
 		defer plugin.Client.Kill()
 	}
-	errorsutil.CheckError(err)
 	errorsutil.CheckError(rootCmd.Execute())
 }
