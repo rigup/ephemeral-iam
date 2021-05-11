@@ -21,6 +21,6 @@ const (
 	// ephemeral-iam release tarballs.
 	FormattedOS = "Linux"
 	// ConfigPath is the path relative to the users home directory to store the
-	// ephemeral-iam config
+	// ephemeral-iam config.
 	ConfigPath = ".config/ephemeral-iam"
 )
