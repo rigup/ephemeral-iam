@@ -41,6 +41,6 @@ func (m *GRPCServer) GetInfo(ctx context.Context, req *pb.Empty) (*pb.PluginInfo
 }
 
 // Run is the gRPC method that is called to invoke a plugin's root command.
-func (m *GRPCServer) Run(ctx context.Context, args *pb.Args) (*pb.Empty, error) {
-	return &pb.Empty{}, m.Impl.Run(args.Arg)
+func (m *GRPCServer) Run(ctx context.Context, args *pb.Empty) (*pb.Empty, error) {
+	return &pb.Empty{}, m.Impl.Run()
 }

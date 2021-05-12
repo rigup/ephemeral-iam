@@ -34,10 +34,8 @@ func (m *GRPCClient) GetInfo() (name, desc, version string, err error) {
 }
 
 // Run is the gRPC method that is called to invoke a plugin's root command.
-func (m *GRPCClient) Run(args []string) error {
-	_, err := m.Client.Run(context.Background(), &pb.Args{
-		Arg: args,
-	})
+func (m *GRPCClient) Run() error {
+	_, err := m.Client.Run(context.Background(), &pb.Empty{})
 	if err != nil {
 		return err
 	}

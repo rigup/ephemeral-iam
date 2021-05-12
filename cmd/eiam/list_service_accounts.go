@@ -45,8 +45,8 @@ func newCmdListServiceAccounts() *cobra.Command {
 		Example: dedent.Dedent(`
 			$ eiam list-service-accounts
 			$ eiam list`),
-		PreRun: func(cmd *cobra.Command, args []string) {
-			cmd.Flags().VisitAll(options.CheckRequired)
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return options.CheckRequired(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			availableSAs, err := gcpclient.FetchAvailableServiceAccounts(listCmdConfig.Project)
@@ -61,7 +61,7 @@ func newCmdListServiceAccounts() *cobra.Command {
 			return nil
 		},
 	}
-	options.AddProjectFlag(cmd.Flags(), &listCmdConfig.Project)
+	options.AddProjectFlag(cmd.Flags(), &listCmdConfig.Project, false)
 
 	return cmd
 }

@@ -4,7 +4,6 @@ package __
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -20,7 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EIAMPluginClient interface {
 	GetInfo(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PluginInfo, error)
-	Run(ctx context.Context, in *Args, opts ...grpc.CallOption) (*Empty, error)
+	Run(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type eIAMPluginClient struct {
@@ -40,7 +39,7 @@ func (c *eIAMPluginClient) GetInfo(ctx context.Context, in *Empty, opts ...grpc.
 	return out, nil
 }
 
-func (c *eIAMPluginClient) Run(ctx context.Context, in *Args, opts ...grpc.CallOption) (*Empty, error) {
+func (c *eIAMPluginClient) Run(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/proto.EIAMPlugin/Run", in, out, opts...)
 	if err != nil {
@@ -54,18 +53,18 @@ func (c *eIAMPluginClient) Run(ctx context.Context, in *Args, opts ...grpc.CallO
 // for forward compatibility
 type EIAMPluginServer interface {
 	GetInfo(context.Context, *Empty) (*PluginInfo, error)
-	Run(context.Context, *Args) (*Empty, error)
+	Run(context.Context, *Empty) (*Empty, error)
 	mustEmbedUnimplementedEIAMPluginServer()
 }
 
 // UnimplementedEIAMPluginServer must be embedded to have forward compatible implementations.
-type UnimplementedEIAMPluginServer struct{}
+type UnimplementedEIAMPluginServer struct {
+}
 
 func (UnimplementedEIAMPluginServer) GetInfo(context.Context, *Empty) (*PluginInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetInfo not implemented")
 }
-
-func (UnimplementedEIAMPluginServer) Run(context.Context, *Args) (*Empty, error) {
+func (UnimplementedEIAMPluginServer) Run(context.Context, *Empty) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Run not implemented")
 }
 func (UnimplementedEIAMPluginServer) mustEmbedUnimplementedEIAMPluginServer() {}
@@ -100,7 +99,7 @@ func _EIAMPlugin_GetInfo_Handler(srv interface{}, ctx context.Context, dec func(
 }
 
 func _EIAMPlugin_Run_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Args)
+	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -112,7 +111,7 @@ func _EIAMPlugin_Run_Handler(srv interface{}, ctx context.Context, dec func(inte
 		FullMethod: "/proto.EIAMPlugin/Run",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EIAMPluginServer).Run(ctx, req.(*Args))
+		return srv.(EIAMPluginServer).Run(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }

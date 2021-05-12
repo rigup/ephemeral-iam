@@ -16,6 +16,7 @@ package eiamplugin
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -24,6 +25,7 @@ import (
 
 	hcplugin "github.com/hashicorp/go-plugin"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/status"
 
 	"github.com/rigup/ephemeral-iam/internal/appconfig"
 	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
@@ -71,12 +73,16 @@ func (rc *RootCommand) LoadPlugins() error {
 }
 
 func loadPlugin(pf, pluginsDir string) (plugins.EIAMPlugin, *hcplugin.Client, error) {
+	args := []string{}
+	if len(os.Args) >= 2 {
+		args = os.Args[2:]
+	}
 	client := hcplugin.NewClient(&hcplugin.ClientConfig{
 		HandshakeConfig: eiamplugin.Handshake,
 		Plugins: map[string]hcplugin.Plugin{
 			"run-command": &eiamplugin.Command{},
 		},
-		Cmd:              exec.Command(path.Join(pluginsDir, pf)), //nolint:gosec // Single string with no args
+		Cmd:              exec.Command(path.Join(pluginsDir, pf), args...), //nolint:gosec // Single string with no args
 		AllowedProtocols: []hcplugin.Protocol{hcplugin.ProtocolGRPC},
 		SyncStderr:       os.Stderr,
 		SyncStdout:       os.Stdout,
@@ -103,10 +109,18 @@ func addPluginCmd(p plugins.EIAMPlugin) (cmd *cobra.Command, name, desc, version
 	}
 
 	cmd = &cobra.Command{
-		Use:   name,
-		Short: fmt.Sprintf("%s %s: %s", name, version, desc),
+		Use:                name,
+		Short:              fmt.Sprintf("%s %s: %s", name, version, desc),
+		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
+		DisableFlagParsing: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.Run(args)
+			if err := p.Run(); err != nil {
+				if serr, ok := status.FromError(err); ok {
+					return errors.New(serr.Message())
+				}
+				return err
+			}
+			return nil
 		},
 	}
 	return cmd, name, desc, version, nil

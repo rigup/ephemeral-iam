@@ -48,12 +48,12 @@ func (e EiamError) Error() string {
 // CheckError is the top-level error handler.
 func CheckError(err error) {
 	if err != nil {
+		if googleErr := checkGoogleAPIError(err); (googleErr != EiamError{}) {
+			err = googleErr
+		} else if grpcError := checkGoogleRPCError(err); (grpcError != EiamError{}) {
+			err = grpcError
+		}
 		if serr, ok := err.(EiamError); ok {
-			if googleErr := checkGoogleAPIError(&serr); googleErr != nil {
-				serr = *googleErr
-			} else if grpcError := checkGoogleRPCError(&serr); grpcError != nil {
-				serr = *grpcError
-			}
 			serr.Log.Error(serr.Msg)
 			util.Logger.Exit(1)
 		}

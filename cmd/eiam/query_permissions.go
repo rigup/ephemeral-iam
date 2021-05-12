@@ -126,14 +126,17 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 			    --zone us-central1-a --instance my-instance \
 			    --service-account-email example@my-project.iam.gserviceaccount.com
 		`),
-		PreRun: func(cmd *cobra.Command, args []string) {
-			cmd.Flags().VisitAll(options.CheckRequired)
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := options.CheckRequired(cmd.Flags()); err != nil {
+				return err
+			}
 			resourceString = fmt.Sprintf(
 				computeInstanceRes,
 				queryPermsCmdConfig.Project,
 				queryPermsCmdConfig.Zone,
 				queryPermsCmdConfig.ComputeInstance,
 			)
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			util.Logger.Infof("Querying permissions granted on %s", resourceString)
@@ -164,7 +167,7 @@ func newCmdQueryComputeInstancePermissions() *cobra.Command {
 		},
 	}
 
-	options.AddProjectFlag(cmd.Flags(), &queryPermsCmdConfig.Project)
+	options.AddProjectFlag(cmd.Flags(), &queryPermsCmdConfig.Project, false)
 	options.AddZoneFlag(cmd.Flags(), &queryPermsCmdConfig.Zone, true)
 	options.AddComputeInstanceFlag(cmd.Flags(), &queryPermsCmdConfig.ComputeInstance, true)
 	options.AddServiceAccountEmailFlag(cmd.Flags(), &queryPermsCmdConfig.ServiceAccountEmail, false)
@@ -208,7 +211,7 @@ func newCmdQueryProjectPermissions() *cobra.Command {
 		},
 	}
 
-	options.AddProjectFlag(cmd.Flags(), &queryPermsCmdConfig.Project)
+	options.AddProjectFlag(cmd.Flags(), &queryPermsCmdConfig.Project, false)
 	options.AddServiceAccountEmailFlag(cmd.Flags(), &queryPermsCmdConfig.ServiceAccountEmail, false)
 	options.AddReasonFlag(cmd.Flags(), &queryPermsCmdConfig.Reason, false)
 
@@ -226,9 +229,12 @@ func newCmdQueryPubSubPermissions() *cobra.Command {
 			  eiam query-permissions pubsub -t topic1 \
 			    --service-account-email example@my-project.iam.gserviceaccount.com
 		`),
-		PreRun: func(cmd *cobra.Command, args []string) {
-			cmd.Flags().VisitAll(options.CheckRequired)
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := options.CheckRequired(cmd.Flags()); err != nil {
+				return err
+			}
 			resourceString = fmt.Sprintf(pubsubTopicsRes, queryPermsCmdConfig.Project, queryPermsCmdConfig.PubSubTopic)
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			util.Logger.Infof("Querying permissions granted on %s", resourceString)
@@ -257,7 +263,7 @@ func newCmdQueryPubSubPermissions() *cobra.Command {
 		},
 	}
 
-	options.AddProjectFlag(cmd.Flags(), &queryPermsCmdConfig.Project)
+	options.AddProjectFlag(cmd.Flags(), &queryPermsCmdConfig.Project, false)
 	options.AddPubSubTopicFlag(cmd.Flags(), &queryPermsCmdConfig.PubSubTopic, true)
 	options.AddServiceAccountEmailFlag(cmd.Flags(), &queryPermsCmdConfig.ServiceAccountEmail, false)
 	options.AddReasonFlag(cmd.Flags(), &queryPermsCmdConfig.Reason, false)
@@ -274,13 +280,16 @@ func newCmdQueryServiceAccountPermissions() *cobra.Command {
 			  eiam query-permissions service-account \
 			    --service-account-email example@my-project.iam.gserviceaccount.com
 		`),
-		PreRun: func(cmd *cobra.Command, args []string) {
-			cmd.Flags().VisitAll(options.CheckRequired)
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := options.CheckRequired(cmd.Flags()); err != nil {
+				return err
+			}
 			resourceString = fmt.Sprintf(
 				serviceAccountsRes,
 				queryPermsCmdConfig.Project,
 				queryPermsCmdConfig.ServiceAccountEmail,
 			)
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			util.Logger.Infof("Querying permissions granted on %s", resourceString)
@@ -308,7 +317,7 @@ func newCmdQueryServiceAccountPermissions() *cobra.Command {
 	}
 
 	options.AddServiceAccountEmailFlag(cmd.Flags(), &queryPermsCmdConfig.ServiceAccountEmail, true)
-	options.AddProjectFlag(cmd.Flags(), &queryPermsCmdConfig.Project)
+	options.AddProjectFlag(cmd.Flags(), &queryPermsCmdConfig.Project, false)
 
 	return cmd
 }
@@ -324,9 +333,12 @@ func newCmdQueryStorageBucketPermissions() *cobra.Command {
 			  eiam query-permissions storage-bucket --bucket bucket-name \
 			    --service-account-email example@my-project.iam.gserviceaccount.com
 		`),
-		PreRun: func(cmd *cobra.Command, args []string) {
-			cmd.Flags().VisitAll(options.CheckRequired)
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := options.CheckRequired(cmd.Flags()); err != nil {
+				return err
+			}
 			resourceString = fmt.Sprintf(storageBucketsRes, queryPermsCmdConfig.StorageBucket)
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			util.Logger.Infof("Querying permissions granted on %s", resourceString)

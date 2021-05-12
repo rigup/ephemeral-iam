@@ -53,7 +53,9 @@ func newCmdGcloud() *cobra.Command {
 		Args:               cobra.ArbitraryArgs,
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			cmd.Flags().VisitAll(options.CheckRequired)
+			if err := options.CheckRequired(cmd.Flags()); err != nil {
+				return err
+			}
 
 			gcloudCmdArgs = util.ExtractUnknownArgs(cmd.Flags(), os.Args)
 			if err := util.FormatReason(&gcloudCmdConfig.Reason); err != nil {
@@ -77,7 +79,7 @@ func newCmdGcloud() *cobra.Command {
 
 	options.AddServiceAccountEmailFlag(cmd.Flags(), &gcloudCmdConfig.ServiceAccountEmail, true)
 	options.AddReasonFlag(cmd.Flags(), &gcloudCmdConfig.Reason, true)
-	options.AddProjectFlag(cmd.Flags(), &gcloudCmdConfig.Project)
+	options.AddProjectFlag(cmd.Flags(), &gcloudCmdConfig.Project, false)
 
 	return cmd
 }

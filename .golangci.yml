@@ -27,6 +27,7 @@ linters-settings:
       - performance
       - style
     disabled-checks:
+      - appendAssign
       - dupImport # https://github.com/go-critic/go-critic/issues/845
       - ifElseChain
       - octalLiteral
@@ -136,6 +137,7 @@ run:
   concurrency: 8
   # allow-parallel-runners: true
   tests: false
+  timeout: 3m
 
 ###############################################################################
 #                                Output Options                               #

@@ -15,11 +15,10 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
 
 	"google.golang.org/api/googleapi"
-
-	util "github.com/rigup/ephemeral-iam/internal/eiamutil"
 )
 
 // See https://cloud.google.com/apis/design/errors#handling_errors
@@ -37,8 +36,10 @@ var googleErrorCodes = map[int]string{
 	504: "Server deadline exceeded",
 }
 
-func checkGoogleAPIError(serr *EiamError) *EiamError {
-	err := serr.Err
+func checkGoogleAPIError(err error) EiamError {
+	if serr, ok := err.(EiamError); ok {
+		err = serr.Err
+	}
 	if gerr, ok := err.(*googleapi.Error); ok {
 		errStatusMsg, ok := googleErrorCodes[gerr.Code]
 		if !ok {
@@ -49,11 +50,7 @@ func checkGoogleAPIError(serr *EiamError) *EiamError {
 			// TODO Check if message can be parsed from body.
 			errMsg = gerr.Body
 		}
-		return &EiamError{
-			Log: util.Logger.WithField("error", errMsg),
-			Msg: fmt.Sprintf("[Google API Error] %s", errStatusMsg),
-			Err: err,
-		}
+		return New(fmt.Sprintf("[Google API Error] %s", errStatusMsg), errors.New(errMsg)).(EiamError)
 	}
-	return nil
+	return EiamError{}
 }

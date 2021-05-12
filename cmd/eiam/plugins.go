@@ -34,8 +34,7 @@ func newCmdPlugins() *cobra.Command {
 		Short: "Manage ephemeral-iam plugins",
 		Long: dedent.Dedent(`
 			Plugins for ephemeral-iam allow you to extend eiam's functionality in the form of commands.
-			Plugins are '.so' files (Golang dynamic libraries) and stored in the 'plugins' directory
-			of your eiam configuration folder.
+			Plugins are stored in the 'plugins' directory of your eiam configuration folder.
 			
 			-------------------------------     Installing a plugin     -------------------------------
 			Plugins are loaded from the '/path/to/config/ephemeral-iam/plugins' directory. To install a
