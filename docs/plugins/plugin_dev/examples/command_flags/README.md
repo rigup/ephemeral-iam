@@ -17,6 +17,49 @@ Here are the available flags and their intended usage.
 | YesFlag                 | `--yes`/`-y`                   | Assume 'yes' to all prompts                                                                                               |
 | ZoneFlag                | `--zone`/`-z`                  | The GCP zone. Inherits from the active gcloud config by default                                                           |
 
+Any of these flags can be marked as required by setting the last parameter in the
+function call to add them to a command to true.  To then check for any missing
+required flags, call `CheckRequired` in the command's `PreRunE` function.
+
+**Example:**
+```go
+
+import (
+    "github.com/rigup/ephemeral-iam/pkg/options"
+    "github.com/spf13/cobra"
+)
+
+...
+
+func pluginFuncWithEiamFlags(p *MyPlugin) *cobra.Command {
+    var (
+        instance string
+        bucket   string
+    )
+
+    cmd := &cobra.Command{
+        Use: "example",
+        PreRunE: func(cmd *cobra.Command, args []string) error {
+            // Check that the compute instance flag was provided
+            return options.CheckRequired(cmd.Flags())
+        },
+        RunE: func(cmd *cobra.command, args []string) error {
+            p.Log.Info("You provided the requied instance flag", "instance", instance)
+            if bucket != "" {
+                p.Log.Info("You provided the optional bucket flag", "bucket", bucket)
+            }
+            return nil
+        }
+    }
+    // Add the `--instance`/`-i` flag and make it required
+    options.AddComputeInstanceFlag(cmd.Flags(), &instance, true)
+    // Add the `--bucket`/`-b` flag and make it optional
+    options.AddStorageBucketFlag(cmd.Flags(), &bucket, false)
+
+	return cmd
+}
+```
+
 ## Adding custom flags to plugin commands
 Custom flags can be added to plugin commands just like any other Cobra command
 as long as the name/shortform does not conflict with an existing flag.

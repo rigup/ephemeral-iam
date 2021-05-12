@@ -60,7 +60,7 @@ func newCmdSetDefaultServiceAccount() *cobra.Command {
 			return nil
 		},
 	}
-	options.AddProjectFlag(cmd.Flags(), &project)
+	options.AddProjectFlag(cmd.Flags(), &project, false)
 	return cmd
 }
 

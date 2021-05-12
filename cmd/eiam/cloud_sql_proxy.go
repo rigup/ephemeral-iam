@@ -57,7 +57,9 @@ func newCmdCloudSQLProxy() *cobra.Command {
 				return errorsutil.New("Failed to run cloud_sql_proxy command", err)
 			}
 
-			cmd.Flags().VisitAll(options.CheckRequired)
+			if err := options.CheckRequired(cmd.Flags()); err != nil {
+				return err
+			}
 
 			cloudSQLProxyCmdArgs = util.ExtractUnknownArgs(cmd.Flags(), os.Args)
 			if err := util.FormatReason(&cspCmdConfig.Reason); err != nil {
@@ -81,7 +83,7 @@ func newCmdCloudSQLProxy() *cobra.Command {
 
 	options.AddServiceAccountEmailFlag(cmd.Flags(), &cspCmdConfig.ServiceAccountEmail, true)
 	options.AddReasonFlag(cmd.Flags(), &cspCmdConfig.Reason, true)
-	options.AddProjectFlag(cmd.Flags(), &cspCmdConfig.Project)
+	options.AddProjectFlag(cmd.Flags(), &cspCmdConfig.Project, false)
 
 	return cmd
 }

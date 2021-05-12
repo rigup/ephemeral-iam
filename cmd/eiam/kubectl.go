@@ -53,7 +53,9 @@ func newCmdKubectl() *cobra.Command {
 		Args:               cobra.ArbitraryArgs,
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			cmd.Flags().VisitAll(options.CheckRequired)
+			if err := options.CheckRequired(cmd.Flags()); err != nil {
+				return err
+			}
 
 			kubectlCmdArgs = util.ExtractUnknownArgs(cmd.Flags(), os.Args)
 			if err := util.FormatReason(&kubectlCmdConfig.Reason); err != nil {
@@ -77,7 +79,7 @@ func newCmdKubectl() *cobra.Command {
 
 	options.AddServiceAccountEmailFlag(cmd.Flags(), &kubectlCmdConfig.ServiceAccountEmail, true)
 	options.AddReasonFlag(cmd.Flags(), &kubectlCmdConfig.Reason, true)
-	options.AddProjectFlag(cmd.Flags(), &kubectlCmdConfig.Project)
+	options.AddProjectFlag(cmd.Flags(), &kubectlCmdConfig.Project, false)
 
 	return cmd
 }

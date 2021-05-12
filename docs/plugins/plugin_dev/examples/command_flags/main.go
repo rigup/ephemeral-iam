@@ -29,6 +29,7 @@ const (
 
 var (
 	project string
+	bucket  string
 	verbose bool
 )
 
@@ -56,6 +57,9 @@ func newRootCmd(p *BasicPlugin) *cobra.Command {
 		Short: desc,
 		// Plugins should use the RunE/PreRunE fields and return their errors
 		// to be handled by eiam.
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return options.CheckRequired(cmd.Flags())
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			p.Logger.Info("The project field defaults to the value in the user's gcloud config", "project", project)
 			if verbose {
@@ -65,7 +69,10 @@ func newRootCmd(p *BasicPlugin) *cobra.Command {
 		},
 	}
 	// This will add the `--project` flag to the command.
-	options.AddProjectFlag(cmd.Flags(), &project)
+	options.AddProjectFlag(cmd.Flags(), &project, false)
+	// This will add the `--bucket` flag and set it as a required flag.
+	// Checks for required flags should be called as shown in PreRunE above.
+	options.AddStorageBucketFlag(cmd.Flags(), &bucket, true)
 	// You can also add custom flags to the command.
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
 

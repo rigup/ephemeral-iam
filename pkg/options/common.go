@@ -16,6 +16,7 @@ package options
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/pflag"
@@ -90,7 +91,7 @@ func AddPersistentFlags(fs *pflag.FlagSet) {
 }
 
 // AddProjectFlag adds the --project/-p flag to the command.
-func AddProjectFlag(fs *pflag.FlagSet, project *string) {
+func AddProjectFlag(fs *pflag.FlagSet, project *string, required bool) {
 	defaultVal, err := gcpclient.GetCurrentProject()
 	errorsutil.CheckError(err)
 
@@ -101,7 +102,7 @@ func AddProjectFlag(fs *pflag.FlagSet, project *string) {
 		defaultVal,
 		"The GCP project. Inherits from the active gcloud config by default",
 	)
-	if defaultVal == "" {
+	if defaultVal == "" || required {
 		if err := fs.SetAnnotation(ProjectFlag.Name, RequiredAnnotation, []string{"true"}); err != nil {
 			util.Logger.Fatalf("failed to set required annotation on flag: %v", err)
 		}
@@ -186,26 +187,50 @@ func AddReasonFlag(fs *pflag.FlagSet, reason *string, required bool) {
 	}
 }
 
-// CheckRequired ensures that a command's required flags have been set.
-func CheckRequired(flag *pflag.Flag) {
-	for annot, val := range flag.Annotations {
-		if annot == RequiredAnnotation && val[0] == "true" && flag.Value.String() == "" {
-			promptForMissingFlag(flag)
+// CheckRequired ensures that a command's required flags have been set. The only
+// way to iterate over every flag in a pflag.FlagSet is with the VisitAll command.
+// VisitAll takes a function as a parameter and calls that function on each flag in the
+// flag set. This input function does not allow you to return errors; therefore,
+// CheckRequired creates an error channel for it to send any errors that it encounters
+// to then returns them.
+func CheckRequired(flags *pflag.FlagSet) error {
+	for err := range visitAllFlags(flags) {
+		if err != nil {
+			return err
 		}
 	}
+
+	return nil
 }
 
-func promptForMissingFlag(flag *pflag.Flag) {
+func visitAllFlags(flags *pflag.FlagSet) <-chan error {
+	errc := make(chan error)
+	go func() {
+		flags.VisitAll(func(flag *pflag.Flag) {
+			for annot, val := range flag.Annotations {
+				if annot == RequiredAnnotation && val[0] == "true" && flag.Value.String() == "" {
+					errc <- promptForMissingFlag(flag)
+				}
+			}
+		})
+		close(errc)
+	}()
+	return errc
+}
+
+func promptForMissingFlag(flag *pflag.Flag) error {
 	prompt := promptui.Prompt{
-		Label: fmt.Sprintf("Enter a value for %s", flag.Name),
+		Label:  fmt.Sprintf("Enter a value for %s", flag.Name),
+		Stdout: os.Stderr,
 	}
 
 	val, err := prompt.Run()
 	if err != nil {
-		util.Logger.Fatalf("Missing required flag: %s", flag.Name)
+		return fmt.Errorf("missing required flag: %s", flag.Name)
 	}
 
 	if err := flag.Value.Set(val); err != nil {
-		util.Logger.Fatalf("Failed to set value for %s: %v", flag.Name, err)
+		return fmt.Errorf("failed to set value for %s: %v", flag.Name, err)
 	}
+	return nil
 }
