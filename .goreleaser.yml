@@ -17,6 +17,7 @@ builds:
       - darwin
     goarch:
       - amd64
+      - arm64
     ldflags:
       - -s -w -X 'github.com/rigup/ephemeral-iam/internal/appconfig.Version=v{{.Version}}'
 archives:
