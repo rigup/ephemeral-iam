@@ -46,7 +46,15 @@ func startShell(svcAcct, accessToken, expiry string, defaultCluster map[string]s
 	defer os.Remove(tmpKubeConfig.Name()) // Remove tmpKubeConfig after priv session ends.
 
 	// Copy environment variables from user, set PS1 prompt, and set the KUBECONFIG env var.
-	cmdEnv := append(os.Environ(), buildPrompt(svcAcct), fmt.Sprintf("KUBECONFIG=%s", tmpKubeConfig.Name()))
+	cmdEnv := append(
+		os.Environ(),
+		buildPrompt(svcAcct),
+		fmt.Sprintf("KUBECONFIG=%s", tmpKubeConfig.Name()),
+		// The Terraform provider can source this config from this environment variable.
+		fmt.Sprintf("KUBE_CONFIG_PATH=%s", tmpKubeConfig.Name()),
+		// The Terraform provider can source this and use it as the access token.
+		fmt.Sprintf("GOOGLE_OAUTH_ACCESS_TOKEN=%s", accessToken),
+	)
 
 	if len(defaultCluster) > 0 {
 		// Create the kubeconfig entry for the privileged service account.
